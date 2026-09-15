@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#EDE4D8;font-family:'Public Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#B0522F;text-decoration:none}a:hover{color:#8E3F22}
+*{box-sizing:border-box}
+::-webkit-scrollbar{width:0;height:0}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
+</style>
+</helmet>
+<div style="min-height:100vh;padding:56px 48px 80px;display:flex;flex-direction:column;gap:40px;align-items:flex-start">
+
+<div style="display:flex;align-items:flex-end;gap:28px;max-width:1180px;flex-wrap:wrap">
+<div>
+<div style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9A8B7B">Stocktake AUG 26 &nbsp;·&nbsp; mobile</div>
+<h1 style="margin:12px 0 0;font:700 40px/1.05 'Public Sans',sans-serif;letter-spacing:-.02em;color:#241D16">Count — blank</h1>
+<p style="margin:12px 0 0;max-width:520px;font:400 14px/1.6 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Nothing counted yet — walk any location end to end and test it. Every location carries the same 192 lines as the workbook's master list, which you can edit by hand or replace by attaching an updated Excel file.</p>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;padding-bottom:4px">
+<div style="padding:10px 14px;background:#FFFCF7;border:1px solid #DFD3C4;border-radius:10px"><div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#9A8B7B">LOCATIONS</div><div style="margin-top:6px;font:600 20px/1 'JetBrains Mono',monospace;color:#241D16">18</div></div>
+<div style="padding:10px 14px;background:#FFFCF7;border:1px solid #DFD3C4;border-radius:10px"><div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#9A8B7B">LINES EACH</div><div style="margin-top:6px;font:600 20px/1 'JetBrains Mono',monospace;color:#241D16">192</div></div>
+<div style="padding:10px 14px;background:#FFFCF7;border:1px solid #DFD3C4;border-radius:10px"><div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#9A8B7B">COUNTERS</div><div style="margin-top:6px;font:600 20px/1 'JetBrains Mono',monospace;color:#241D16">1</div></div>
+</div>
+</div>
+
+<div style="display:flex;gap:44px;align-items:flex-start;flex-wrap:wrap">
+
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">LIVE PROTOTYPE</span><span style="flex:1;height:1px;background:#DFD3C4;min-width:60px"></span></div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ W }}" height="{{ H }}" hint-size="402px,874px">
+<div style="height:100%;padding-top:62px;position:relative;overflow:hidden;background:#F6F0E7">
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:14px 20px 12px;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div>
+<div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A0917F">FRIDAY 28 AUG</div>
+<div style="margin-top:5px;font:700 26px/1 'Public Sans',sans-serif;letter-spacing:-.02em;color:#241D16">Stocktake</div>
+</div>
+<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:999px">
+<span style="width:6px;height:6px;border-radius:50%;background:#C08A2E"></span>
+<span style="font:500 10px/1 'JetBrains Mono',monospace;color:#6E6152">OFFLINE</span>
+</div>
+</div>
+</div>
+
+<div style="flex:1;overflow:auto;padding:16px 20px 28px">
+<div style="padding:16px;background:#241D16;border-radius:16px;color:#F6F0E7">
+<div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A99883">THIS SESSION</div>
+<div style="margin-top:12px;display:flex;align-items:flex-end;gap:6px">
+<span style="font:700 40px/1 'JetBrains Mono',monospace;letter-spacing:-.03em">{{ sessionUnits }}</span>
+<span style="font:400 12px/1 'Public Sans',sans-serif;color:#A99883;padding-bottom:6px">units counted</span>
+</div>
+<div style="margin-top:14px;display:flex;gap:20px">
+<div><div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#A99883">LINES</div><div style="margin-top:5px;font:500 14px/1 'JetBrains Mono',monospace">{{ sessionLines }}</div></div>
+<div><div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#A99883">CLASHES</div><div style="margin-top:5px;font:500 14px/1 'JetBrains Mono',monospace;color:#E4A07A">{{ clashCount }}</div></div>
+<div><div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#A99883">WITH YOU</div><div style="margin-top:5px;font:500 14px/1 'JetBrains Mono',monospace">—</div></div>
+</div>
+</div>
+
+<sc-if value="{{ clashCount }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ openClashes }}" style="margin-top:12px;width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;background:#FBEFE6;border:1px solid #E9C5AB;border-radius:12px;text-align:left;cursor:pointer;font-family:'Public Sans',sans-serif" style-hover="background:#F8E6D9">
+<span style="width:22px;height:22px;flex:none;border-radius:6px;background:#B0522F;color:#fff;display:flex;align-items:center;justify-content:center;font:700 11px/1 'JetBrains Mono',monospace">!</span>
+<span style="flex:1;font:500 12px/1.35 'Public Sans',sans-serif;color:#7A3A20">{{ clashLabel }}</span>
+<span style="font:400 16px/1 'Public Sans',sans-serif;color:#B0522F">›</span>
+</button>
+</sc-if>
+
+<div style="margin:22px 0 10px;display:flex;align-items:baseline;justify-content:space-between">
+<span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A0917F">LOCATIONS</span>
+<span style="font:400 11px/1 'Public Sans',sans-serif;color:#A0917F">{{ locDoneLabel }}</span>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ locations }}" as="loc" hint-placeholder-count="6">
+<button onClick="{{ loc.open }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#C9B9A4">
+<span style="width:34px;height:34px;flex:none;border-radius:10px;background:{{ loc.tint }};display:flex;align-items:center;justify-content:center;font:600 11px/1 'JetBrains Mono',monospace;color:{{ loc.tintInk }}">{{ loc.abbr }}</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 14px/1.2 'Public Sans',sans-serif;color:#241D16">{{ loc.name }}</span>
+<span style="display:block;margin-top:4px;font:400 11px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ loc.meta }}</span>
+</span>
+<span style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+<span style="font:500 11px/1 'JetBrains Mono',monospace;color:#6E6152">{{ loc.pctLabel }}</span>
+<span style="display:block;width:46px;height:4px;border-radius:2px;background:#E9E0D3;overflow:hidden"><span style="display:block;height:4px;border-radius:2px;background:#B0522F;width:{{ loc.pct }}"></span></span>
+</span>
+</button>
+</sc-for>
+</div>
+<button onClick="{{ openTotals }}" style="margin-top:14px;width:100%;display:flex;align-items:center;gap:12px;padding:15px 14px;background:#EFE7DB;border:1px solid #DCCFBE;border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#B0522F">
+<span style="flex:1;min-width:0">
+<span style="display:block;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">GRAND TOTAL</span>
+<span style="display:block;margin-top:7px;font:600 22px/1 'JetBrains Mono',monospace;color:#241D16">{{ grandUnits }}</span>
+<span style="display:block;margin-top:6px;font:400 10.5px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ grandLines }}</span>
+</span>
+<span style="flex:none;font:400 16px/1 'Public Sans',sans-serif;color:#B0522F">›</span>
+</button>
+<button onClick="{{ openMaster }}" style="margin-top:8px;width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:#FFFCF7;border:1px dashed #C9B9A4;border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#B0522F">
+<span style="width:34px;height:34px;flex:none;border-radius:10px;background:#EFE7DB;display:flex;align-items:center;justify-content:center;font:600 11px/1 'JetBrains Mono',monospace;color:#6E6152">☰</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 14px/1.2 'Public Sans',sans-serif;color:#241D16">Master list</span>
+<span style="display:block;margin-top:4px;font:400 11px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ masterMeta }}</span>
+</span>
+<span style="flex:none;font:400 16px/1 'Public Sans',sans-serif;color:#B0522F">›</span>
+</button>
+<p style="margin:18px 2px 0;font:400 11px/1.5 'Public Sans',sans-serif;color:#A0917F">Every location holds the full master list. Anything left untouched submits as zero.</p>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isCount }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 0;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ goHome }}" style="width:32px;height:32px;flex:none;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:#241D16">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:#241D16">{{ locName }}</div>
+<div style="margin-top:3px;font:400 10px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ locProgress }}</div>
+</div>
+<button onClick="{{ openSubmit }}" style="flex:none;padding:8px 14px;background:#241D16;color:#F6F0E7;border:none;border-radius:9px;cursor:pointer;font:600 12px/1 'Public Sans',sans-serif" style-hover="background:#3A2F24">Submit</button>
+</div>
+<div style="margin-top:10px;display:flex;align-items:center;gap:8px;padding:9px 12px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:10px">
+<span style="font:400 12px/1 'Public Sans',sans-serif;color:#A0917F">⌕</span>
+<input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search this location" style="flex:1;border:none;outline:none;background:transparent;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+<sc-if value="{{ query }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ clearQuery }}" style="border:none;background:transparent;cursor:pointer;font:400 13px/1 'Public Sans',sans-serif;color:#A0917F">✕</button>
+</sc-if>
+</div>
+<div style="margin-top:8px;display:flex;gap:6px">
+<button onClick="{{ toggleHideEmpty }}" style="flex:1;padding:8px;border-radius:9px;cursor:pointer;background:{{ hideEmptyBg }};border:1px solid {{ hideEmptyBorder }};font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:{{ hideEmptyInk }}">{{ hideEmptyLabel }}</button>
+<button onClick="{{ openManage }}" style="flex:none;padding:8px 11px;border-radius:9px;cursor:pointer;background:#FFFCF7;border:1px solid #E3D8C9;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#6E6152">CATEGORIES</button>
+</div>
+<div style="margin-top:10px;display:flex;gap:6px;overflow:auto;padding-bottom:10px">
+<sc-for list="{{ chips }}" as="chip" hint-placeholder-count="4">
+<button onClick="{{ chip.jump }}" style="flex:none;padding:7px 11px;border-radius:999px;cursor:pointer;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.04em;background:{{ chip.bg }};border:1px solid {{ chip.border }};color:{{ chip.ink }}">{{ chip.label }}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="flex:1;overflow:auto;padding-bottom:120px">
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+<div id="{{ g.anchor }}" style="scroll-margin-top:0">
+<div style="position:sticky;top:0;z-index:2;display:flex;align-items:stretch;background:#EFE7DB;border-top:1px solid #E3D8C9;border-bottom:1px solid #E3D8C9">
+<button onClick="{{ g.toggle }}" style="flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:8px 10px 8px 16px;background:transparent;border:none;cursor:pointer;text-align:left" style-hover="background:#E7DDCE">
+<span style="flex:none;font:400 9px/1 'JetBrains Mono',monospace;color:#8C7E6D;transform:{{ g.caret }}">▾</span>
+<span style="flex:1;min-width:0;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#6E6152">{{ g.sub }}</span>
+<span style="flex:none;font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ g.done }}</span>
+</button>
+<button onClick="{{ g.hide }}" style="flex:none;margin:5px 12px 5px 4px;padding:3px 7px;border:1px solid #DCCFBE;background:#F6F0E7;border-radius:6px;cursor:pointer;font:500 9px/1.2 'JetBrains Mono',monospace;letter-spacing:.06em;color:#8C7E6D" style-hover="border-color:#B0522F;color:#B0522F">NOT HERE</button>
+</div>
+<sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+<button onClick="{{ it.open }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:{{ it.rowBg }};border:none;border-bottom:1px solid #EAE1D4;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="background:#FFF8EE">
+<span style="flex:1;min-width:0">
+<span style="display:block;font:500 12.5px/1.3 'Public Sans',sans-serif;color:#241D16;text-wrap:pretty">{{ it.name }}</span>
+<span style="display:block;margin-top:4px;font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ it.meta }}</span>
+</span>
+<span style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+<span style="font:600 15px/1 'JetBrains Mono',monospace;color:{{ it.valInk }}">{{ it.val }}</span>
+<span style="font:400 9.5px/1 'JetBrains Mono',monospace;color:{{ it.subInk }}">{{ it.valSub }}</span>
+</span>
+</button>
+</sc-for>
+</div>
+</sc-for>
+<sc-if value="{{ hasHidden }}" hint-placeholder-val="{{ false }}">
+<div style="padding:14px 16px;background:#EFE7DB;border-top:1px solid #E3D8C9;display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:400 11px/1.4 'Public Sans',sans-serif;color:#6E6152">{{ hiddenLabel }}</span>
+<button onClick="{{ showAll }}" style="flex:none;padding:7px 11px;border:1px solid #DCCFBE;background:#FFFCF7;border-radius:8px;cursor:pointer;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#B0522F">SHOW ALL</button>
+</div>
+</sc-if>
+<div style="padding:22px 16px;text-align:center;font:400 11px/1.5 'Public Sans',sans-serif;color:#A0917F">End of {{ locName }}</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTotals }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 12px;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ goHome }}" style="width:32px;height:32px;flex:none;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:#241D16">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:#241D16">Grand total</div>
+<div style="margin-top:3px;font:400 10px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ grandLines }}</div>
+</div>
+</div>
+<div style="margin-top:12px;display:flex;align-items:flex-end;gap:7px">
+<span style="font:700 38px/1 'JetBrains Mono',monospace;letter-spacing:-.03em;color:#241D16">{{ grandUnits }}</span>
+<span style="font:400 12px/1 'Public Sans',sans-serif;color:#8C7E6D;padding-bottom:5px">units across all locations</span>
+</div>
+<div style="margin-top:12px;display:flex;gap:6px">
+<button onClick="{{ byCat }}" style="flex:1;padding:8px;border-radius:9px;cursor:pointer;background:{{ catBg }};border:1px solid #E3D8C9;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:{{ catInk }}">BY CATEGORY</button>
+<button onClick="{{ byLoc }}" style="flex:1;padding:8px;border-radius:9px;cursor:pointer;background:{{ locBg }};border:1px solid #E3D8C9;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:{{ locInk }}">BY LOCATION</button>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding-bottom:44px">
+<sc-for list="{{ totalRows }}" as="r" hint-placeholder-count="4">
+<div>
+<button onClick="{{ r.toggle }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:13px 16px;background:#FFFCF7;border:none;border-bottom:1px solid #EAE1D4;cursor:pointer;text-align:left" style-hover="background:#FFF8EE">
+<span style="flex:none;font:400 9px/1 'JetBrains Mono',monospace;color:#8C7E6D;transform:{{ r.caret }}">▾</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 12px/1.2 'JetBrains Mono',monospace;letter-spacing:.08em;color:#241D16">{{ r.label }}</span>
+<span style="display:block;margin-top:6px;width:100%;height:3px;border-radius:2px;background:#EDE4D8;overflow:hidden"><span style="display:block;height:3px;border-radius:2px;background:#B0522F;width:{{ r.bar }}"></span></span>
+</span>
+<span style="flex:none;text-align:right">
+<span style="display:block;font:600 15px/1 'JetBrains Mono',monospace;color:#241D16">{{ r.units }}</span>
+<span style="display:block;margin-top:4px;font:400 9.5px/1 'JetBrains Mono',monospace;color:#A0917F">{{ r.lines }}</span>
+</span>
+</button>
+<sc-for list="{{ r.items }}" as="ri" hint-placeholder-count="0">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 16px 10px 28px;background:#F9F5EE;border-bottom:1px solid #EFE7DB">
+<span style="flex:1;min-width:0">
+<span style="display:block;font:400 11.5px/1.3 'Public Sans',sans-serif;color:#241D16;text-wrap:pretty">{{ ri.name }}</span>
+<span style="display:block;margin-top:3px;font:400 9.5px/1 'JetBrains Mono',monospace;color:#A0917F">{{ ri.split }}</span>
+</span>
+<span style="flex:none;font:500 12px/1 'JetBrains Mono',monospace;color:#241D16">{{ ri.units }}</span>
+</div>
+</sc-for>
+</div>
+</sc-for>
+<sc-if value="{{ noTotals }}" hint-placeholder-val="{{ false }}">
+<div style="padding:36px 24px;text-align:center">
+<div style="font:600 13px/1.3 'Public Sans',sans-serif;color:#241D16">Nothing counted yet</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:#8C7E6D;text-wrap:pretty">Enter a figure against any line and it rolls up here, by category or by location.</p>
+</div>
+</sc-if>
+<sc-if value="{{ hasTotals }}" hint-placeholder-val="{{ true }}">
+<div style="padding:18px 16px 8px">
+<button onClick="{{ exportCsv }}" style="width:100%;padding:14px;border-radius:12px;background:#241D16;border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#F6F0E7" style-hover="background:#3A2F24">Export for the workbook</button>
+<p style="margin:10px 2px 0;font:400 10.5px/1.5 'Public Sans',sans-serif;color:#A0917F">One row per counted line, Grand Total plus all 18 location columns — the same shape as the sheet, so it pastes straight in.</p>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column;padding:24px 20px 44px;background:#241D16">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px">
+<span style="width:44px;height:44px;border-radius:12px;background:#B0522F;display:flex;align-items:center;justify-content:center;font:600 18px/1 'JetBrains Mono',monospace;color:#fff">✓</span>
+<div>
+<div style="font:700 26px/1.1 'Public Sans',sans-serif;color:#F6F0E7;letter-spacing:-.02em">{{ doneName }} submitted</div>
+<p style="margin:10px 0 0;font:400 13px/1.6 'Public Sans',sans-serif;color:#A99883;text-wrap:pretty">Queued locally. It syncs to the workbook next time you have signal, into the {{ doneName }} column.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:1px;background:#3A2F24;border-radius:12px;overflow:hidden">
+<div style="display:flex;justify-content:space-between;padding:13px 14px;background:#2C241B"><span style="font:400 12px/1 'Public Sans',sans-serif;color:#A99883">Lines counted</span><span style="font:500 12px/1 'JetBrains Mono',monospace;color:#F6F0E7">{{ doneLines }}</span></div>
+<div style="display:flex;justify-content:space-between;padding:13px 14px;background:#2C241B"><span style="font:400 12px/1 'Public Sans',sans-serif;color:#A99883">Total units</span><span style="font:500 12px/1 'JetBrains Mono',monospace;color:#F6F0E7">{{ doneUnits }}</span></div>
+<div style="display:flex;justify-content:space-between;padding:13px 14px;background:#2C241B"><span style="font:400 12px/1 'Public Sans',sans-serif;color:#A99883">Submitted as zero</span><span style="font:500 12px/1 'JetBrains Mono',monospace;color:#F6F0E7">{{ doneZeros }}</span></div>
+<div style="display:flex;justify-content:space-between;padding:13px 14px;background:#2C241B"><span style="font:400 12px/1 'Public Sans',sans-serif;color:#A99883">Low stock flagged</span><span style="font:500 12px/1 'JetBrains Mono',monospace;color:#E4A07A">{{ doneLow }}</span></div>
+</div>
+<div style="margin-top:6px;display:flex;gap:8px">
+<button onClick="{{ goHome }}" style="flex:1;padding:15px;background:#3A2F24;color:#F6F0E7;border:none;border-radius:12px;cursor:pointer;font:600 14px/1 'Public Sans',sans-serif" style-hover="background:#4A3C2E">Back to locations</button>
+<button onClick="{{ openTotals }}" style="flex:1;padding:15px;background:#F6F0E7;color:#241D16;border:none;border-radius:12px;cursor:pointer;font:600 14px/1 'Public Sans',sans-serif" style-hover="background:#fff">Grand total</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeSheet }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:21;background:#F6F0E7;border-radius:20px 20px 26px 26px;box-shadow:0 -12px 40px rgba(36,29,22,.28);animation:sheetUp .22s cubic-bezier(.22,1,.36,1);overflow:hidden">
+<div style="padding:14px 18px 12px;border-bottom:1px solid #E3D8C9;display:flex;align-items:flex-start;gap:10px">
+<div style="flex:1;min-width:0">
+<div style="font:600 13.5px/1.3 'Public Sans',sans-serif;color:#241D16;text-wrap:pretty">{{ sheetName }}</div>
+<div style="margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font:400 10px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ sheetMeta }}</span>
+<sc-if value="{{ sheetClash }}" hint-placeholder-val="{{ false }}">
+<span style="padding:3px 7px;border-radius:5px;background:#FBEFE6;border:1px solid #E9C5AB;font:500 9px/1 'JetBrains Mono',monospace;color:#8E3F22">{{ sheetClashLabel }}</span>
+</sc-if>
+</div>
+</div>
+<button onClick="{{ closeSheet }}" style="flex:none;width:28px;height:28px;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:8px;cursor:pointer;font:400 12px/1 'Public Sans',sans-serif;color:#6E6152">✕</button>
+</div>
+
+<div style="padding:14px 18px 0;display:flex;gap:10px">
+<button onClick="{{ focusCartons }}" style="flex:1;padding:11px 12px;border-radius:12px;text-align:left;cursor:pointer;background:{{ cartonBg }};border:1.5px solid {{ cartonBorder }};font-family:'Public Sans',sans-serif">
+<span style="display:block;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#8C7E6D">CARTONS ×{{ sheetCarton }}</span>
+<span style="display:block;margin-top:7px;font:600 24px/1 'JetBrains Mono',monospace;color:#241D16">{{ cartonVal }}</span>
+</button>
+<button onClick="{{ focusSingles }}" style="flex:1;padding:11px 12px;border-radius:12px;text-align:left;cursor:pointer;background:{{ singleBg }};border:1.5px solid {{ singleBorder }};font-family:'Public Sans',sans-serif">
+<span style="display:block;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#8C7E6D">{{ singleLabel }}</span>
+<span style="display:block;margin-top:7px;font:600 24px/1 'JetBrains Mono',monospace;color:#241D16">{{ singleVal }}</span>
+</button>
+</div>
+
+<div style="padding:10px 18px 0">
+<button onClick="{{ toggleAdd }}" style="width:100%;padding:10px;border-radius:10px;cursor:pointer;background:{{ addBg }};border:1px solid {{ addBorder }};font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:{{ addInk }}">{{ addLabel }}</button>
+</div>
+<div style="padding:10px 18px 0;display:flex;align-items:baseline;justify-content:space-between">
+<span style="font:400 11px/1 'Public Sans',sans-serif;color:#8C7E6D">{{ sheetTotalLabel }}</span>
+<button onClick="{{ toggleHistory }}" style="border:none;background:transparent;cursor:pointer;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#B0522F">{{ historyToggleLabel }}</button>
+</div>
+
+<sc-if value="{{ historyOpen }}" hint-placeholder-val="{{ false }}">
+<div style="margin:10px 18px 0;border:1px solid #E3D8C9;border-radius:11px;overflow:hidden">
+<div style="padding:11px 12px;background:#FFFCF7;font:400 10.5px/1.4 'Public Sans',sans-serif;color:#8C7E6D">No previous counts for this line yet. Once you submit a location, past counts show here.</div>
+<sc-for list="{{ history }}" as="h" hint-placeholder-count="0">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#FFFCF7;border-bottom:1px solid #EFE7DB">
+<span style="font:400 10.5px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ h.when }}</span>
+<span style="font:400 10.5px/1 'Public Sans',sans-serif;color:#8C7E6D">{{ h.who }}</span>
+<span style="font:500 11px/1 'JetBrains Mono',monospace;color:#241D16">{{ h.units }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<div style="padding:12px 14px 10px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
+<sc-for list="{{ keys }}" as="k" hint-placeholder-count="12">
+<button onClick="{{ k.press }}" style="padding:13px 0;border-radius:11px;cursor:pointer;background:{{ k.bg }};border:1px solid {{ k.border }};font:500 20px/1 'JetBrains Mono',monospace;color:{{ k.ink }}">{{ k.label }}</button>
+</sc-for>
+</div>
+
+<div style="padding:0 14px 42px;display:flex;gap:8px">
+<button onClick="{{ closeSheet }}" style="flex:none;padding:14px 18px;border-radius:12px;background:#FFFCF7;border:1px solid #E3D8C9;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#241D16">Done</button>
+<button onClick="{{ nextItem }}" style="flex:1;padding:14px;border-radius:12px;background:#241D16;border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#F6F0E7" style-hover="background:#3A2F24">Save &amp; next item</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ submitOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:30;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeSubmit }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:31;padding:20px 18px 52px;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1)">
+<div style="font:700 19px/1.2 'Public Sans',sans-serif;color:#241D16;letter-spacing:-.01em">Submit {{ locName }}?</div>
+<p style="margin:9px 0 0;font:400 12.5px/1.6 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">{{ submitBody }}</p>
+<div style="margin-top:16px;display:flex;gap:8px">
+<button onClick="{{ closeSubmit }}" style="flex:none;padding:14px 18px;border-radius:12px;background:#FFFCF7;border:1px solid #E3D8C9;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#241D16">Keep counting</button>
+<button onClick="{{ confirmSubmit }}" style="flex:1;padding:14px;border-radius:12px;background:#B0522F;border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#fff" style-hover="background:#95431f">Submit</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ manageOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:30;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeManage }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;top:90px;z-index:31;display:flex;flex-direction:column;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1);overflow:hidden">
+<div style="padding:18px 18px 12px;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font:700 18px/1.2 'Public Sans',sans-serif;color:#241D16">What's in {{ locName }}?</div>
+<button onClick="{{ closeManage }}" style="width:28px;height:28px;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:8px;cursor:pointer;font:400 12px/1 'Public Sans',sans-serif;color:#6E6152">✕</button>
+</div>
+<p style="margin:8px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Switch off anything this location never holds. It stays off next month, and switching a category off takes its sub-categories with it.</p>
+</div>
+<div style="flex:1;overflow:auto;padding:8px 0 44px">
+<sc-for list="{{ manageCats }}" as="mc" hint-placeholder-count="3">
+<div style="padding:6px 0">
+<button onClick="{{ mc.toggle }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 18px;background:transparent;border:none;cursor:pointer;text-align:left">
+<span style="flex:1;font:600 12px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:{{ mc.ink }}">{{ mc.name }}</span>
+<span style="font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ mc.count }}</span>
+<span style="width:34px;height:20px;flex:none;border-radius:999px;background:{{ mc.track }};position:relative;display:block"><span style="position:absolute;top:2px;left:{{ mc.knob }};width:16px;height:16px;border-radius:50%;background:#FFFCF7;transition:left .16s ease"></span></span>
+</button>
+<sc-for list="{{ mc.subs }}" as="ms" hint-placeholder-count="2">
+<button onClick="{{ ms.toggle }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 18px 9px 30px;background:transparent;border:none;cursor:pointer;text-align:left">
+<span style="flex:1;font:400 11.5px/1.2 'Public Sans',sans-serif;color:{{ ms.ink }}">{{ ms.name }}</span>
+<span style="font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ ms.count }}</span>
+<span style="width:34px;height:20px;flex:none;border-radius:999px;background:{{ ms.track }};position:relative;display:block"><span style="position:absolute;top:2px;left:{{ ms.knob }};width:16px;height:16px;border-radius:50%;background:#FFFCF7;transition:left .16s ease"></span></span>
+</button>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+
+<sc-if value="{{ isMaster }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 12px;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ goHome }}" style="width:32px;height:32px;flex:none;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:#241D16">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:#241D16">Master list</div>
+<div style="margin-top:3px;font:400 10px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ masterMeta }}</div>
+</div>
+</div>
+<div style="margin-top:10px;display:flex;align-items:center;gap:8px;padding:9px 12px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:10px">
+<span style="font:400 12px/1 'Public Sans',sans-serif;color:#A0917F">⌕</span>
+<input value="{{ mQuery }}" onChange="{{ onMQuery }}" placeholder="Search all products" style="flex:1;border:none;outline:none;background:transparent;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+</div>
+<div style="margin-top:8px;display:flex;gap:6px">
+<button onClick="{{ openAdd }}" style="flex:1;padding:9px;border-radius:9px;cursor:pointer;background:#241D16;border:none;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#F6F0E7">+ ADD ITEM</button>
+<button onClick="{{ openImport }}" style="flex:1;padding:9px;border-radius:9px;cursor:pointer;background:#FFFCF7;border:1px solid #E3D8C9;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#6E6152">ATTACH EXCEL</button>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding-bottom:44px">
+<sc-for list="{{ masterGroups }}" as="mg" hint-placeholder-count="4">
+<div>
+<div style="position:sticky;top:0;z-index:2;padding:7px 16px;background:#EFE7DB;border-top:1px solid #E3D8C9;border-bottom:1px solid #E3D8C9;display:flex;align-items:center;justify-content:space-between">
+<span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#6E6152">{{ mg.cat }}</span>
+<span style="font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ mg.count }}</span>
+</div>
+<sc-for list="{{ mg.items }}" as="mi" hint-placeholder-count="4">
+<button onClick="{{ mi.edit }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:11px 16px;background:#FFFCF7;border:none;border-bottom:1px solid #EAE1D4;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="background:#FFF8EE">
+<span style="flex:1;min-width:0">
+<span style="display:block;font:500 12px/1.3 'Public Sans',sans-serif;color:#241D16;text-wrap:pretty">{{ mi.name }}</span>
+<span style="display:block;margin-top:4px;font:400 9.5px/1 'JetBrains Mono',monospace;color:#A0917F">{{ mi.meta }}</span>
+</span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:#C4B7A6">›</span>
+</button>
+</sc-for>
+</div>
+</sc-for>
+<div style="padding:20px 16px;text-align:center;font:400 11px/1.5 'Public Sans',sans-serif;color:#A0917F">{{ masterFootnote }}</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ addOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:30;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeAdd }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:31;padding:20px 18px 52px;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1)">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font:700 18px/1.2 'Public Sans',sans-serif;color:#241D16">{{ addTitle }}</div>
+<button onClick="{{ closeAdd }}" style="width:28px;height:28px;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:8px;cursor:pointer;font:400 12px/1 'Public Sans',sans-serif;color:#6E6152">✕</button>
+</div>
+<p style="margin:8px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">{{ addBlurb }}</p>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+<input value="{{ nfName }}" onChange="{{ onNfName }}" placeholder="Product name" style="width:100%;padding:12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;outline:none;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+<div style="display:flex;gap:8px">
+<select value="{{ nfCat }}" onChange="{{ onNfCat }}" style="flex:1;padding:12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;outline:none;font:400 12px/1 'Public Sans',sans-serif;color:#241D16">
+<sc-for list="{{ catOptions }}" as="co" hint-placeholder-count="4">
+<option value="{{ co }}">{{ co }}</option>
+</sc-for>
+</select>
+<input value="{{ nfCarton }}" onChange="{{ onNfCarton }}" placeholder="Carton" style="width:96px;padding:12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;outline:none;font:400 13px/1 'JetBrains Mono',monospace;color:#241D16" />
+</div>
+<select value="{{ nfSubSelect }}" onChange="{{ onNfSubPick }}" style="width:100%;padding:12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;outline:none;font:400 12px/1 'Public Sans',sans-serif;color:#241D16">
+<sc-for list="{{ subOptions }}" as="so" hint-placeholder-count="4">
+<option value="{{ so.value }}">{{ so.label }}</option>
+</sc-for>
+</select>
+<sc-if value="{{ nfSubNew }}" hint-placeholder-val="{{ false }}">
+<input value="{{ nfSub }}" onChange="{{ onNfSub }}" placeholder="New sub category name" style="width:100%;padding:12px;border:1.5px solid #B0522F;border-radius:10px;background:#FFFCF7;outline:none;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+</sc-if>
+<input value="{{ nfCode }}" onChange="{{ onNfCode }}" placeholder="Barcode / product ID" style="width:100%;padding:12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;outline:none;font:400 13px/1 'JetBrains Mono',monospace;color:#241D16" />
+<button onClick="{{ toggleNfFrac }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;cursor:pointer;text-align:left">
+<span style="flex:1;font:400 12px/1.3 'Public Sans',sans-serif;color:#241D16">Counted in part bottles (0.4)</span>
+<span style="width:34px;height:20px;flex:none;border-radius:999px;background:{{ nfFracTrack }};position:relative;display:block"><span style="position:absolute;top:2px;left:{{ nfFracKnob }};width:16px;height:16px;border-radius:50%;background:#FFFCF7;transition:left .16s ease"></span></span>
+</button>
+</div>
+<div style="margin-top:14px;display:flex;gap:8px">
+<button onClick="{{ closeAdd }}" style="flex:none;padding:14px 16px;border-radius:12px;background:#FFFCF7;border:1px solid #E3D8C9;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#241D16">Cancel</button>
+<button onClick="{{ saveNew }}" style="flex:1;padding:14px;border-radius:12px;background:{{ saveBg }};border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#fff">{{ saveLabel }}</button>
+</div>
+<sc-if value="{{ isEditing }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ deleteItem }}" style="margin-top:8px;width:100%;padding:13px;border-radius:12px;background:#FDF4EC;border:1px solid #E9C5AB;cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:#8E3F22" style-hover="background:#F8E6D9">{{ deleteLabel }}</button>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ importOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:30;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeImport }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:31;padding:20px 18px 52px;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1)">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font:700 18px/1.2 'Public Sans',sans-serif;color:#241D16">Attach a workbook</div>
+<button onClick="{{ closeImport }}" style="width:28px;height:28px;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:8px;cursor:pointer;font:400 12px/1 'Public Sans',sans-serif;color:#6E6152">✕</button>
+</div>
+<p style="margin:8px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Pick the .xlsx or .csv with your master list. It reads Product Name, Category, Sub Category and Carton Size — counts already entered stay where they are.</p>
+<label style="margin-top:14px;display:block;padding:20px;border:1px dashed #C9B9A4;border-radius:12px;background:#FFFCF7;text-align:center;cursor:pointer">
+<span style="display:block;font:600 12.5px/1.3 'Public Sans',sans-serif;color:#241D16">{{ importFileLabel }}</span>
+<span style="display:block;margin-top:6px;font:400 10.5px/1.4 'JetBrains Mono',monospace;color:#8C7E6D">{{ importHint }}</span>
+<input type="file" accept=".xlsx,.csv" onChange="{{ onFile }}" style="display:none" />
+</label>
+<sc-if value="{{ importReady }}" hint-placeholder-val="{{ false }}">
+<p style="margin:12px 2px 0;font:400 11px/1.55 'Public Sans',sans-serif;color:#8C7E6D;text-wrap:pretty">{{ replaceWarn }}</p>
+<div style="margin-top:10px;display:flex;gap:8px">
+<button onClick="{{ applyMerge }}" style="flex:1;padding:13px;border-radius:11px;background:#FFFCF7;border:1px solid #E3D8C9;cursor:pointer;font:600 11.5px/1.3 'Public Sans',sans-serif;color:#241D16">{{ mergeLabel }}</button>
+<button onClick="{{ applyReplace }}" style="flex:1;padding:13px;border-radius:11px;background:#B0522F;border:none;cursor:pointer;font:600 11.5px/1.3 'Public Sans',sans-serif;color:#fff">Replace list</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ clashOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:30;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeClashes }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:31;padding:20px 18px 52px;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1)">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font:700 18px/1.2 'Public Sans',sans-serif;color:#241D16">Counted twice</div>
+<button onClick="{{ closeClashes }}" style="width:28px;height:28px;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:8px;cursor:pointer;font:400 12px/1 'Public Sans',sans-serif;color:#6E6152">✕</button>
+</div>
+<p style="margin:9px 0 0;font:400 12.5px/1.6 'Public Sans',sans-serif;color:#6E6152">When a line gets counted twice, both numbers show here and you pick which one stands.</p>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ clashes }}" as="c" hint-placeholder-count="2">
+<div style="padding:12px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:12px">
+<div style="font:500 12px/1.3 'Public Sans',sans-serif;color:#241D16">{{ c.name }}</div>
+<div style="margin-top:9px;display:flex;gap:7px">
+<button onClick="{{ c.keepMine }}" style="flex:1;padding:10px;border-radius:9px;background:#F1EAE0;border:1px solid #DFD3C4;cursor:pointer;font:500 11px/1.2 'JetBrains Mono',monospace;color:#241D16">You {{ c.mine }}</button>
+<button onClick="{{ c.keepTheirs }}" style="flex:1;padding:10px;border-radius:9px;background:#F1EAE0;border:1px solid #DFD3C4;cursor:pointer;font:500 11px/1.2 'JetBrains Mono',monospace;color:#241D16">Jess {{ c.theirs }}</button>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-import>
+</div>
+
+<div style="width:340px;display:flex;flex-direction:column;gap:22px;padding-top:26px">
+<div>
+<div style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">WHAT THE SHEET DID, AND WHAT THE APP DOES</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:12px">
+<div style="padding:13px 14px;background:#FFFCF7;border:1px solid #DFD3C4;border-radius:12px">
+<div style="font:600 12.5px/1.3 'Public Sans',sans-serif;color:#241D16">Sorting and finding</div>
+<p style="margin:6px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Category and sub-category order is kept exactly as the workbook has it. Sub-category headers are sticky and collapsible, the chips filter the list down to one sub-category, and the search box never scrolls away.</p>
+</div>
+<div style="padding:13px 14px;background:#FFFCF7;border:1px solid #DFD3C4;border-radius:12px">
+<div style="font:600 12.5px/1.3 'Public Sans',sans-serif;color:#241D16">Cartons and singles</div>
+<p style="margin:6px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Two fields, carton size from column E, total units done for you. Spirits and postmix accept a decimal for the part bottle.</p>
+</div>
+<div style="padding:13px 14px;background:#FFFCF7;border:1px solid #DFD3C4;border-radius:12px">
+<div style="font:600 12.5px/1.3 'Public Sans',sans-serif;color:#241D16">Two people, one location</div>
+<p style="margin:6px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Nobody gets locked out. If a line gets counted twice it is flagged on the row and resolved from the home screen.</p>
+</div>
+</div>
+</div>
+<div style="padding:14px;background:#EFE7DB;border:1px dashed #C9B9A4;border-radius:12px">
+<div style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">OPEN</div>
+<p style="margin:9px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Value and reorder levels are stubbed out — you said skip value for now, so the low-stock flag uses last count instead of a par level. Tell me the par levels and it becomes a real reorder list.</p>
+</div>
+</div>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#B0522F&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#B0522F&quot;,&quot;#1F6F5C&quot;,&quot;#3A5BD9&quot;,&quot;#8A6A1F&quot;],&quot;section&quot;:&quot;Look&quot;},&quot;showClashes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behaviour&quot;}}">
+const LOCS = [
+  {name:"Astral Bar", abbr:"AB", tint:"#F2E3D6", tintInk:"#8E4A26"},
+  {name:"GB1 Bar", abbr:"G1", tint:"#EFE7DB", tintInk:"#7A6C5B"},
+  {name:"GB2 Bar", abbr:"G2", tint:"#EFE7DB", tintInk:"#7A6C5B"},
+  {name:"CB1 Bar", abbr:"C1", tint:"#EFE7DB", tintInk:"#7A6C5B"},
+  {name:"CB2 Bar", abbr:"C2", tint:"#EFE7DB", tintInk:"#7A6C5B"},
+  {name:"CB3 Bar", abbr:"C3", tint:"#EFE7DB", tintInk:"#7A6C5B"},
+  {name:"Botanical Bar", abbr:"BB", tint:"#E7E4D3", tintInk:"#6B6A3A"},
+  {name:"Botanical Storeroom", abbr:"BS", tint:"#E7E4D3", tintInk:"#6B6A3A"},
+  {name:"Spirits Room", abbr:"SR", tint:"#E7E4D3", tintInk:"#6B6A3A"},
+  {name:"Juice Fridge", abbr:"JF", tint:"#DFE7E1", tintInk:"#3D6350"},
+  {name:"White Wine Fridge", abbr:"WW", tint:"#DFE7E1", tintInk:"#3D6350"},
+  {name:"Loading Dock Fridge", abbr:"LD", tint:"#DFE7E1", tintInk:"#3D6350"},
+  {name:"Upper Keg", abbr:"UK", tint:"#E4E1E6", tintInk:"#575070"},
+  {name:"Lower Keg", abbr:"LK", tint:"#E4E1E6", tintInk:"#575070"},
+  {name:"Postmix Loading Dock", abbr:"PL", tint:"#E4E1E6", tintInk:"#575070"},
+  {name:"Postmix Lower Keg", abbr:"PK", tint:"#E4E1E6", tintInk:"#575070"},
+  {name:"Postmix TWR", abbr:"PT", tint:"#E4E1E6", tintInk:"#575070"},
+  {name:"Other Items", abbr:"OT", tint:"#EFE7DB", tintInk:"#7A6C5B"}
+];
+const STORE = "stocktake.master.blank.v1";
+
+class Component extends DCLogic {
+  constructor(p){
+    super(p);
+    this.state = {
+      master:[], ready:false,
+      screen:"home", loc:null, counts:{}, query:"", sheet:null, field:"c",
+      hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null,
+      submitted:{}, totalsMode:"cat", expanded:{},
+      buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{},
+      mQuery:"", addOpen:false, importOpen:false,
+      nf:{name:"", cat:"BEER", sub:"", carton:"24", code:"", frac:false, subNew:false}, editId:null,
+      imported:null, importName:""
+    };
+  }
+
+  componentDidMount(){
+    import("./stock-master.js").then(mod=>{
+      let master = mod.MASTER_ROWS.map((r,i)=>({
+        id:"m"+i, code:r[0], cat:r[1], sub:r[2], name:r[3], carton:r[4]||1, frac:!!r[5]
+      }));
+      let counts = null, submitted = null, dup = null;
+      try{
+        const saved = JSON.parse(localStorage.getItem(STORE)||"null");
+        if(saved && saved.length) master = saved;                       /* older format: bare array */
+        else if(saved && saved.master && saved.master.length){
+          master = saved.master; counts = saved.counts||{};
+          submitted = saved.submitted||{}; dup = saved.dup||{};
+        }
+      }catch(e){}
+      if(counts) this.setState({master:master, counts:counts, submitted:submitted, dup:dup, ready:true});
+      else this.setState({master:master, ready:true}, ()=>this.seed());
+    });
+  }
+
+  seed(){}
+  persist(master){ this.save({master:master}); }
+  save(patch){
+    const s = this.state;
+    const body = Object.assign({master:s.master, counts:s.counts, submitted:s.submitted, dup:s.dup}, patch);
+    try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
+  }
+
+  ck(loc, id){ return loc+"|"+id; }
+  units(it, e){ if(!it || !e) return 0; return (e.c||0)*it.carton + (e.s||0); }
+  fmt(n){ return Math.round(n*100)/100; }
+  countedIn(name){
+    const c = this.state.counts, pre = name+"|";
+    return Object.keys(c).filter(k=>k.indexOf(pre)===0).length;
+  }
+  unitsIn(name){
+    const c = this.state.counts, pre = name+"|";
+    return Object.keys(c).filter(k=>k.indexOf(pre)===0)
+      .reduce((a,k)=>a+this.units(this.byId(k.split("|")[1]), c[k]), 0);
+  }
+  byId(id){ return this.state.master.find(x=>x.id===id); }
+
+  press(k){
+    return ()=>{
+      const s = this.state;
+      if(!s.sheet || !s.loc) return;
+      const it = this.byId(s.sheet);
+      const key = this.ck(s.loc, s.sheet);
+      const counts = Object.assign({}, s.counts);
+      const e = Object.assign({c:0,s:0,by:"you"}, counts[key]||{});
+      const cur = s.buf===null ? "" : s.buf;
+      let next;
+      if(k==="del") next = cur.length>1 ? cur.slice(0,-1) : "";
+      else if(k==="."){ if(!it.frac || s.field!=="s" || cur.indexOf(".")>=0) return; next = (cur||"0")+"."; }
+      else next = (cur==="0"?"":cur) + k;
+      if(next.replace(/[^0-9]/g,"").length>4) return;
+      let v = next===""||next==="." ? 0 : parseFloat(next);
+      if(s.addBase !== null && s.addBase !== undefined) v = s.addBase + v;
+      if(s.field==="c") e.c = Math.round(v); else e.s = Math.round(v*100)/100;
+      e.by = "you";
+      counts[key] = e;
+      this.setState({counts:counts, buf:next}, ()=>this.save({}));
+    };
+  }
+
+  /* ---- file import ---- */
+  async readSheet(file){
+    const name = (file.name||"").toLowerCase();
+    if(name.endsWith(".csv")) return this.parseCsv(await file.text());
+    return this.parseXlsx(new Uint8Array(await file.arrayBuffer()));
+  }
+  splitCsvLine(line){
+    const out=[]; let cur="", q=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){ if(q && line[i+1]==='"'){cur+='"';i++;} else q=!q; }
+      else if(ch==="," && !q){ out.push(cur); cur=""; }
+      else cur+=ch;
+    }
+    out.push(cur); return out;
+  }
+  fromTable(rows){
+    let head=-1;
+    for(let i=0;i<Math.min(rows.length,20);i++){
+      if(rows[i].some(c=>/product\s*name/i.test(String(c)))){ head=i; break; }
+    }
+    if(head<0) return null;
+    const H = rows[head].map(c=>String(c||"").toLowerCase().trim());
+    const col = (re)=>H.findIndex(h=>re.test(h));
+    const cn=col(/product\s*name/), cc=col(/^category/), cs=col(/sub\s*category/), cz=col(/carton/), cb=col(/barcode/);
+    const out=[];
+    for(let i=head+1;i<rows.length;i++){
+      const r=rows[i]; const nm=String(r[cn]||"").trim();
+      if(!nm || /grand total/i.test(nm)) continue;
+      const cat=String(r[cc]||"UNCATEGORISED").trim();
+      const sub=String(r[cs]||cat).trim();
+      const carton=parseFloat(r[cz])||1;
+      out.push({code:cb>=0?String(r[cb]||""):"", cat:cat, sub:sub, name:nm, carton:carton,
+        frac: cat.toUpperCase().indexOf("SPIRIT")>=0 || /PMIX/i.test(sub) || /^POSTMIX/i.test(nm)});
+    }
+    return out;
+  }
+  parseCsv(text){
+    const rows = text.split(/\r?\n/).filter(l=>l.length).map(l=>this.splitCsvLine(l));
+    return this.fromTable(rows);
+  }
+  async parseXlsx(buf){
+    const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+    let eocd=-1;
+    for(let i=buf.length-22;i>=0;i--){ if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break; } }
+    if(eocd<0) return null;
+    const n=dv.getUint16(eocd+10,true), cd=dv.getUint32(eocd+16,true);
+    let p=cd; const map={};
+    for(let i=0;i<n;i++){
+      const nl=dv.getUint16(p+28,true), el=dv.getUint16(p+30,true), cl=dv.getUint16(p+32,true);
+      map[new TextDecoder().decode(buf.slice(p+46,p+46+nl))]=dv.getUint32(p+42,true);
+      p+=46+nl+el+cl;
+    }
+    const get = async (nm)=>{
+      if(map[nm]===undefined) return "";
+      const lho=map[nm], nl=dv.getUint16(lho+26,true), el=dv.getUint16(lho+28,true);
+      const method=dv.getUint16(lho+8,true); const cs=dv.getUint32(lho+18,true);
+      const start=lho+30+nl+el;
+      const data = cs===0 ? buf.slice(start) : buf.slice(start, start+cs);
+      if(method===0) return new TextDecoder().decode(data);
+      return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+    };
+    const ssXml = await get("xl/sharedStrings.xml");
+    const strs = (ssXml.match(/<si>[\s\S]*?<\/si>/g)||[]).map(si=>
+      (si.match(/<t[^>]*>[\s\S]*?<\/t>/g)||[]).map(t=>t.replace(/<[^>]+>/g,"")).join(""));
+    const wb = await get("xl/workbook.xml");
+    const rels = await get("xl/_rels/workbook.xml.rels");
+    const rmap = {};
+    (rels.match(/<Relationship [^>]*>/g)||[]).forEach(r=>{
+      const id=(r.match(/Id="([^"]+)"/)||[])[1], t=(r.match(/Target="([^"]+)"/)||[])[1];
+      if(id&&t) rmap[id]=t.replace(/^\/?xl\//,"");
+    });
+    let target = null;
+    (wb.match(/<sheet [^>]*>/g)||[]).forEach(sh=>{
+      const nm=(sh.match(/name="([^"]+)"/)||[])[1];
+      const rid=(sh.match(/r:id="([^"]+)"/)||[])[1];
+      if(!target && /master|full stock/i.test(nm||"")) target = rmap[rid];
+    });
+    if(!target){
+      const first=(wb.match(/<sheet [^>]*>/)||[])[0];
+      target = rmap[(first&&first.match(/r:id="([^"]+)"/)||[])[1]] || "worksheets/sheet1.xml";
+    }
+    const sh = await get("xl/"+target);
+    const rows=[];
+    (sh.match(/<row[\s\S]*?<\/row>|<row[^>]*\/>/g)||[]).forEach(r=>{
+      const cells=[];
+      (r.match(/<c [^>]*\/>|<c [^>]*>[\s\S]*?<\/c>/g)||[]).forEach(c=>{
+        const ref=(c.match(/r="([A-Z]+)/)||[])[1]||"A";
+        let ci=0; for(let i=0;i<ref.length;i++) ci = ci*26 + (ref.charCodeAt(i)-64);
+        ci--;
+        const isStr=/t="s"/.test(c);
+        const inline=(c.match(/<is>[\s\S]*?<t[^>]*>([\s\S]*?)<\/t>/)||[])[1];
+        const v=(c.match(/<v>([\s\S]*?)<\/v>/)||[])[1];
+        cells[ci] = inline!==undefined ? inline : (v===undefined ? "" : (isStr ? strs[+v] : v));
+      });
+      rows.push(cells);
+    });
+    return this.fromTable(rows);
+  }
+
+  renderVals(){
+    const s = this.state;
+    const accent = this.props.accent || "#B0522F";
+    const master = s.master;
+    const dupOn = this.props.showClashes !== false;
+    const dupKeys = dupOn ? Object.keys(s.dup) : [];
+    const totalUnits = Object.keys(s.counts).reduce((a,k)=>
+      a + this.units(this.byId(k.split("|")[1]), s.counts[k]), 0);
+    const N = master.length;
+
+    const vals = {
+      W: 402, H: 874,
+      isHome: s.screen==="home", isCount: s.screen==="count", isDone: s.screen==="done",
+      isTotals: s.screen==="totals", isMaster: s.screen==="master",
+      sessionUnits: this.fmt(totalUnits), sessionLines: Object.keys(s.counts).length,
+      clashCount: dupKeys.length,
+      clashLabel: dupKeys.length===1 ? "1 line counted by both you and Jess" : dupKeys.length+" lines counted by both you and Jess",
+      locDoneLabel: Object.keys(s.submitted||{}).length + " of "+LOCS.length+" submitted",
+      goHome: ()=>this.setState({screen:"home", sheet:null, submitOpen:false, mQuery:""}),
+      openTotals: ()=>this.setState({screen:"totals"}),
+      openMaster: ()=>this.setState({screen:"master"}),
+      grandUnits: this.fmt(totalUnits),
+      grandLines: Object.keys(s.counts).length + " of "+(N*LOCS.length)+" location lines have a figure",
+      masterMeta: N + (N===1?" product":" products") + " · used by every location",
+      masterFootnote: "Edits apply to all "+LOCS.length+" locations. Counts already entered are kept.",
+      openClashes: ()=>this.setState({clashOpen:true}),
+      closeClashes: ()=>this.setState({clashOpen:false}),
+      clashOpen: s.clashOpen,
+      clashes: dupKeys.map(key=>{
+        const it = this.byId(key.split("|")[1]), d = s.dup[key];
+        const resolve=(which)=>()=>{
+          const dup=Object.assign({}, s.dup); delete dup[key];
+          const counts=Object.assign({}, s.counts);
+          counts[key] = which==="mine" ? {c:d.mine.c,s:d.mine.s,by:"you"} : {c:d.theirs.c,s:d.theirs.s,by:"Jess"};
+          this.setState({dup:dup, counts:counts, clashOpen: Object.keys(dup).length>0}, ()=>this.save({}));
+        };
+        return { name: it ? it.name : "", mine: d.mine.c+"×"+(it?it.carton:1)+" + "+d.mine.s,
+          theirs: d.theirs.c+"×"+(it?it.carton:1)+" + "+d.theirs.s,
+          keepMine: resolve("mine"), keepTheirs: resolve("theirs") };
+      }),
+      locations: LOCS.map(l=>{
+        const done = this.countedIn(l.name);
+        const pct = N ? Math.round(done/N*100) : 0;
+        const sub = (s.submitted||{})[l.name];
+        return { name:l.name, abbr:l.abbr, tint:l.tint, tintInk:l.tintInk,
+          meta: sub!==undefined ? "submitted · "+this.fmt(sub)+" units"
+              : (done ? done+" of "+N+" lines" : N+" lines · not started"),
+          pct: pct+"%", pctLabel: sub!==undefined ? "✓" : (done ? pct+"%" : "—"),
+          open: ()=>this.setState({screen:"count", loc:l.name, query:""}) };
+      })
+    };
+
+    /* ---- master list screen ---- */
+    if(s.screen==="master" || s.addOpen || s.importOpen){
+      const mq = s.mQuery.trim().toLowerCase();
+      const list = mq ? master.filter(i=>(i.name+" "+i.sub+" "+i.cat).toLowerCase().indexOf(mq)>=0) : master;
+      const cats=[]; const buckets={};
+      list.forEach(i=>{ if(!buckets[i.cat]){buckets[i.cat]=[]; cats.push(i.cat);} buckets[i.cat].push(i); });
+      vals.mQuery = s.mQuery;
+      vals.onMQuery = (e)=>this.setState({mQuery:e.target.value});
+      vals.masterGroups = cats.map(c=>({
+        cat:c, count: buckets[c].length+(buckets[c].length===1?" line":" lines"),
+        items: buckets[c].map(i=>({
+          name: i.name,
+          meta: (i.code ? i.code+" · " : "")+i.sub+" · ctn "+i.carton+(i.frac?" · part bottles":""),
+          edit: ()=>this.setState({addOpen:true, editId:i.id,
+            nf:{name:i.name, cat:i.cat, sub:i.sub, carton:String(i.carton), code:i.code||"", frac:!!i.frac, subNew:false}})
+        }))
+      }));
+      const allCats=[]; master.forEach(i=>{ if(allCats.indexOf(i.cat)<0) allCats.push(i.cat); });
+      vals.catOptions = allCats.length ? allCats : ["BEER"];
+      const allCatsFirst = allCats[0];
+      vals.addOpen = s.addOpen;
+      const editing = !!s.editId;
+      vals.isEditing = editing;
+      vals.addTitle = editing ? "Edit product" : "Add a product";
+      vals.addBlurb = editing
+        ? "Changes apply everywhere this product is counted. Counts already entered are kept."
+        : "It joins every location's list straight away.";
+      vals.openAdd = ()=>{
+        const cat = allCatsFirst||"BEER";
+        const list = subsFor(cat);
+        this.setState({addOpen:true, editId:null,
+          nf:{name:"", cat:cat, sub:(list[0]||""), carton:"24", code:"", frac:false, subNew:false}});
+      };
+      vals.closeAdd = ()=>this.setState({addOpen:false, editId:null});
+      vals.deleteLabel = "Delete from master list";
+      vals.deleteItem = ()=>{
+        const next = master.filter(x=>x.id!==s.editId);
+        const counts = Object.assign({}, s.counts);
+        Object.keys(counts).forEach(k=>{ if(k.split("|")[1]===s.editId) delete counts[k]; });
+        this.persist(next);
+        this.setState({master:next, counts:counts, addOpen:false, editId:null});
+      };
+      const nf = s.nf;
+      vals.nfName = nf.name; vals.nfSub = nf.sub; vals.nfCat = nf.cat; vals.nfCarton = nf.carton;
+      vals.nfCode = nf.code || "";
+      const setNf=(patch)=>this.setState({nf:Object.assign({}, nf, patch)});
+      vals.onNfName = (e)=>setNf({name:e.target.value});
+      vals.onNfSub = (e)=>setNf({sub:e.target.value});
+      const subsFor = (cat)=>{
+        const out=[]; master.forEach(i=>{ if(i.cat===cat && out.indexOf(i.sub)<0) out.push(i.sub); });
+        if(!out.length) master.forEach(i=>{ if(out.indexOf(i.sub)<0) out.push(i.sub); });
+        return out;
+      };
+      const subs = subsFor(nf.cat);
+      vals.subOptions = subs.map(x=>({value:x, label:x})).concat([{value:"__new", label:"+ New sub category…"}]);
+      vals.nfSubNew = !!nf.subNew;
+      vals.nfSubSelect = nf.subNew ? "__new" : (subs.indexOf(nf.sub)>=0 ? nf.sub : (subs[0]||"__new"));
+      vals.onNfSubPick = (e)=>{
+        const v = e.target.value;
+        if(v==="__new") setNf({subNew:true, sub:""});
+        else setNf({subNew:false, sub:v});
+      };
+      vals.onNfCat = (e)=>{
+        const cat = e.target.value;
+        const list = subsFor(cat);
+        setNf({cat:cat, subNew:false, sub: list.indexOf(nf.sub)>=0 ? nf.sub : (list[0]||"")});
+      };
+      vals.onNfCarton = (e)=>setNf({carton:e.target.value});
+      vals.onNfCode = (e)=>setNf({code:e.target.value});
+      vals.toggleNfFrac = ()=>setNf({frac:!nf.frac});
+      vals.nfFracTrack = nf.frac ? accent : "#DCCFBE";
+      vals.nfFracKnob = nf.frac ? "16px" : "2px";
+      const valid = nf.name.trim().length>1 && (!nf.subNew || nf.sub.trim().length>1);
+      vals.saveBg = valid ? "#241D16" : "#C4B7A6";
+      vals.saveLabel = valid ? (editing ? "Save changes" : "Add to master list")
+        : (nf.name.trim().length>1 ? "Name the sub category" : "Name it first");
+      vals.saveNew = ()=>{
+        if(!valid) return;
+        const fields = { code:(nf.code||"").trim(), cat:nf.cat,
+          sub:((nf.subNew ? nf.sub : vals.nfSubSelect)||"").trim().toUpperCase() || nf.cat,
+          name:nf.name.trim(), carton:parseFloat(nf.carton)||1, frac:nf.frac };
+        let next;
+        if(editing) next = master.map(x=>x.id===s.editId ? Object.assign({}, x, fields) : x);
+        else next = master.concat([Object.assign({id:"n"+Date.now()}, fields)]);
+        this.persist(next);
+        this.setState({master:next, addOpen:false, editId:null,
+          nf:{name:"", cat:nf.cat, sub:nf.sub, carton:nf.carton, code:"", frac:false, subNew:false}});
+      };
+      vals.importOpen = s.importOpen;
+      vals.openImport = ()=>this.setState({importOpen:true, imported:null, importName:""});
+      vals.closeImport = ()=>this.setState({importOpen:false});
+      vals.importFileLabel = s.importName || "Choose a file";
+      const imp = s.imported;
+      vals.importHint = imp===null
+        ? (s.importName ? "Could not find a Product Name column" : ".xlsx or .csv from this phone")
+        : imp.length+" products read from "+s.importName;
+      vals.importReady = !!(imp && imp.length);
+      const newOnes = imp ? imp.filter(r=>!master.some(m=>m.name.trim().toUpperCase()===r.name.trim().toUpperCase())) : [];
+      vals.mergeLabel = "Add "+newOnes.length+" new only";
+      vals.onFile = (e)=>{
+        const file = e.target.files && e.target.files[0];
+        if(!file) return;
+        this.setState({importName:file.name, imported:null});
+        this.readSheet(file).then(rows=>this.setState({imported:rows}))
+          .catch(()=>this.setState({imported:null}));
+      };
+      const norm = (v)=>String(v||"").trim().toUpperCase();
+      const matchExisting = (r)=>master.find(m=>
+        (r.code && m.code && norm(r.code)===norm(r.code) && norm(m.code)===norm(r.code)) || norm(m.name)===norm(r.name));
+      const countedIds = {};
+      Object.keys(s.counts).forEach(k=>{ countedIds[k.split("|")[1]] = true; });
+      const keptIds = {};
+      if(imp) imp.forEach(r=>{ const m = matchExisting(r); if(m) keptIds[m.id] = true; });
+      const droppedCounted = Object.keys(countedIds).filter(id=>!keptIds[id] && master.some(m=>m.id===id));
+      vals.replaceWarn = droppedCounted.length
+        ? "Replacing drops "+droppedCounted.length+(droppedCounted.length===1?" counted line":" counted lines")+" that are not in this file. Everything matched by name keeps its counts."
+        : "Products matched by name keep the counts you have already entered.";
+      vals.applyReplace = ()=>{
+        if(!imp || !imp.length) return;
+        const next = imp.map((r,i)=>{
+          const m = matchExisting(r);
+          return m ? Object.assign({}, m, r, {id:m.id}) : Object.assign({id:"x"+i+"-"+Date.now()}, r);
+        });
+        const keep = {};
+        next.forEach(n=>{ keep[n.id] = true; });
+        const counts = Object.assign({}, s.counts);
+        Object.keys(counts).forEach(k=>{ if(!keep[k.split("|")[1]]) delete counts[k]; });
+        this.persist(next);
+        this.setState({master:next, counts:counts, imported:null, importOpen:false, importName:""});
+      };
+      vals.applyMerge = ()=>{
+        if(!newOnes.length){ this.setState({importOpen:false, imported:null, importName:""}); return; }
+        const next = master.concat(newOnes.map((r,i)=>Object.assign({id:"a"+i+"-"+Date.now()}, r)));
+        this.persist(next);
+        this.setState({master:next, imported:null, importOpen:false, importName:""});
+      };
+    }
+
+    /* ---- totals ---- */
+    if(s.screen==="totals"){
+      const mode = s.totalsMode || "cat";
+      vals.catBg = mode==="cat" ? "#241D16" : "#FFFCF7";
+      vals.catInk = mode==="cat" ? "#F6F0E7" : "#6E6152";
+      vals.locBg = mode==="loc" ? "#241D16" : "#FFFCF7";
+      vals.locInk = mode==="loc" ? "#F6F0E7" : "#6E6152";
+      vals.byCat = ()=>this.setState({totalsMode:"cat"});
+      vals.byLoc = ()=>this.setState({totalsMode:"loc"});
+      const exp = s.expanded || {};
+      const entries = Object.keys(s.counts).map(k=>{
+        const parts = k.split("|");
+        return { key:k, loc:parts[0], it:this.byId(parts[1]), e:s.counts[k] };
+      }).filter(x=>x.it);
+      const order=[]; const bucket={};
+      entries.forEach(x=>{
+        const g = mode==="cat" ? x.it.cat : x.loc;
+        if(!bucket[g]){ bucket[g]=[]; order.push(g); }
+        bucket[g].push(x);
+      });
+      vals.totalRows = order.map(g=>{
+        const rows = bucket[g];
+        const units = rows.reduce((a,x)=>a+this.units(x.it,x.e),0);
+        const on = !!exp[g];
+        return {
+          label: g, units: this.fmt(units),
+          lines: rows.length+(rows.length===1?" line":" lines"),
+          caret: on ? "none" : "rotate(-90deg)",
+          bar: Math.max(3, Math.round(units/Math.max(1,totalUnits)*100))+"%",
+          toggle: ()=>{ const e=Object.assign({}, exp); if(e[g]) delete e[g]; else e[g]=true; this.setState({expanded:e}); },
+          items: (on ? rows : []).map(x=>({
+            name: x.it.name,
+            units: String(this.fmt(this.units(x.it,x.e))),
+            split: (mode==="cat" ? x.loc : x.it.sub)+" · "+(x.e.c||0)+"×"+x.it.carton+" + "+this.fmt(x.e.s||0)
+          }))
+        };
+      });
+      vals.hasTotals = entries.length>0;
+      vals.noTotals = entries.length===0;
+      vals.exportCsv = ()=>{
+        if(!entries.length) return;
+        const locNames = LOCS.map(l=>l.name);
+        const head = ["Barcode","Product Name","Sub Category","Category","Carton Size","Grand Total"].concat(locNames);
+        const lines = [head.join(",")];
+        const seen = {};
+        entries.forEach(x=>{ seen[x.it.id]=true; });
+        master.filter(i=>seen[i.id]).forEach(i=>{
+          const per = locNames.map(n=>{
+            const e = s.counts[this.ck(n,i.id)];
+            return e ? this.fmt(this.units(i,e)) : 0;
+          });
+          const grand = per.reduce((a,b)=>a+b,0);
+          lines.push([i.code, '"'+i.name+'"', i.sub, i.cat, i.carton, this.fmt(grand)].concat(per).join(","));
+        });
+        const blob = new Blob([lines.join("\n")], {type:"text/csv"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "stocktake-aug-26.csv";
+        a.click();
+      };
+    }
+
+    /* ---- count / done ---- */
+    if(s.screen==="count" || s.sheet || s.screen==="done"){
+      const locName = s.loc || s.doneLoc;
+      const items = master;
+      const cAt = (it)=>s.counts[this.ck(locName, it.id)];
+      const q = s.query.trim().toLowerCase();
+      const hid = s.hidden[locName] || {};
+      const collapsed = (s.collapsed||{})[locName] || {};
+      const hideEmpty = !!s.hideEmpty[locName];
+      const subHasCount = {};
+      items.forEach(i=>{ if(cAt(i)) subHasCount[i.sub]=true; });
+      const isHidden = (it)=> hid["c:"+it.cat] || hid["s:"+it.sub] || (hideEmpty && !subHasCount[it.sub]);
+      const visible = items.filter(i=>!isHidden(i));
+      const only = (s.only||{})[locName] || null;
+      const shown = q ? items.filter(i=>(i.name+" "+i.sub).toLowerCase().indexOf(q)>=0)
+                      : (only ? visible.filter(i=>i.sub===only) : visible);
+      const setHid = (next)=>{ const h=Object.assign({}, s.hidden); h[locName]=next; this.setState({hidden:h}); };
+      const nDone = this.countedIn(locName);
+      vals.hasHidden = !q && visible.length < items.length;
+      const hiddenN = items.length - visible.length;
+      vals.hiddenLabel = hiddenN + (hiddenN===1 ? " line hidden — not stocked here" : " lines hidden — not stocked here");
+      vals.showAll = ()=>{
+        const h=Object.assign({}, s.hidden); h[locName]={};
+        const e=Object.assign({}, s.hideEmpty); e[locName]=false;
+        this.setState({hidden:h, hideEmpty:e});
+      };
+      vals.toggleHideEmpty = ()=>{ const e=Object.assign({}, s.hideEmpty); e[locName]=!hideEmpty; this.setState({hideEmpty:e}); };
+      vals.hideEmptyLabel = hideEmpty ? "SHOWING COUNTED ONLY" : "HIDE UNCOUNTED GROUPS";
+      vals.hideEmptyBg = hideEmpty ? "#241D16" : "#FFFCF7";
+      vals.hideEmptyBorder = hideEmpty ? "#241D16" : "#E3D8C9";
+      vals.hideEmptyInk = hideEmpty ? "#F6F0E7" : "#6E6152";
+      vals.manageOpen = s.manageOpen;
+      vals.openManage = ()=>this.setState({manageOpen:true});
+      vals.closeManage = ()=>this.setState({manageOpen:false});
+      const catOrder=[]; const catSubs={};
+      items.forEach(i=>{
+        if(!catSubs[i.cat]){ catSubs[i.cat]=[]; catOrder.push(i.cat); }
+        if(catSubs[i.cat].indexOf(i.sub)<0) catSubs[i.cat].push(i.sub);
+      });
+      const swatch=(on)=>({track: on?accent:"#DCCFBE", knob: on?"16px":"2px", ink: on?"#241D16":"#B3A493"});
+      vals.manageCats = catOrder.map(cat=>{
+        const catOn = !hid["c:"+cat];
+        const cs = swatch(catOn);
+        return {
+          name:cat, count: items.filter(i=>i.cat===cat).length+" lines",
+          track:cs.track, knob:cs.knob, ink:cs.ink,
+          toggle: ()=>{ const n=Object.assign({}, hid); if(catOn) n["c:"+cat]=true; else delete n["c:"+cat]; setHid(n); },
+          subs: catSubs[cat].map(sub=>{
+            const on = catOn && !hid["s:"+sub];
+            const ss = swatch(on);
+            return { name:sub, count: items.filter(i=>i.sub===sub).length,
+              track:ss.track, knob:ss.knob, ink:ss.ink,
+              toggle: ()=>{ const n=Object.assign({}, hid); if(!hid["s:"+sub]) n["s:"+sub]=true; else { delete n["s:"+sub]; delete n["c:"+cat]; } setHid(n); } };
+          })
+        };
+      });
+      const order=[]; const bySub={};
+      shown.forEach(i=>{ if(!bySub[i.sub]){ bySub[i.sub]=[]; order.push(i.sub); } bySub[i.sub].push(i); });
+      vals.locName = locName;
+      vals.locProgress = nDone+" of "+visible.length+" lines · rest submit as zero";
+      vals.query = s.query;
+      vals.onQuery = (e)=>this.setState({query:e.target.value});
+      vals.clearQuery = ()=>this.setState({query:""});
+      const setOnly=(sub)=>()=>{ const o=Object.assign({}, s.only||{}); o[locName]=(only===sub)?null:sub; this.setState({only:o}); };
+      const chipStyle=(on)=> on ? {bg:"#241D16", border:"#241D16", ink:"#F6F0E7"} : {bg:"#FFFCF7", border:"#E3D8C9", ink:"#6E6152"};
+      const allSubs=[]; visible.forEach(i=>{ if(allSubs.indexOf(i.sub)<0) allSubs.push(i.sub); });
+      vals.chips = [Object.assign({label:"ALL", jump:setOnly(null)}, chipStyle(!only))]
+        .concat(allSubs.map(sub=>Object.assign({label:sub, jump:setOnly(sub)}, chipStyle(only===sub))));
+      vals.groups = order.map(sub=>{
+        const list = bySub[sub];
+        return {
+          sub:sub, anchor:"g-"+sub.replace(/[^A-Z]/g,""),
+          done: list.filter(i=>cAt(i)).length+"/"+list.length,
+          hide: ()=>{ const n=Object.assign({}, hid); n["s:"+sub]=true; setHid(n); },
+          caret: collapsed[sub] ? "rotate(-90deg)" : "none",
+          toggle: ()=>{
+            const c=Object.assign({}, collapsed);
+            if(c[sub]) delete c[sub]; else c[sub]=true;
+            const all=Object.assign({}, s.collapsed); all[locName]=c;
+            this.setState({collapsed:all});
+          },
+          items: (collapsed[sub] && !q && !only ? [] : list).map(it=>{
+            const e = cAt(it);
+            const isDup = dupKeys.indexOf(this.ck(locName,it.id))>=0;
+            return {
+              name: it.name,
+              meta: isDup ? "clash · you and Jess"
+                : (e ? (e.c||0)+"×"+it.carton+" + "+this.fmt(e.s||0)+" single"+((e.s===1)?"":"s")+(e.by==="Jess"?" · Jess":"")
+                     : "ctn "+it.carton+(it.frac?" · part bottles ok":"")),
+              val: e ? String(this.fmt(this.units(it,e))) : "—",
+              valSub: e ? "units" : "not counted",
+              valInk: isDup ? accent : (e ? "#241D16" : "#C4B7A6"),
+              subInk: isDup ? accent : "#A0917F",
+              rowBg: isDup ? "#FDF4EC" : (e ? "#FFFCF7" : "#F9F5EE"),
+              open: ()=>this.setState({sheet:it.id, field:"c", buf:null, addBase:null, historyOpen:false})
+            };
+          })
+        };
+      });
+      vals.openSubmit = ()=>this.setState({submitOpen:true});
+      vals.closeSubmit = ()=>this.setState({submitOpen:false});
+      vals.submitOpen = s.submitOpen;
+      const zeros = visible.length - nDone;
+      vals.submitBody = nDone+(nDone===1?" line":" lines")+" counted, "+zeros+" will submit as zero. It saves on the phone now and syncs when you are back on signal.";
+      vals.confirmSubmit = ()=>{
+        const sub = Object.assign({}, s.submitted||{});
+        sub[locName] = this.unitsIn(locName);
+        this.setState({screen:"done", doneLoc:locName, submitOpen:false, sheet:null, submitted:sub}, ()=>this.save({}));
+      };
+      vals.doneName = locName;
+      vals.doneLines = nDone;
+      vals.doneUnits = this.fmt(this.unitsIn(locName));
+      vals.doneZeros = zeros;
+      vals.doneLow = items.filter(i=>{ const e=cAt(i); return e && this.units(i,e)<=6; }).length;
+    }
+
+    /* ---- keypad sheet ---- */
+    vals.sheetOpen = !!s.sheet;
+    if(s.sheet){
+      const it = this.byId(s.sheet);
+      const key = this.ck(s.loc, s.sheet);
+      const e = s.counts[key] || {c:0,s:0};
+      const idx = master.indexOf(it);
+      vals.sheetName = it ? it.name : "";
+      vals.sheetMeta = it ? (it.sub+" · carton "+it.carton+(it.frac?" · decimals ok":"")) : "";
+      vals.sheetCarton = it ? it.carton : 1;
+      vals.sheetClash = dupKeys.indexOf(key)>=0;
+      vals.sheetClashLabel = "ALSO COUNTED BY JESS";
+      const adding = s.addBase!==null && s.addBase!==undefined;
+      const typed = s.buf===null||s.buf==="" ? 0 : parseFloat(s.buf)||0;
+      vals.cartonVal = String(s.field==="c" && s.buf!==null && !adding ? s.buf : this.fmt(e.c||0));
+      vals.singleVal = String(s.field==="s" && s.buf!==null && !adding ? s.buf : this.fmt(e.s||0));
+      vals.addLabel = adding
+        ? (this.fmt(s.addBase)+" + "+this.fmt(typed)+" = "+this.fmt(s.addBase+typed)+"  ·  TAP TO CANCEL")
+        : ("+ ADD TO THIS "+(s.field==="c"?"CARTON":"SINGLES")+" COUNT");
+      vals.addBg = adding ? "#FBEFE6" : "#FFFCF7";
+      vals.addBorder = adding ? accent : "#E3D8C9";
+      vals.addInk = adding ? "#8E3F22" : "#6E6152";
+      vals.toggleAdd = ()=>{
+        if(adding) this.setState({addBase:null, buf:null});
+        else this.setState({addBase: s.field==="c" ? (e.c||0) : (e.s||0), buf:null});
+      };
+      vals.singleLabel = it && it.frac ? "SINGLES / PART" : "SINGLES";
+      vals.cartonBg = s.field==="c" ? "#FFFCF7" : "#F1EAE0";
+      vals.cartonBorder = s.field==="c" ? accent : "#DFD3C4";
+      vals.singleBg = s.field==="s" ? "#FFFCF7" : "#F1EAE0";
+      vals.singleBorder = s.field==="s" ? accent : "#DFD3C4";
+      vals.focusCartons = ()=>this.setState({field:"c", buf:null, addBase:null});
+      vals.focusSingles = ()=>this.setState({field:"s", buf:null, addBase:null});
+      vals.sheetTotalLabel = this.fmt(this.units(it,e))+" units total";
+      vals.historyOpen = s.historyOpen;
+      vals.historyToggleLabel = s.historyOpen ? "HIDE HISTORY" : "NO PREVIOUS COUNTS";
+      vals.toggleHistory = ()=>this.setState({historyOpen:!s.historyOpen});
+      vals.history = [];
+      const keys = ["1","2","3","4","5","6","7","8","9", (it&&it.frac)?".":"", "0","del"];
+      vals.keys = keys.map(k=>({
+        label: k==="del" ? "⌫" : k,
+        bg: k===""?"transparent":(k==="del"||k==="."?"#F1EAE0":"#FFFCF7"),
+        border: k===""?"transparent":"#E3D8C9",
+        ink: k===""?"transparent":"#241D16",
+        press: k==="" ? ()=>{} : this.press(k)
+      }));
+      vals.closeSheet = ()=>this.setState({sheet:null, buf:null, addBase:null});
+      vals.nextItem = ()=>{
+        const nx = master[idx+1];
+        if(nx) this.setState({sheet:nx.id, field:"c", buf:null, addBase:null, historyOpen:false});
+        else this.setState({sheet:null, buf:null, addBase:null});
+      };
+    }
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

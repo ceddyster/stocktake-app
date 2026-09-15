@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#241D16">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#EDE4D8;font-family:'Public Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#B0522F;text-decoration:none}a:hover{color:#8E3F22}
+*{box-sizing:border-box}
+::-webkit-scrollbar{width:0;height:0}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
+</style>
+</helmet>
+<div style="min-height:100vh;padding:56px 48px 80px;display:flex;flex-direction:column;gap:40px;align-items:flex-start">
+
+<div style="display:flex;align-items:flex-end;gap:28px;max-width:1180px;flex-wrap:wrap">
+<div>
+<div style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9A8B7B">New stocktake &nbsp;·&nbsp; setup</div>
+<h1 style="margin:12px 0 0;font:700 40px/1.05 'Public Sans',sans-serif;letter-spacing:-.02em;color:#241D16">Set up</h1>
+<p style="margin:12px 0 0;max-width:520px;font:400 14px/1.6 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">A blank start. Name the stocktake, add the bars, venues or fridges you want to count, then build the product list by hand or by attaching a spreadsheet. While counting, everyone's entries go to one shared stocktake on the server. Google Drive is where the finished count lands, as a file in the folder your team already uses.</p>
+</div>
+
+</div>
+
+<div style="display:flex;gap:44px;align-items:flex-start;flex-wrap:wrap">
+
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">LIVE PROTOTYPE</span><span style="flex:1;height:1px;background:#DFD3C4;min-width:60px"></span></div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ W }}" height="{{ H }}" hint-size="402px,874px">
+<div style="height:100%;padding-top:62px;position:relative;overflow:hidden;background:#F6F0E7">
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:14px 20px 12px;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div>
+<button onClick="{{ openDrive }}" style="display:flex;align-items:center;gap:6px;padding:0;background:transparent;border:none;cursor:pointer">
+<span style="width:6px;height:6px;border-radius:50%;background:{{ onlineDot }}"></span>
+<span style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A0917F">{{ syncPill }}</span>
+</button>
+<div style="margin-top:5px;font:700 24px/1.1 'Public Sans',sans-serif;letter-spacing:-.02em;color:#241D16">{{ appTitle }}</div>
+</div>
+<div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+<button onClick="{{ toggleRole }}" style="padding:7px 11px;background:{{ roleBg }};border:1px solid {{ roleBorder }};border-radius:999px;cursor:pointer;font:600 9.5px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:{{ roleInk }}">{{ roleLabel }}</button>
+<button onClick="{{ openSetup }}" style="padding:7px 11px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:999px;cursor:pointer;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#6E6152" style-hover="border-color:#B0522F;color:#B0522F">SETUP</button>
+</div>
+</div>
+</div>
+
+<div style="flex:1;overflow:auto;padding:16px 20px 28px">
+<sc-if value="{{ soloMode }}" hint-placeholder-val="{{ true }}">
+<div style="margin-bottom:12px;padding:11px 13px;background:#EFE7DB;border:1px dashed #C9B9A4;border-radius:12px;display:flex;align-items:flex-start;gap:9px">
+<span style="width:6px;height:6px;flex:none;margin-top:5px;border-radius:50%;background:#B0522F"></span>
+<span style="flex:1;font:400 11px/1.5 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Not connected to a server. Counts stay on this phone — other phones joining this code will not see them.</span>
+</div>
+</sc-if>
+<sc-if value="{{ netErr }}" hint-placeholder-val="{{ false }}">
+<div style="margin-bottom:12px;padding:11px 13px;background:#FBEDE7;border:1px solid #E8C3B2;border-radius:12px;font:400 11px/1.5 'Public Sans',sans-serif;color:#8A4227;text-wrap:pretty">Can't reach the server. Counting still works and everything is kept on this phone — it will send as soon as you're back.</div>
+</sc-if>
+<sc-if value="{{ joinedAsCounter }}" hint-placeholder-val="{{ false }}">
+<div style="margin-bottom:12px;padding:11px 13px;background:#EFE7DB;border:1px solid #DCCFBE;border-radius:12px;font:400 11px/1.5 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">{{ joinedNote }}</div>
+</sc-if>
+<sc-if value="{{ justSaved }}" hint-placeholder-val="{{ false }}">
+<div style="margin-bottom:12px;padding:13px 14px;background:#FFFCF7;border:1px solid #C9DCC0;border-radius:12px;display:flex;align-items:flex-start;gap:10px;animation:pop .2s ease">
+<span style="width:22px;height:22px;flex:none;border-radius:6px;background:#5E8C4A;color:#fff;display:flex;align-items:center;justify-content:center;font:600 11px/1 'JetBrains Mono',monospace">✓</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 12px/1.3 'Public Sans',sans-serif;color:#241D16">Saved to Drive</span>
+<span style="display:block;margin-top:4px;font:400 10.5px/1.4 'JetBrains Mono',monospace;color:#6E6152;word-break:break-all">{{ savedFileName }}</span>
+<span style="display:block;margin-top:4px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:#8C7E6D">{{ savedWhere }}</span>
+</span>
+<button onClick="{{ dismissSaved }}" style="flex:none;width:24px;height:24px;border:1px solid #E3D8C9;background:#F9F5EE;border-radius:7px;cursor:pointer;font:400 11px/1 'Public Sans',sans-serif;color:#6E6152">✕</button>
+</div>
+</sc-if>
+<div style="padding:16px;background:#241D16;border-radius:16px;color:#F6F0E7">
+<div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A99883">THIS SESSION</div>
+<div style="margin-top:12px;display:flex;align-items:flex-end;gap:6px">
+<span style="font:700 40px/1 'JetBrains Mono',monospace;letter-spacing:-.03em">{{ sessionUnits }}</span>
+<span style="font:400 12px/1 'Public Sans',sans-serif;color:#A99883;padding-bottom:6px">units counted</span>
+</div>
+<div style="margin-top:14px;display:flex;gap:20px">
+<div><div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#A99883">LINES</div><div style="margin-top:5px;font:500 14px/1 'JetBrains Mono',monospace">{{ sessionLines }}</div></div>
+<div><div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#A99883">COUNTING</div><div style="margin-top:5px;font:500 14px/1 'JetBrains Mono',monospace">{{ teamCount }}</div></div>
+</div>
+</div>
+
+<sc-if value="{{ clashCount }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ openClashes }}" style="margin-top:12px;width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;background:#FBEFE6;border:1px solid #E9C5AB;border-radius:12px;text-align:left;cursor:pointer;font-family:'Public Sans',sans-serif" style-hover="background:#F8E6D9">
+<span style="width:22px;height:22px;flex:none;border-radius:6px;background:#B0522F;color:#fff;display:flex;align-items:center;justify-content:center;font:700 11px/1 'JetBrains Mono',monospace">!</span>
+<span style="flex:1;font:500 12px/1.35 'Public Sans',sans-serif;color:#7A3A20">{{ clashLabel }}</span>
+<span style="font:400 16px/1 'Public Sans',sans-serif;color:#B0522F">›</span>
+</button>
+</sc-if>
+
+<div style="margin:22px 0 10px;display:flex;align-items:baseline;justify-content:space-between">
+<span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A0917F">LOCATIONS</span>
+<span style="font:400 11px/1 'Public Sans',sans-serif;color:#A0917F">{{ locDoneLabel }}</span>
+</div>
+
+<sc-if value="{{ noLocs }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ openSetup }}" style="width:100%;padding:22px 16px;background:#FFFCF7;border:1px dashed #C9B9A4;border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#B0522F">
+<span style="display:block;font:600 13px/1.3 'Public Sans',sans-serif;color:#241D16">No places yet</span>
+<span style="display:block;margin-top:7px;font:400 11.5px/1.5 'Public Sans',sans-serif;color:#8C7E6D">Add the bars, fridges or storerooms you want to count. Tap to open setup.</span>
+</button>
+</sc-if>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ locations }}" as="loc" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:0">
+<button onClick="{{ loc.open }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#C9B9A4">
+<span style="width:34px;height:34px;flex:none;border-radius:10px;background:{{ loc.tint }};display:flex;align-items:center;justify-content:center;font:600 11px/1 'JetBrains Mono',monospace;color:{{ loc.tintInk }}">{{ loc.abbr }}</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 14px/1.2 'Public Sans',sans-serif;color:#241D16">{{ loc.name }}</span>
+<span style="display:block;margin-top:4px;font:400 11px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ loc.meta }}</span>
+</span>
+<span style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+<span style="font:500 11px/1 'JetBrains Mono',monospace;color:#6E6152">{{ loc.pctLabel }}</span>
+<span style="display:block;width:46px;height:4px;border-radius:2px;background:#E9E0D3;overflow:hidden"><span style="display:block;height:4px;border-radius:2px;background:#B0522F;width:{{ loc.pct }}"></span></span>
+</span>
+</button>
+<sc-if value="{{ loc.canReopen }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ loc.reopen }}" style="align-self:flex-start;margin:6px 0 2px 46px;min-height:36px;padding:0 12px;background:#FBEFE6;border:1px solid #E9C5AB;border-radius:9px;cursor:pointer;font:600 9.5px/1 'JetBrains Mono',monospace;letter-spacing:.08em;color:#8E3F22" style-hover="background:#F7E3D4">REOPEN TO EDIT</button>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<button onClick="{{ openTotals }}" style="margin-top:14px;width:100%;display:flex;align-items:center;gap:12px;padding:15px 14px;background:#EFE7DB;border:1px solid #DCCFBE;border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#B0522F">
+<span style="flex:1;min-width:0">
+<span style="display:block;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">GRAND TOTAL</span>
+<span style="display:block;margin-top:7px;font:600 22px/1 'JetBrains Mono',monospace;color:#241D16">{{ grandUnits }}</span>
+<span style="display:block;margin-top:6px;font:400 10.5px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ grandLines }}</span>
+</span>
+<span style="flex:none;font:400 16px/1 'Public Sans',sans-serif;color:#B0522F">›</span>
+</button>
+<button onClick="{{ openMaster }}" style="margin-top:8px;width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:#FFFCF7;border:1px dashed #C9B9A4;border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#B0522F">
+<span style="width:34px;height:34px;flex:none;border-radius:10px;background:#EFE7DB;display:flex;align-items:center;justify-content:center;font:600 11px/1 'JetBrains Mono',monospace;color:#6E6152">☰</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 14px/1.2 'Public Sans',sans-serif;color:#241D16">Master list</span>
+<span style="display:block;margin-top:4px;font:400 11px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ masterMeta }}</span>
+</span>
+<span style="flex:none;font:400 16px/1 'Public Sans',sans-serif;color:#B0522F">›</span>
+</button>
+<button onClick="{{ openTeam }}" style="margin-top:14px;width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#C9B9A4">
+<span style="width:34px;height:34px;flex:none;border-radius:10px;background:#241D16;display:flex;align-items:center;justify-content:center;font:600 11px/1 'JetBrains Mono',monospace;color:#F6F0E7">{{ teamCount }}</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 14px/1.2 'Public Sans',sans-serif;color:#241D16">Who's counting</span>
+<span style="display:block;margin-top:4px;font:400 11px/1 'JetBrains Mono',monospace;color:#8C7E6D">code {{ joinCode }} · live progress</span>
+</span>
+<span style="flex:none;font:400 16px/1 'Public Sans',sans-serif;color:#B0522F">›</span>
+</button>
+<button onClick="{{ openDrive }}" style="margin-top:8px;width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#C9B9A4">
+<span style="width:34px;height:34px;flex:none;border-radius:10px;background:#EFE7DB;display:flex;align-items:center;justify-content:center;font:600 12px/1 'JetBrains Mono',monospace;color:#6E6152">⇅</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 14px/1.2 'Public Sans',sans-serif;color:#241D16">Google Drive</span>
+<span style="display:block;margin-top:4px;font:400 11px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ driveRowMeta }}</span>
+</span>
+<span style="flex:none;font:400 16px/1 'Public Sans',sans-serif;color:#B0522F">›</span>
+</button>
+<button onClick="{{ openSetup }}" style="margin-top:8px;width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:#FFFCF7;border:1px dashed #C9B9A4;border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#B0522F">
+<span style="width:34px;height:34px;flex:none;border-radius:10px;background:#EFE7DB;display:flex;align-items:center;justify-content:center;font:600 13px/1 'JetBrains Mono',monospace;color:#6E6152">+</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 14px/1.2 'Public Sans',sans-serif;color:#241D16">Places &amp; setup</span>
+<span style="display:block;margin-top:4px;font:400 11px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ setupLocsCount }} · rename or add</span>
+</span>
+<span style="flex:none;font:400 16px/1 'Public Sans',sans-serif;color:#B0522F">›</span>
+</button>
+<p style="margin:18px 2px 0;font:400 11px/1.5 'Public Sans',sans-serif;color:#A0917F">Every place holds the same product list. Anything left untouched submits as zero.</p>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSetup }}" hint-placeholder-val="{{ true }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:16px 20px 14px;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:#A0917F">NEW STOCKTAKE</div>
+<div style="margin-top:6px;font:700 25px/1.05 'Public Sans',sans-serif;letter-spacing:-.02em;color:#241D16">Set it up</div>
+</div>
+
+<div style="flex:1;overflow:auto;padding:18px 20px 40px;display:flex;flex-direction:column;gap:22px">
+
+<div>
+<div style="display:flex;align-items:center;gap:9px">
+<span style="width:20px;height:20px;flex:none;border-radius:6px;background:#241D16;color:#F6F0E7;display:flex;align-items:center;justify-content:center;font:600 10px/1 'JetBrains Mono',monospace">1</span>
+<span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#6E6152">NAME IT</span>
+</div>
+<input value="{{ titleValue }}" onChange="{{ onTitle }}" placeholder="e.g. Venue stocktake — August" style="margin-top:10px;width:100%;padding:13px;border:1px solid #E3D8C9;border-radius:11px;background:#FFFCF7;outline:none;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+<button onClick="{{ openImport }}" style="margin-top:10px;width:100%;display:flex;align-items:center;gap:11px;padding:13px 14px;background:#EFE7DB;border:1px dashed #C9B9A4;border-radius:11px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#B0522F">
+<span style="width:30px;height:30px;flex:none;border-radius:9px;background:#FFFCF7;display:flex;align-items:center;justify-content:center;font:600 13px/1 'JetBrains Mono',monospace;color:#6E6152">↑</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 12.5px/1.2 'Public Sans',sans-serif;color:#241D16">Already have a spreadsheet?</span>
+<span style="display:block;margin-top:4px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:#8C7E6D">Attach it and the app builds the products and places for you</span>
+</span>
+</button>
+</div>
+
+<div>
+<div style="display:flex;align-items:center;gap:9px">
+<span style="width:20px;height:20px;flex:none;border-radius:6px;background:#241D16;color:#F6F0E7;display:flex;align-items:center;justify-content:center;font:600 10px/1 'JetBrains Mono',monospace">2</span>
+<span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#6E6152">WHO'S COUNTING</span>
+</div>
+<p style="margin:9px 0 0;font:400 11.5px/1.5 'Public Sans',sans-serif;color:#8C7E6D;text-wrap:pretty">Your name goes on every line you enter, so a double count can be sorted out later.</p>
+<input value="{{ meValue }}" onChange="{{ onMe }}" placeholder="Your name" style="margin-top:10px;width:100%;padding:13px;border:1px solid #E3D8C9;border-radius:11px;background:#FFFCF7;outline:none;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+<div style="margin-top:10px;padding:13px 14px;background:#241D16;border-radius:11px;display:flex;align-items:center;gap:12px">
+<span style="flex:1;min-width:0">
+<span style="display:block;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#A99883">JOIN CODE FOR YOUR TEAM</span>
+<span style="display:block;margin-top:7px;font:700 22px/1 'JetBrains Mono',monospace;letter-spacing:.22em;color:#F6F0E7">{{ joinCode }}</span>
+</span>
+<span style="flex:none;font:400 10px/1.4 'Public Sans',sans-serif;color:#A99883;text-align:right;max-width:110px">Others type this on their phone to count with you</span>
+</div>
+<div style="margin-top:10px;display:flex;gap:7px">
+<input value="{{ joinCodeValue }}" onChange="{{ onJoinCode }}" placeholder="Or join a code" style="flex:1;min-width:0;padding:12px;border:1px solid #E3D8C9;border-radius:11px;background:#FFFCF7;outline:none;font:500 13px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:#241D16" />
+<button onClick="{{ tryJoin }}" style="flex:none;padding:0 15px;border-radius:11px;background:#FFFCF7;border:1px solid #E3D8C9;cursor:pointer;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#6E6152">JOIN</button>
+</div>
+<sc-if value="{{ joinNote }}" hint-placeholder-val="{{ false }}">
+<p style="margin:9px 2px 0;font:400 11px/1.5 'Public Sans',sans-serif;color:#8E3F22;text-wrap:pretty">{{ joinNote }}</p>
+</sc-if>
+</div>
+
+<div>
+<div style="display:flex;align-items:center;gap:9px">
+<span style="width:20px;height:20px;flex:none;border-radius:6px;background:#241D16;color:#F6F0E7;display:flex;align-items:center;justify-content:center;font:600 10px/1 'JetBrains Mono',monospace">3</span>
+<span style="flex:1;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#6E6152">PLACES TO COUNT</span>
+<span style="font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ setupLocsCount }}</span>
+</div>
+<p style="margin:9px 0 0;font:400 11.5px/1.5 'Public Sans',sans-serif;color:#8C7E6D;text-wrap:pretty">Bars, venues, fridges, storerooms — your names, your order.</p>
+<div style="margin-top:10px;display:flex;gap:7px">
+<input value="{{ newLoc }}" onChange="{{ onNewLoc }}" placeholder="Add a place" style="flex:1;min-width:0;padding:13px;border:1px solid #E3D8C9;border-radius:11px;background:#FFFCF7;outline:none;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+<button onClick="{{ addLoc }}" style="flex:none;padding:0 15px;border-radius:11px;background:{{ addLocBg }};border:none;cursor:pointer;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#F6F0E7">{{ addLocLabel }}</button>
+</div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ setupLocs }}" as="sl" hint-placeholder-count="0">
+<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:11px">
+<span style="width:30px;height:30px;flex:none;border-radius:9px;background:{{ sl.tint }};display:flex;align-items:center;justify-content:center;font:600 10px/1 'JetBrains Mono',monospace;color:{{ sl.tintInk }}">{{ sl.abbr }}</span>
+<input value="{{ sl.name }}" onChange="{{ sl.rename }}" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font:500 12.5px/1.2 'Public Sans',sans-serif;color:#241D16" />
+<button onClick="{{ sl.remove }}" style="flex:none;padding:6px 9px;border:1px solid #E9C5AB;background:#FDF4EC;border-radius:7px;cursor:pointer;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#8E3F22">REMOVE</button>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div>
+<div style="display:flex;align-items:center;gap:9px">
+<span style="width:20px;height:20px;flex:none;border-radius:6px;background:#241D16;color:#F6F0E7;display:flex;align-items:center;justify-content:center;font:600 10px/1 'JetBrains Mono',monospace">4</span>
+<span style="flex:1;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#6E6152">PRODUCT LIST</span>
+</div>
+<p style="margin:9px 0 0;font:400 11.5px/1.5 'Public Sans',sans-serif;color:#8C7E6D;text-wrap:pretty">{{ setupMasterCount }}. Every place counts this same list.</p>
+<div style="margin-top:10px;display:flex;gap:7px">
+<button onClick="{{ openAdd }}" style="flex:1;padding:12px;border-radius:11px;background:#241D16;border:none;cursor:pointer;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#F6F0E7">+ ADD PRODUCT</button>
+<button onClick="{{ openImport }}" style="flex:1;padding:12px;border-radius:11px;background:#FFFCF7;border:1px solid #E3D8C9;cursor:pointer;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#6E6152">ATTACH EXCEL</button>
+</div>
+<button onClick="{{ openMaster }}" style="margin-top:7px;width:100%;padding:11px;border-radius:11px;background:transparent;border:1px solid #E3D8C9;cursor:pointer;font:500 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#6E6152">REVIEW THE LIST</button>
+</div>
+
+<div>
+<div style="display:flex;align-items:center;gap:9px">
+<span style="width:20px;height:20px;flex:none;border-radius:6px;background:#241D16;color:#F6F0E7;display:flex;align-items:center;justify-content:center;font:600 10px/1 'JetBrains Mono',monospace">5</span>
+<span style="flex:1;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#6E6152">WHERE IT SAVES</span>
+</div>
+<p style="margin:9px 0 0;font:400 11.5px/1.5 'Public Sans',sans-serif;color:#8C7E6D;text-wrap:pretty">Counting happens on the shared stocktake, so everyone's lines arrive as they go. Drive is where the finished count is filed at the end, for whoever needs it after.</p>
+<sc-if value="{{ driveOff }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:10px;padding:14px;background:#FFFCF7;border:1px dashed #C9B9A4;border-radius:12px">
+<div style="font:600 12.5px/1.3 'Public Sans',sans-serif;color:#241D16">No Drive account yet</div>
+<p style="margin:7px 0 0;font:400 11px/1.5 'Public Sans',sans-serif;color:#8C7E6D;text-wrap:pretty">Counting still works without it. You just have no copy filed anywhere afterwards, so the finished numbers stay inside the app.</p>
+<button onClick="{{ connectDrive }}" style="margin-top:11px;width:100%;padding:13px;border-radius:11px;background:#241D16;border:none;cursor:pointer;font:600 12.5px/1 'Public Sans',sans-serif;color:#F6F0E7" style-hover="background:#3A2F24">Connect Google Drive</button>
+</div>
+</sc-if>
+<sc-if value="{{ driveOn }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:10px;padding:14px;background:#241D16;border-radius:12px">
+<div style="display:flex;align-items:center;gap:8px">
+<span style="width:6px;height:6px;border-radius:50%;background:#8FBF7A"></span>
+<span style="flex:1;font:400 10px/1 'JetBrains Mono',monospace;color:#A99883;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ driveAccount }}</span>
+<button onClick="{{ disconnectDrive }}" style="flex:none;padding:8px 11px;background:#2C241B;border:1px solid #3A2F24;border-radius:8px;cursor:pointer;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.08em;color:#A99883">CHANGE</button>
+</div>
+<div style="margin-top:11px;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#A99883">FINISHED COUNT SAVES AS</div>
+<div style="margin-top:8px;font:600 12.5px/1.3 'JetBrains Mono',monospace;color:#F6F0E7;word-break:break-all">{{ driveFileName }}</div>
+<div style="margin-top:9px;display:flex;align-items:center;gap:7px">
+<span style="font:400 10px/1 'JetBrains Mono',monospace;color:#A99883">in</span>
+<input value="{{ folderValue }}" onChange="{{ onFolder }}" placeholder="Folder" style="flex:1;min-width:0;padding:14px 10px;border:1px solid #3A2F24;border-radius:9px;background:#2C241B;outline:none;font:400 11px/1 'JetBrains Mono',monospace;color:#F6F0E7" />
+</div>
+</div>
+<div style="margin-top:8px;padding:13px 14px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:12px">
+<div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">WHO CAN OPEN IT</div>
+<div style="margin-top:9px;display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ driveShared }}" as="ds2" hint-placeholder-count="0">
+<div style="display:flex;align-items:center;gap:9px;padding:8px 10px;background:#F9F5EE;border:1px solid #EAE1D4;border-radius:9px">
+<span style="width:22px;height:22px;flex:none;border-radius:50%;background:#C9B9A4;display:flex;align-items:center;justify-content:center;font:600 10px/1 'Public Sans',sans-serif;color:#FFFCF7">{{ ds2.initial }}</span>
+<span style="flex:1;min-width:0;font:400 11px/1 'JetBrains Mono',monospace;color:#241D16;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ds2.email }}</span>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:8px;display:flex;gap:7px">
+<input value="{{ shareInput }}" onChange="{{ onShareInput }}" placeholder="name@work.com" style="flex:1;min-width:0;padding:14px 11px;border:1px solid #E3D8C9;border-radius:10px;background:#F9F5EE;outline:none;font:400 11.5px/1 'Public Sans',sans-serif;color:#241D16" />
+<button onClick="{{ addShare }}" style="flex:none;min-height:44px;padding:0 14px;border-radius:10px;background:#241D16;border:none;cursor:pointer;font:600 9.5px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#F6F0E7">SHARE</button>
+</div>
+</div>
+</sc-if>
+</div>
+
+<button onClick="{{ startCounting }}" style="width:100%;padding:16px;border-radius:12px;background:{{ startBg }};border:none;cursor:pointer;font:600 14px/1 'Public Sans',sans-serif;color:#F6F0E7">{{ startLabel }}</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDrive }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 14px;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ goHome }}" style="width:32px;height:32px;flex:none;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:#241D16">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:#241D16">Google Drive</div>
+<div style="margin-top:3px;font:400 10px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ driveAccount }}</div>
+</div>
+<button onClick="{{ toggleOnline }}" style="flex:none;display:flex;align-items:center;gap:6px;padding:7px 10px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:999px;cursor:pointer">
+<span style="width:6px;height:6px;border-radius:50%;background:{{ onlineDot }}"></span>
+<span style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#6E6152">{{ onlineLabel }}</span>
+</button>
+</div>
+</div>
+
+<div style="flex:1;overflow:auto;padding:16px 16px 44px;display:flex;flex-direction:column;gap:14px">
+
+<sc-if value="{{ driveOff }}" hint-placeholder-val="{{ true }}">
+<div style="padding:18px 16px;background:#FFFCF7;border:1px dashed #C9B9A4;border-radius:14px">
+<div style="font:600 13.5px/1.3 'Public Sans',sans-serif;color:#241D16">Not connected</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Nothing is being filed to Drive. Counting and sharing work regardless — connect an account and the finished stocktake is written to a folder your team can open, updated as places are submitted.</p>
+<button onClick="{{ connectDrive }}" style="margin-top:12px;width:100%;padding:14px;border-radius:12px;background:#241D16;border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#F6F0E7">Connect Google Drive</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ driveOn }}" hint-placeholder-val="{{ false }}">
+<div style="padding:14px;background:#241D16;border-radius:14px">
+<div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#A99883">SHARED FILE</div>
+<div style="margin-top:9px;font:600 13px/1.3 'JetBrains Mono',monospace;color:#F6F0E7;word-break:break-all">{{ driveFileName }}</div>
+<div style="margin-top:6px;font:400 10.5px/1 'JetBrains Mono',monospace;color:#A99883">in {{ driveFolder }} · {{ driveSharedCount }}</div>
+<div style="margin-top:14px;display:flex;gap:18px">
+<div><div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#A99883">LAST SYNC</div><div style="margin-top:5px;font:500 13px/1 'JetBrains Mono',monospace;color:#F6F0E7">{{ lastSyncLabel }}</div></div>
+<div><div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#A99883">QUEUED</div><div style="margin-top:5px;font:500 13px/1 'JetBrains Mono',monospace;color:{{ pendingInk }}">{{ pendingCount }}</div></div>
+</div>
+</div>
+
+<button onClick="{{ syncNow }}" style="width:100%;padding:14px;border-radius:12px;background:{{ syncBg }};border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#F6F0E7">{{ syncLabel }}</button>
+
+<div style="padding:14px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:13px">
+<div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">WHO CAN OPEN IT</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Share the file with each counter's own Google account. Everyone stays signed into their own — that is what puts a real name against each line.</p>
+<div style="margin-top:11px;display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ driveShared }}" as="ds" hint-placeholder-count="0">
+<div style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:#F9F5EE;border:1px solid #EAE1D4;border-radius:10px">
+<span style="width:26px;height:26px;flex:none;border-radius:50%;background:#C9B9A4;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Public Sans',sans-serif;color:#FFFCF7">{{ ds.initial }}</span>
+<span style="flex:1;min-width:0;font:400 11.5px/1.2 'Public Sans',sans-serif;color:#241D16;word-break:break-all">{{ ds.email }}</span>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:8px;display:flex;gap:7px">
+<input value="{{ shareInput }}" onChange="{{ onShareInput }}" placeholder="name@gmail.com" style="flex:1;min-width:0;padding:11px;border:1px solid #E3D8C9;border-radius:10px;background:#F9F5EE;outline:none;font:400 12px/1 'Public Sans',sans-serif;color:#241D16" />
+<button onClick="{{ addShare }}" style="flex:none;padding:0 14px;border-radius:10px;background:#F1EAE0;border:1px solid #DFD3C4;cursor:pointer;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#241D16">SHARE</button>
+</div>
+</div>
+
+<div style="padding:14px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:13px">
+<div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">HOW IT SYNCS</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Each phone appends only its own lines, so two people counting at once never overwrite each other. The app reads the file back and takes the latest entry per product per place — and when the same line has two names against it, both are kept until someone picks. Off signal, entries queue here and go up when you are back.</p>
+<button onClick="{{ disconnectDrive }}" style="margin-top:11px;width:100%;padding:11px;border-radius:10px;background:transparent;border:1px solid #E9C5AB;cursor:pointer;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#8E3F22">DISCONNECT</button>
+</div>
+
+<button onClick="{{ openPast }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="border-color:#C9B9A4">
+<span style="width:32px;height:32px;flex:none;border-radius:9px;background:#EFE7DB;display:flex;align-items:center;justify-content:center;font:600 12px/1 'JetBrains Mono',monospace;color:#6E6152">{{ pastCount }}</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:#241D16">Past stocktakes</span>
+<span style="display:block;margin-top:4px;font:400 10.5px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ pastRowMeta }}</span>
+</span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:#B0522F">›</span>
+</button>
+
+<div style="padding:14px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:13px">
+<div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">WHEN THE COUNT IS DONE</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Closing it off leaves the file in Drive to open any time, and clears the phone for the next count. The places and product list stay.</p>
+<button onClick="{{ openFinish }}" style="margin-top:11px;width:100%;min-height:44px;padding:12px;border-radius:11px;background:#241D16;border:none;cursor:pointer;font:600 12.5px/1 'Public Sans',sans-serif;color:#F6F0E7">Finish this stocktake</button>
+</div>
+</sc-if>
+
+<div style="padding:13px 14px;background:#EFE7DB;border:1px dashed #C9B9A4;border-radius:12px">
+<div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">PROTOTYPE ONLY</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">No real Google sign-in is wired up yet. These screens show the states the live app needs — connected, queued, synced — so the flow can be judged before the account setup is done.</p>
+</div>
+</div>
+</div>
+</sc-if>
+
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="240" fill="#241D16"></rect><rect x="72" y="66" width="96" height="108" rx="10" fill="#F6F0E7"></rect><rect x="88" y="88" width="44" height="8" rx="4" fill="#C9B9A4"></rect><rect x="88" y="110" width="64" height="8" rx="4" fill="#C9B9A4"></rect><rect x="88" y="132" width="34" height="8" rx="4" fill="#B0522F"></rect></svg>
+</template>
+
+<sc-if value="{{ isPast }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 14px;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ openDrive }}" style="width:32px;height:32px;flex:none;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:#241D16">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:#241D16">Past stocktakes</div>
+<div style="margin-top:3px;font:400 10px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ pastRowMeta }}</div>
+</div>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding:16px 16px 44px;display:flex;flex-direction:column;gap:9px">
+<sc-if value="{{ pastEmpty }}" hint-placeholder-val="{{ true }}">
+<div style="padding:18px 16px;background:#FFFCF7;border:1px dashed #C9B9A4;border-radius:14px">
+<div style="font:600 13.5px/1.3 'Public Sans',sans-serif;color:#241D16">Nothing finished yet</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Once a count is closed off it lands here, and the file stays in Drive for anyone it was shared with.</p>
+</div>
+</sc-if>
+<sc-for list="{{ pastList }}" as="p" hint-placeholder-count="0">
+<div style="padding:14px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:13px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="flex:1;min-width:0;font:600 13.5px/1.25 'Public Sans',sans-serif;color:#241D16;text-wrap:pretty">{{ p.title }}</span>
+<span style="flex:none;font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ p.when }}</span>
+</div>
+<div style="margin-top:7px;font:400 10.5px/1.4 'JetBrains Mono',monospace;color:#8C7E6D">{{ p.meta }}</div>
+<div style="margin-top:9px;padding:9px 10px;background:#F9F5EE;border:1px solid #EAE1D4;border-radius:9px;font:400 10.5px/1.3 'JetBrains Mono',monospace;color:#241D16;word-break:break-all">{{ p.file }}</div>
+</div>
+</sc-for>
+<sc-if value="{{ pastAny }}" hint-placeholder-val="{{ false }}">
+<div style="padding:13px 14px;background:#EFE7DB;border:1px dashed #C9B9A4;border-radius:12px;font:400 11px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">These open read-only in Drive. Nothing here can be counted into again.</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ finishOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:32;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeFinish }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:33;padding:20px 18px 52px;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1)">
+<div style="font:700 19px/1.2 'Public Sans',sans-serif;color:#241D16;letter-spacing:-.01em">Finish this stocktake?</div>
+<p style="margin:9px 0 0;font:400 12.5px/1.6 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">The file stays in Drive and moves to Past stocktakes. Counts clear off this phone. Your places and product list are kept for the next one.</p>
+<div style="margin-top:16px;display:flex;gap:8px">
+<button onClick="{{ closeFinish }}" style="flex:none;min-height:44px;padding:14px 18px;border-radius:12px;background:#FFFCF7;border:1px solid #E3D8C9;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#241D16">Not yet</button>
+<button onClick="{{ confirmFinish }}" style="flex:1;min-height:44px;padding:14px;border-radius:12px;background:#B0522F;border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#fff">Finish and archive</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ lockOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:34;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeLock }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:35;padding:20px 18px 52px;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1)">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="width:26px;height:26px;flex:none;border-radius:8px;background:#EFE7DB;display:flex;align-items:center;justify-content:center;font:400 12px/1 'Public Sans',sans-serif;color:#6E6152">🔒</span>
+<div style="flex:1;font:700 17px/1.2 'Public Sans',sans-serif;color:#241D16">{{ lockTitle }}</div>
+</div>
+<p style="margin:10px 0 0;font:400 12.5px/1.6 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">{{ lockNote }}</p>
+<button onClick="{{ closeLock }}" style="margin-top:16px;width:100%;min-height:44px;padding:14px;border-radius:12px;background:#241D16;border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#F6F0E7">Got it</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTeam }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 14px;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ goHome }}" style="width:32px;height:32px;flex:none;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:#241D16">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:#241D16">Who's counting</div>
+<div style="margin-top:3px;font:400 10px/1 'JetBrains Mono',monospace;color:#8C7E6D">you are {{ me }}</div>
+</div>
+</div>
+<div style="margin-top:12px;padding:13px 14px;background:#241D16;border-radius:11px;display:flex;align-items:center;gap:12px">
+<span style="flex:1;min-width:0">
+<span style="display:block;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#A99883">JOIN CODE</span>
+<span style="display:block;margin-top:7px;font:700 22px/1 'JetBrains Mono',monospace;letter-spacing:.22em;color:#F6F0E7">{{ joinCode }}</span>
+</span>
+<span style="flex:none;font:400 10px/1.4 'Public Sans',sans-serif;color:#A99883;text-align:right;max-width:120px">Same code, same places, same product list</span>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding:14px 16px 44px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ team }}" as="t" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:13px">
+<span style="width:34px;height:34px;flex:none;border-radius:50%;background:{{ t.tint }};display:flex;align-items:center;justify-content:center;font:600 13px/1 'Public Sans',sans-serif;color:#F6F0E7">{{ t.initial }}</span>
+<span style="flex:1;min-width:0">
+<span style="display:flex;align-items:center;gap:7px">
+<span style="font:600 13px/1.2 'Public Sans',sans-serif;color:#241D16">{{ t.name }}</span>
+<sc-if value="{{ t.badge }}" hint-placeholder-val="{{ false }}">
+<span style="padding:2px 6px;border-radius:5px;background:#EFE7DB;font:500 8.5px/1.3 'JetBrains Mono',monospace;letter-spacing:.08em;color:#6E6152">{{ t.badge }}</span>
+</sc-if>
+</span>
+<span style="display:block;margin-top:5px;font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ t.last }}</span>
+</span>
+<span style="flex:none;text-align:right">
+<span style="display:block;font:600 13px/1 'JetBrains Mono',monospace;color:#241D16">{{ t.units }}</span>
+<span style="display:block;margin-top:5px;font:400 9.5px/1 'JetBrains Mono',monospace;color:#A0917F">{{ t.lines }}</span>
+</span>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:16px;padding:13px 14px;background:#EFE7DB;border:1px dashed #C9B9A4;border-radius:12px">
+<div style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">PROTOTYPE ONLY</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Real sign-in is not wired up yet, so phones cannot see each other. This button drops a teammate's counts in so you can test what it feels like.</p>
+<button onClick="{{ addDemoMate }}" style="margin-top:10px;width:100%;padding:11px;border-radius:10px;background:#FFFCF7;border:1px solid #DCCFBE;cursor:pointer;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#6E6152">SIMULATE A TEAMMATE COUNTING</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isCount }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 0;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ goHome }}" style="width:32px;height:32px;flex:none;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:#241D16">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:#241D16">{{ locName }}</div>
+<div style="margin-top:3px;font:400 10px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ locProgress }}</div>
+</div>
+<button onClick="{{ openSubmit }}" style="flex:none;padding:8px 14px;background:#241D16;color:#F6F0E7;border:none;border-radius:9px;cursor:pointer;font:600 12px/1 'Public Sans',sans-serif" style-hover="background:#3A2F24">Submit</button>
+</div>
+<div style="margin-top:10px;display:flex;align-items:center;gap:8px;padding:9px 12px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:10px">
+<span style="font:400 12px/1 'Public Sans',sans-serif;color:#A0917F">⌕</span>
+<input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search this location" style="flex:1;border:none;outline:none;background:transparent;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+<sc-if value="{{ query }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ clearQuery }}" style="border:none;background:transparent;cursor:pointer;font:400 13px/1 'Public Sans',sans-serif;color:#A0917F">✕</button>
+</sc-if>
+</div>
+<div style="margin-top:8px;display:flex;gap:6px">
+<button onClick="{{ toggleHideEmpty }}" style="flex:1;padding:8px;border-radius:9px;cursor:pointer;background:{{ hideEmptyBg }};border:1px solid {{ hideEmptyBorder }};font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:{{ hideEmptyInk }}">{{ hideEmptyLabel }}</button>
+<button onClick="{{ openManage }}" style="flex:none;padding:8px 11px;border-radius:9px;cursor:pointer;background:#FFFCF7;border:1px solid #E3D8C9;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#6E6152">CATEGORIES</button>
+</div>
+<div style="margin-top:10px;display:flex;gap:6px;overflow:auto;padding-bottom:10px">
+<sc-for list="{{ chips }}" as="chip" hint-placeholder-count="4">
+<button onClick="{{ chip.jump }}" style="flex:none;padding:7px 11px;border-radius:999px;cursor:pointer;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.04em;background:{{ chip.bg }};border:1px solid {{ chip.border }};color:{{ chip.ink }}">{{ chip.label }}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="flex:1;overflow:auto;padding-bottom:120px">
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+<div id="{{ g.anchor }}" style="scroll-margin-top:0">
+<div style="position:sticky;top:0;z-index:2;display:flex;align-items:stretch;background:#EFE7DB;border-top:1px solid #E3D8C9;border-bottom:1px solid #E3D8C9">
+<button onClick="{{ g.toggle }}" style="flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:8px 10px 8px 16px;background:transparent;border:none;cursor:pointer;text-align:left" style-hover="background:#E7DDCE">
+<span style="flex:none;font:400 9px/1 'JetBrains Mono',monospace;color:#8C7E6D;transform:{{ g.caret }}">▾</span>
+<span style="flex:1;min-width:0;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#6E6152">{{ g.sub }}</span>
+<span style="flex:none;font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ g.done }}</span>
+</button>
+<button onClick="{{ g.hide }}" style="flex:none;margin:5px 12px 5px 4px;padding:3px 7px;border:1px solid #DCCFBE;background:#F6F0E7;border-radius:6px;cursor:pointer;font:500 9px/1.2 'JetBrains Mono',monospace;letter-spacing:.06em;color:#8C7E6D" style-hover="border-color:#B0522F;color:#B0522F">NOT HERE</button>
+</div>
+<sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+<button onClick="{{ it.open }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:{{ it.rowBg }};border:none;border-bottom:1px solid #EAE1D4;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="background:#FFF8EE">
+<span style="flex:1;min-width:0">
+<span style="display:block;font:500 12.5px/1.3 'Public Sans',sans-serif;color:#241D16;text-wrap:pretty">{{ it.name }}</span>
+<span style="display:block;margin-top:4px;font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ it.meta }}</span>
+</span>
+<span style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+<span style="font:600 15px/1 'JetBrains Mono',monospace;color:{{ it.valInk }}">{{ it.val }}</span>
+<span style="font:400 9.5px/1 'JetBrains Mono',monospace;color:{{ it.subInk }}">{{ it.valSub }}</span>
+</span>
+</button>
+</sc-for>
+</div>
+</sc-for>
+<sc-if value="{{ hasHidden }}" hint-placeholder-val="{{ false }}">
+<div style="padding:14px 16px;background:#EFE7DB;border-top:1px solid #E3D8C9;display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:400 11px/1.4 'Public Sans',sans-serif;color:#6E6152">{{ hiddenLabel }}</span>
+<button onClick="{{ showAll }}" style="flex:none;padding:7px 11px;border:1px solid #DCCFBE;background:#FFFCF7;border-radius:8px;cursor:pointer;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#B0522F">SHOW ALL</button>
+</div>
+</sc-if>
+<div style="padding:22px 16px;text-align:center;font:400 11px/1.5 'Public Sans',sans-serif;color:#A0917F">End of {{ locName }}</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTotals }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 12px;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ goHome }}" style="width:32px;height:32px;flex:none;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:#241D16">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:#241D16">Grand total</div>
+<div style="margin-top:3px;font:400 10px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ grandLines }}</div>
+</div>
+</div>
+<div style="margin-top:12px;display:flex;align-items:flex-end;gap:7px">
+<span style="font:700 38px/1 'JetBrains Mono',monospace;letter-spacing:-.03em;color:#241D16">{{ grandUnits }}</span>
+<span style="font:400 12px/1 'Public Sans',sans-serif;color:#8C7E6D;padding-bottom:5px">units across all locations</span>
+</div>
+<div style="margin-top:12px;display:flex;gap:6px">
+<button onClick="{{ byCat }}" style="flex:1;padding:8px;border-radius:9px;cursor:pointer;background:{{ catBg }};border:1px solid #E3D8C9;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:{{ catInk }}">BY CATEGORY</button>
+<button onClick="{{ byLoc }}" style="flex:1;padding:8px;border-radius:9px;cursor:pointer;background:{{ locBg }};border:1px solid #E3D8C9;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:{{ locInk }}">BY LOCATION</button>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding-bottom:44px">
+<sc-for list="{{ totalRows }}" as="r" hint-placeholder-count="4">
+<div>
+<button onClick="{{ r.toggle }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:13px 16px;background:#FFFCF7;border:none;border-bottom:1px solid #EAE1D4;cursor:pointer;text-align:left" style-hover="background:#FFF8EE">
+<span style="flex:none;font:400 9px/1 'JetBrains Mono',monospace;color:#8C7E6D;transform:{{ r.caret }}">▾</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 12px/1.2 'JetBrains Mono',monospace;letter-spacing:.08em;color:#241D16">{{ r.label }}</span>
+<span style="display:block;margin-top:6px;width:100%;height:3px;border-radius:2px;background:#EDE4D8;overflow:hidden"><span style="display:block;height:3px;border-radius:2px;background:#B0522F;width:{{ r.bar }}"></span></span>
+</span>
+<span style="flex:none;text-align:right">
+<span style="display:block;font:600 15px/1 'JetBrains Mono',monospace;color:#241D16">{{ r.units }}</span>
+<span style="display:block;margin-top:4px;font:400 9.5px/1 'JetBrains Mono',monospace;color:#A0917F">{{ r.lines }}</span>
+</span>
+</button>
+<sc-for list="{{ r.items }}" as="ri" hint-placeholder-count="0">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 16px 10px 28px;background:#F9F5EE;border-bottom:1px solid #EFE7DB">
+<span style="flex:1;min-width:0">
+<span style="display:block;font:400 11.5px/1.3 'Public Sans',sans-serif;color:#241D16;text-wrap:pretty">{{ ri.name }}</span>
+<span style="display:block;margin-top:3px;font:400 9.5px/1 'JetBrains Mono',monospace;color:#A0917F">{{ ri.split }}</span>
+</span>
+<span style="flex:none;font:500 12px/1 'JetBrains Mono',monospace;color:#241D16">{{ ri.units }}</span>
+</div>
+</sc-for>
+</div>
+</sc-for>
+<sc-if value="{{ noTotals }}" hint-placeholder-val="{{ false }}">
+<div style="padding:36px 24px;text-align:center">
+<div style="font:600 13px/1.3 'Public Sans',sans-serif;color:#241D16">Nothing counted yet</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:#8C7E6D;text-wrap:pretty">Enter a figure against any line and it rolls up here, by category or by location.</p>
+</div>
+</sc-if>
+<sc-if value="{{ hasTotals }}" hint-placeholder-val="{{ true }}">
+<div style="padding:18px 16px 8px">
+<button onClick="{{ exportCsv }}" style="width:100%;padding:14px;border-radius:12px;background:#241D16;border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#F6F0E7" style-hover="background:#3A2F24">Export for the workbook</button>
+<p style="margin:10px 2px 0;font:400 10.5px/1.5 'Public Sans',sans-serif;color:#A0917F">{{ exportNote }}</p>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column;padding:24px 20px 44px;background:#241D16">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px">
+<span style="width:44px;height:44px;border-radius:12px;background:#B0522F;display:flex;align-items:center;justify-content:center;font:600 18px/1 'JetBrains Mono',monospace;color:#fff">✓</span>
+<div>
+<div style="font:700 26px/1.1 'Public Sans',sans-serif;color:#F6F0E7;letter-spacing:-.02em">{{ doneName }} submitted</div>
+<p style="margin:10px 0 0;font:400 13px/1.6 'Public Sans',sans-serif;color:#A99883;text-wrap:pretty">Queued locally. It syncs to the workbook next time you have signal, into the {{ doneName }} column.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:1px;background:#3A2F24;border-radius:12px;overflow:hidden">
+<div style="display:flex;justify-content:space-between;padding:13px 14px;background:#2C241B"><span style="font:400 12px/1 'Public Sans',sans-serif;color:#A99883">Lines counted</span><span style="font:500 12px/1 'JetBrains Mono',monospace;color:#F6F0E7">{{ doneLines }}</span></div>
+<div style="display:flex;justify-content:space-between;padding:13px 14px;background:#2C241B"><span style="font:400 12px/1 'Public Sans',sans-serif;color:#A99883">Total units</span><span style="font:500 12px/1 'JetBrains Mono',monospace;color:#F6F0E7">{{ doneUnits }}</span></div>
+<div style="display:flex;justify-content:space-between;padding:13px 14px;background:#2C241B"><span style="font:400 12px/1 'Public Sans',sans-serif;color:#A99883">Submitted as zero</span><span style="font:500 12px/1 'JetBrains Mono',monospace;color:#F6F0E7">{{ doneZeros }}</span></div>
+<div style="display:flex;justify-content:space-between;padding:13px 14px;background:#2C241B"><span style="font:400 12px/1 'Public Sans',sans-serif;color:#A99883">Low stock flagged</span><span style="font:500 12px/1 'JetBrains Mono',monospace;color:#E4A07A">{{ doneLow }}</span></div>
+</div>
+<div style="margin-top:6px;display:flex;gap:8px">
+<button onClick="{{ goHome }}" style="flex:1;padding:15px;background:#3A2F24;color:#F6F0E7;border:none;border-radius:12px;cursor:pointer;font:600 14px/1 'Public Sans',sans-serif" style-hover="background:#4A3C2E">Back to locations</button>
+<button onClick="{{ openTotals }}" style="flex:1;padding:15px;background:#F6F0E7;color:#241D16;border:none;border-radius:12px;cursor:pointer;font:600 14px/1 'Public Sans',sans-serif" style-hover="background:#fff">Grand total</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeSheet }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:21;background:#F6F0E7;border-radius:20px 20px 26px 26px;box-shadow:0 -12px 40px rgba(36,29,22,.28);animation:sheetUp .22s cubic-bezier(.22,1,.36,1);overflow:hidden">
+<div style="padding:14px 18px 12px;border-bottom:1px solid #E3D8C9;display:flex;align-items:flex-start;gap:10px">
+<div style="flex:1;min-width:0">
+<div style="font:600 13.5px/1.3 'Public Sans',sans-serif;color:#241D16;text-wrap:pretty">{{ sheetName }}</div>
+<div style="margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font:400 10px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ sheetMeta }}</span>
+<sc-if value="{{ sheetClash }}" hint-placeholder-val="{{ false }}">
+<span style="padding:3px 7px;border-radius:5px;background:#FBEFE6;border:1px solid #E9C5AB;font:500 9px/1 'JetBrains Mono',monospace;color:#8E3F22">{{ sheetClashLabel }}</span>
+</sc-if>
+</div>
+</div>
+<button onClick="{{ closeSheet }}" style="flex:none;width:28px;height:28px;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:8px;cursor:pointer;font:400 12px/1 'Public Sans',sans-serif;color:#6E6152">✕</button>
+</div>
+
+<div style="padding:14px 18px 0;display:flex;gap:10px">
+<button onClick="{{ focusCartons }}" style="flex:1;padding:11px 12px;border-radius:12px;text-align:left;cursor:pointer;background:{{ cartonBg }};border:1.5px solid {{ cartonBorder }};font-family:'Public Sans',sans-serif">
+<span style="display:block;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#8C7E6D">CARTONS ×{{ sheetCarton }}</span>
+<span style="display:block;margin-top:7px;font:600 24px/1 'JetBrains Mono',monospace;color:#241D16">{{ cartonVal }}</span>
+</button>
+<button onClick="{{ focusSingles }}" style="flex:1;padding:11px 12px;border-radius:12px;text-align:left;cursor:pointer;background:{{ singleBg }};border:1.5px solid {{ singleBorder }};font-family:'Public Sans',sans-serif">
+<span style="display:block;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#8C7E6D">{{ singleLabel }}</span>
+<span style="display:block;margin-top:7px;font:600 24px/1 'JetBrains Mono',monospace;color:#241D16">{{ singleVal }}</span>
+</button>
+</div>
+
+<sc-if value="{{ sheetClash }}" hint-placeholder-val="{{ false }}">
+<div style="margin:12px 18px 0;padding:11px 12px;background:#FBEFE6;border:1px solid #E9C5AB;border-radius:11px;display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:400 11px/1.4 'Public Sans',sans-serif;color:#7A3A20">{{ otherLabel }}</span>
+<button onClick="{{ useTheirs }}" style="flex:none;padding:7px 10px;border-radius:8px;background:#FFFCF7;border:1px solid #E9C5AB;cursor:pointer;font:600 9px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#8E3F22">USE THEIRS</button>
+</div>
+</sc-if>
+<div style="padding:10px 18px 0">
+<button onClick="{{ toggleAdd }}" style="width:100%;padding:10px;border-radius:10px;cursor:pointer;background:{{ addBg }};border:1px solid {{ addBorder }};font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:{{ addInk }}">{{ addLabel }}</button>
+</div>
+<div style="padding:10px 18px 0;display:flex;align-items:baseline;justify-content:space-between">
+<span style="font:400 11px/1 'Public Sans',sans-serif;color:#8C7E6D">{{ sheetTotalLabel }}</span>
+<button onClick="{{ toggleHistory }}" style="border:none;background:transparent;cursor:pointer;font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#B0522F">{{ historyToggleLabel }}</button>
+</div>
+
+<sc-if value="{{ historyOpen }}" hint-placeholder-val="{{ false }}">
+<div style="margin:10px 18px 0;border:1px solid #E3D8C9;border-radius:11px;overflow:hidden">
+<div style="padding:11px 12px;background:#FFFCF7;font:400 10.5px/1.4 'Public Sans',sans-serif;color:#8C7E6D">No previous counts for this line yet. Once you submit a place, past counts show here.</div>
+<sc-for list="{{ history }}" as="h" hint-placeholder-count="0">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#FFFCF7;border-bottom:1px solid #EFE7DB">
+<span style="font:400 10.5px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ h.when }}</span>
+<span style="font:400 10.5px/1 'Public Sans',sans-serif;color:#8C7E6D">{{ h.who }}</span>
+<span style="font:500 11px/1 'JetBrains Mono',monospace;color:#241D16">{{ h.units }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<div style="padding:12px 14px 10px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
+<sc-for list="{{ keys }}" as="k" hint-placeholder-count="12">
+<button onClick="{{ k.press }}" style="padding:13px 0;border-radius:11px;cursor:pointer;background:{{ k.bg }};border:1px solid {{ k.border }};font:500 20px/1 'JetBrains Mono',monospace;color:{{ k.ink }}">{{ k.label }}</button>
+</sc-for>
+</div>
+
+<div style="padding:0 14px 42px;display:flex;gap:8px">
+<button onClick="{{ closeSheet }}" style="flex:1;padding:14px;border-radius:12px;background:#241D16;border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#F6F0E7" style-hover="background:#3A2F24">Done</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ submitOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:30;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeSubmit }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:31;padding:20px 18px 52px;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1)">
+<div style="font:700 19px/1.2 'Public Sans',sans-serif;color:#241D16;letter-spacing:-.01em">Submit {{ locName }}?</div>
+<p style="margin:9px 0 0;font:400 12.5px/1.6 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">{{ submitBody }}</p>
+<div style="margin-top:16px;display:flex;gap:8px">
+<button onClick="{{ closeSubmit }}" style="flex:none;padding:14px 18px;border-radius:12px;background:#FFFCF7;border:1px solid #E3D8C9;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#241D16">Keep counting</button>
+<button onClick="{{ confirmSubmit }}" style="flex:1;padding:14px;border-radius:12px;background:#B0522F;border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#fff" style-hover="background:#95431f">Submit</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ manageOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:30;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeManage }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;top:90px;z-index:31;display:flex;flex-direction:column;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1);overflow:hidden">
+<div style="padding:18px 18px 12px;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font:700 18px/1.2 'Public Sans',sans-serif;color:#241D16">What's in {{ locName }}?</div>
+<button onClick="{{ closeManage }}" style="width:28px;height:28px;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:8px;cursor:pointer;font:400 12px/1 'Public Sans',sans-serif;color:#6E6152">✕</button>
+</div>
+<p style="margin:8px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Switch off anything this location never holds. It stays off next month, and switching a category off takes its sub-categories with it.</p>
+</div>
+<div style="flex:1;overflow:auto;padding:8px 0 44px">
+<sc-for list="{{ manageCats }}" as="mc" hint-placeholder-count="3">
+<div style="padding:6px 0">
+<button onClick="{{ mc.toggle }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 18px;background:transparent;border:none;cursor:pointer;text-align:left">
+<span style="flex:1;font:600 12px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:{{ mc.ink }}">{{ mc.name }}</span>
+<span style="font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ mc.count }}</span>
+<span style="width:34px;height:20px;flex:none;border-radius:999px;background:{{ mc.track }};position:relative;display:block"><span style="position:absolute;top:2px;left:{{ mc.knob }};width:16px;height:16px;border-radius:50%;background:#FFFCF7;transition:left .16s ease"></span></span>
+</button>
+<sc-for list="{{ mc.subs }}" as="ms" hint-placeholder-count="2">
+<button onClick="{{ ms.toggle }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 18px 9px 30px;background:transparent;border:none;cursor:pointer;text-align:left">
+<span style="flex:1;font:400 11.5px/1.2 'Public Sans',sans-serif;color:{{ ms.ink }}">{{ ms.name }}</span>
+<span style="font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ ms.count }}</span>
+<span style="width:34px;height:20px;flex:none;border-radius:999px;background:{{ ms.track }};position:relative;display:block"><span style="position:absolute;top:2px;left:{{ ms.knob }};width:16px;height:16px;border-radius:50%;background:#FFFCF7;transition:left .16s ease"></span></span>
+</button>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+
+<sc-if value="{{ isMaster }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 12px;background:#F6F0E7;border-bottom:1px solid #E3D8C9">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ goHome }}" style="width:32px;height:32px;flex:none;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:#241D16">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:#241D16">Master list</div>
+<div style="margin-top:3px;font:400 10px/1 'JetBrains Mono',monospace;color:#8C7E6D">{{ masterMeta }}</div>
+</div>
+</div>
+<div style="margin-top:10px;display:flex;align-items:center;gap:8px;padding:9px 12px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:10px">
+<span style="font:400 12px/1 'Public Sans',sans-serif;color:#A0917F">⌕</span>
+<input value="{{ mQuery }}" onChange="{{ onMQuery }}" placeholder="Search all products" style="flex:1;border:none;outline:none;background:transparent;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+</div>
+<div style="margin-top:8px;display:flex;gap:6px">
+<button onClick="{{ openAdd }}" style="flex:1;padding:9px;border-radius:9px;cursor:pointer;background:#241D16;border:none;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#F6F0E7">+ ADD ITEM</button>
+<button onClick="{{ openImport }}" style="flex:1;padding:9px;border-radius:9px;cursor:pointer;background:#FFFCF7;border:1px solid #E3D8C9;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#6E6152">ATTACH EXCEL</button>
+</div>
+<sc-if value="{{ notAdmin }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:8px;padding:9px 11px;background:#EFE7DB;border:1px solid #DCCFBE;border-radius:10px;font:400 10.5px/1.45 'Public Sans',sans-serif;color:#6E6152">You can add products. Changing one that is already on the list is up to {{ adminName }}.</div>
+</sc-if>
+</div>
+<div style="flex:1;overflow:auto;padding-bottom:44px">
+<sc-for list="{{ masterGroups }}" as="mg" hint-placeholder-count="4">
+<div>
+<div style="position:sticky;top:0;z-index:2;padding:7px 16px;background:#EFE7DB;border-top:1px solid #E3D8C9;border-bottom:1px solid #E3D8C9;display:flex;align-items:center;justify-content:space-between">
+<span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#6E6152">{{ mg.cat }}</span>
+<span style="font:400 10px/1 'JetBrains Mono',monospace;color:#A0917F">{{ mg.count }}</span>
+</div>
+<sc-for list="{{ mg.items }}" as="mi" hint-placeholder-count="4">
+<button onClick="{{ mi.edit }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:11px 16px;background:#FFFCF7;border:none;border-bottom:1px solid #EAE1D4;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif" style-hover="background:#FFF8EE">
+<span style="flex:1;min-width:0">
+<span style="display:block;font:500 12px/1.3 'Public Sans',sans-serif;color:#241D16;text-wrap:pretty">{{ mi.name }}</span>
+<span style="display:block;margin-top:4px;font:400 9.5px/1 'JetBrains Mono',monospace;color:#A0917F">{{ mi.meta }}</span>
+</span>
+<span style="flex:none;font:400 13px/1 'Public Sans',sans-serif;color:#C4B7A6">{{ mi.chev }}</span>
+</button>
+</sc-for>
+</div>
+</sc-for>
+<div style="padding:20px 16px;text-align:center;font:400 11px/1.5 'Public Sans',sans-serif;color:#A0917F">{{ masterFootnote }}</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ addOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:30;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeAdd }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:31;padding:20px 18px 52px;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1)">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font:700 18px/1.2 'Public Sans',sans-serif;color:#241D16">{{ addTitle }}</div>
+<button onClick="{{ closeAdd }}" style="width:28px;height:28px;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:8px;cursor:pointer;font:400 12px/1 'Public Sans',sans-serif;color:#6E6152">✕</button>
+</div>
+<p style="margin:8px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">{{ addBlurb }}</p>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+<input value="{{ nfName }}" onChange="{{ onNfName }}" placeholder="Product name" style="width:100%;padding:12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;outline:none;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+<div style="display:flex;gap:8px">
+<select value="{{ nfCatSelect }}" onChange="{{ onNfCat }}" style="flex:1;padding:12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;outline:none;font:400 12px/1 'Public Sans',sans-serif;color:#241D16">
+<sc-for list="{{ catOptions }}" as="co" hint-placeholder-count="4">
+<option value="{{ co.value }}">{{ co.label }}</option>
+</sc-for>
+</select>
+<input value="{{ nfCarton }}" onChange="{{ onNfCarton }}" placeholder="Carton" style="width:96px;padding:12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;outline:none;font:400 13px/1 'JetBrains Mono',monospace;color:#241D16" />
+</div>
+<sc-if value="{{ nfCatNew }}" hint-placeholder-val="{{ true }}">
+<input value="{{ nfCat }}" onChange="{{ onNfCatText }}" placeholder="New category name (optional)" style="width:100%;padding:12px;border:1.5px solid #B0522F;border-radius:10px;background:#FFFCF7;outline:none;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+</sc-if>
+<select value="{{ nfSubSelect }}" onChange="{{ onNfSubPick }}" style="width:100%;padding:12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;outline:none;font:400 12px/1 'Public Sans',sans-serif;color:#241D16">
+<sc-for list="{{ subOptions }}" as="so" hint-placeholder-count="4">
+<option value="{{ so.value }}">{{ so.label }}</option>
+</sc-for>
+</select>
+<sc-if value="{{ nfSubNew }}" hint-placeholder-val="{{ false }}">
+<input value="{{ nfSub }}" onChange="{{ onNfSub }}" placeholder="New sub category name (optional)" style="width:100%;padding:12px;border:1.5px solid #B0522F;border-radius:10px;background:#FFFCF7;outline:none;font:400 13px/1 'Public Sans',sans-serif;color:#241D16" />
+</sc-if>
+<input value="{{ nfCode }}" onChange="{{ onNfCode }}" placeholder="Barcode / product ID" style="width:100%;padding:12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;outline:none;font:400 13px/1 'JetBrains Mono',monospace;color:#241D16" />
+<button onClick="{{ toggleNfFrac }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid #E3D8C9;border-radius:10px;background:#FFFCF7;cursor:pointer;text-align:left">
+<span style="flex:1;font:400 12px/1.3 'Public Sans',sans-serif;color:#241D16">Counted in part bottles (0.4)</span>
+<span style="width:34px;height:20px;flex:none;border-radius:999px;background:{{ nfFracTrack }};position:relative;display:block"><span style="position:absolute;top:2px;left:{{ nfFracKnob }};width:16px;height:16px;border-radius:50%;background:#FFFCF7;transition:left .16s ease"></span></span>
+</button>
+</div>
+<sc-if value="{{ askUnsorted }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:14px;padding:13px 14px;background:#FBEFE6;border:1px solid #E9C5AB;border-radius:12px">
+<div style="font:600 12.5px/1.3 'Public Sans',sans-serif;color:#7A3A20">Are you sure?</div>
+<p style="margin:7px 0 0;font:400 11.5px/1.55 'Public Sans',sans-serif;color:#7A3A20;text-wrap:pretty">{{ unsortedNote }}</p>
+<div style="margin-top:11px;display:flex;gap:7px">
+<button onClick="{{ cancelUnsorted }}" style="flex:1;padding:11px;border-radius:9px;background:#FFFCF7;border:1px solid #E9C5AB;cursor:pointer;font:600 11px/1 'Public Sans',sans-serif;color:#8E3F22">Let me set one</button>
+<button onClick="{{ saveNew }}" style="flex:1;padding:11px;border-radius:9px;background:#B0522F;border:none;cursor:pointer;font:600 11px/1 'Public Sans',sans-serif;color:#fff">{{ confirmUnsortedLabel }}</button>
+</div>
+</div>
+</sc-if>
+<div style="margin-top:14px;display:flex;gap:8px">
+<button onClick="{{ closeAdd }}" style="flex:none;padding:14px 16px;border-radius:12px;background:#FFFCF7;border:1px solid #E3D8C9;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#241D16">Cancel</button>
+<button onClick="{{ saveNew }}" style="flex:1;padding:14px;border-radius:12px;background:{{ saveBg }};border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#fff">{{ saveLabel }}</button>
+</div>
+<sc-if value="{{ isEditing }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ deleteItem }}" style="margin-top:8px;width:100%;padding:13px;border-radius:12px;background:#FDF4EC;border:1px solid #E9C5AB;cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:#8E3F22" style-hover="background:#F8E6D9">{{ deleteLabel }}</button>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ importOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:30;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeImport }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:31;padding:20px 18px 52px;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1)">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font:700 18px/1.2 'Public Sans',sans-serif;color:#241D16">Attach a workbook</div>
+<button onClick="{{ closeImport }}" style="width:28px;height:28px;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:8px;cursor:pointer;font:400 12px/1 'Public Sans',sans-serif;color:#6E6152">✕</button>
+</div>
+<p style="margin:8px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Pick the .xlsx or .csv with your product list. A column of product names is all it needs — barcode, category, sub category and carton size are used if they are there, and filled in with sensible defaults if they are not.</p>
+<label style="margin-top:14px;display:block;padding:20px;border:1px dashed #C9B9A4;border-radius:12px;background:#FFFCF7;text-align:center;cursor:pointer">
+<span style="display:block;font:600 12.5px/1.3 'Public Sans',sans-serif;color:#241D16">{{ importFileLabel }}</span>
+<span style="display:block;margin-top:6px;font:400 10.5px/1.4 'JetBrains Mono',monospace;color:#8C7E6D">{{ importHint }}</span>
+<input type="file" accept=".xlsx,.csv" onChange="{{ onFile }}" style="display:none" />
+</label>
+<sc-if value="{{ importReady }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ hasNewLocs }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:12px;padding:12px 13px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:11px">
+<p style="margin:0;font:400 11px/1.5 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">{{ newLocsLabel }}</p>
+<button onClick="{{ takeLocs }}" style="margin-top:9px;width:100%;padding:10px;border-radius:9px;background:#F1EAE0;border:1px solid #DFD3C4;cursor:pointer;font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#241D16">{{ takeLocsLabel }}</button>
+</div>
+</sc-if>
+<button onClick="{{ buildAll }}" style="margin-top:12px;width:100%;padding:14px;border-radius:12px;background:#241D16;border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:#F6F0E7" style-hover="background:#3A2F24">{{ buildAllLabel }}</button>
+<p style="margin:9px 2px 0;font:400 10.5px/1.5 'Public Sans',sans-serif;color:#A0917F;text-wrap:pretty">{{ buildAllNote }}</p>
+<div style="margin-top:14px;height:1px;background:#E3D8C9"></div>
+<p style="margin:12px 2px 0;font:400 11px/1.55 'Public Sans',sans-serif;color:#8C7E6D;text-wrap:pretty">{{ replaceWarn }}</p>
+<div style="margin-top:10px;display:flex;gap:8px">
+<button onClick="{{ applyMerge }}" style="flex:1;padding:13px;border-radius:11px;background:#FFFCF7;border:1px solid #E3D8C9;cursor:pointer;font:600 11.5px/1.3 'Public Sans',sans-serif;color:#241D16">{{ mergeLabel }}</button>
+<button onClick="{{ applyReplace }}" style="flex:1;padding:13px;border-radius:11px;background:#B0522F;border:none;cursor:pointer;font:600 11.5px/1.3 'Public Sans',sans-serif;color:#fff">Replace list</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ clashOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:30;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeClashes }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:31;padding:20px 18px 52px;background:#F6F0E7;border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1)">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font:700 18px/1.2 'Public Sans',sans-serif;color:#241D16">Counted twice</div>
+<button onClick="{{ closeClashes }}" style="width:28px;height:28px;border:1px solid #E3D8C9;background:#FFFCF7;border-radius:8px;cursor:pointer;font:400 12px/1 'Public Sans',sans-serif;color:#6E6152">✕</button>
+</div>
+<p style="margin:9px 0 0;font:400 12.5px/1.6 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">{{ clashBlurb }}</p>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ clashes }}" as="c" hint-placeholder-count="2">
+<div style="padding:12px;background:#FFFCF7;border:1px solid #E3D8C9;border-radius:12px">
+<div style="font:500 12px/1.3 'Public Sans',sans-serif;color:#241D16">{{ c.name }}</div>
+<div style="margin-top:9px;display:flex;gap:7px">
+<button onClick="{{ c.keepMine }}" style="flex:1;padding:10px;border-radius:9px;background:#F1EAE0;border:1px solid #DFD3C4;cursor:pointer;font:500 10.5px/1.3 'JetBrains Mono',monospace;color:#241D16">{{ c.mine }}</button>
+<button onClick="{{ c.keepTheirs }}" style="flex:1;padding:10px;border-radius:9px;background:#F1EAE0;border:1px solid #DFD3C4;cursor:pointer;font:500 10.5px/1.3 'JetBrains Mono',monospace;color:#241D16">{{ c.theirs }}</button>
+</div>
+<sc-if value="{{ notAdmin }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:8px;font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:#8E3F22">{{ clashAction }}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-import>
+</div>
+
+<div style="width:340px;display:flex;flex-direction:column;gap:22px;padding-top:26px">
+<div>
+<div style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">HOW SETUP WORKS</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:12px">
+<div style="padding:13px 14px;background:#FFFCF7;border:1px solid #DFD3C4;border-radius:12px">
+<div style="font:600 12.5px/1.3 'Public Sans',sans-serif;color:#241D16">Your own places</div>
+<p style="margin:6px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Bars, venues, fridges, storerooms, vans — call them whatever you call them. Rename or remove one later and the counts follow.</p>
+</div>
+<div style="padding:13px 14px;background:#FFFCF7;border:1px solid #DFD3C4;border-radius:12px">
+<div style="font:600 12.5px/1.3 'Public Sans',sans-serif;color:#241D16">One product list</div>
+<p style="margin:6px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Every place counts the same list, so nothing gets missed. Build it product by product, or attach an .xlsx or .csv — a column of product names is enough, and it picks up barcodes, categories and carton sizes if they are there.</p>
+</div>
+<div style="padding:13px 14px;background:#FFFCF7;border:1px solid #DFD3C4;border-radius:12px">
+<div style="font:600 12.5px/1.3 'Public Sans',sans-serif;color:#241D16">Three to five counters</div>
+<p style="margin:6px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Everyone types their name, joins on a five-character code, and every line carries who entered it. Count the same line twice and both numbers are kept side by side until the admin picks. Everyone's counts land in the same shared stocktake within a second or so.</p>
+</div>
+</div>
+</div>
+<div style="padding:14px;background:#EFE7DB;border:1px dashed #C9B9A4;border-radius:12px">
+<div style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:#9A8B7B">OPEN</div>
+<p style="margin:9px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:#6E6152;text-wrap:pretty">Every count saves on the phone as well as to the shared stocktake, so closing the app or losing signal keeps your place. Unit costs and par levels are not in here yet.</p>
+</div>
+</div>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#B0522F&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#B0522F&quot;,&quot;#1F6F5C&quot;,&quot;#3A5BD9&quot;,&quot;#8A6A1F&quot;],&quot;section&quot;:&quot;Look&quot;},&quot;showClashes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behaviour&quot;}}">
+const TINTS = [
+  {tint:"#F2E3D6", tintInk:"#8E4A26"},
+  {tint:"#E7E4D3", tintInk:"#6B6A3A"},
+  {tint:"#DFE7E1", tintInk:"#3D6350"},
+  {tint:"#E4E1E6", tintInk:"#575070"},
+  {tint:"#EFE7DB", tintInk:"#7A6C5B"}
+];
+const LEGACY = "stocktake.setup.v1";
+const CLOUD = "stocktake.cloud.v1";
+
+/* Supabase: paste the project URL and anon key here (or set window.STOCKTAKE_SB
+   before this script). Left blank, the app falls back to the same-browser store. */
+const SB = {
+  url: (typeof window!=="undefined" && window.STOCKTAKE_SB && window.STOCKTAKE_SB.url) || "https://ijzuvrwcfipvsxbxginz.supabase.co",
+  key: (typeof window!=="undefined" && window.STOCKTAKE_SB && window.STOCKTAKE_SB.key) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenV2cndjZmlwdnN4YnhnaW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MzU2OTgsImV4cCI6MjEwMzMxMTY5OH0.eOlxDqeEFthSulxOLnMUHYiSDOI9hd55KjCuLr8SdXo",
+  on(){ return !!(this.url && this.key); },
+  head(){ return {apikey:this.key, Authorization:"Bearer "+this.key, "Content-Type":"application/json"}; },
+  get(code){
+    return fetch(this.url+"/rest/v1/stocktakes?code=eq."+encodeURIComponent(code)+"&select=doc",
+      {headers:this.head()})
+      .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+      .then(rows=>(rows && rows[0] && rows[0].doc) || null);
+  },
+  put(code, doc){
+    return fetch(this.url+"/rest/v1/stocktakes",
+      {method:"POST", headers:Object.assign({Prefer:"resolution=merge-duplicates"}, this.head()),
+       body:JSON.stringify({code:code, doc:doc})})
+      .then(r=>{ if(!r.ok) throw new Error(r.status); return true; });
+  }
+};
+let DEV = "";
+try{
+  DEV = sessionStorage.getItem("stocktake.device") || "";
+  if(!DEV){ DEV = Math.random().toString(36).slice(2,8); sessionStorage.setItem("stocktake.device", DEV); }
+}catch(e){ DEV = "solo"; }
+const STORE = LEGACY + "." + DEV;
+function abbrOf(n){
+  const w = String(n||"").trim().split(/\s+/).filter(x=>x.length);
+  if(!w.length) return "··";
+  if(w.length===1) return w[0].slice(0,2).toUpperCase();
+  return (w[0][0]+w[1][0]).toUpperCase();
+}
+
+class Component extends DCLogic {
+  constructor(p){
+    super(p);
+    this.state = {
+      title:"", locNames:[], master:[], ready:false, me:"", code:"", joinCode:"", joinName:"", joinNote:"",
+      drive:{connected:false, account:"", folder:"Stocktakes", lastSync:0, shared:[]},
+      admin:"", viewAs:"admin", archive:[], lockNote:"", finishOpen:false, joined:false, liveAt:0, removedIds:[],
+      online:true, syncing:false, pushed:{},
+      screen:"setup", setupStep:1, newLoc:"",
+      loc:null, counts:{}, query:"", sheet:null, field:"c",
+      hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null,
+      submitted:{}, totalsMode:"cat", expanded:{},
+      buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{},
+      mQuery:"", addOpen:false, importOpen:false,
+      nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
+      imported:null, importName:""
+    };
+  }
+
+  componentDidMount(){
+    let saved = null;
+    try{ saved = JSON.parse(localStorage.getItem(STORE)||"null"); }catch(e){}
+    /* the pre-device-id record belongs to exactly one window; every later
+       window starts blank so it can join by code */
+    if(!saved){
+      let claim = "";
+      try{ claim = localStorage.getItem("stocktake.claimed") || ""; }catch(e){}
+      if(!claim){
+        try{ localStorage.setItem("stocktake.claimed", DEV); }catch(e){}
+        claim = DEV;
+      }
+      if(claim === DEV){ try{ saved = JSON.parse(localStorage.getItem(LEGACY)||"null"); }catch(e){} }
+    }
+    this.timer = setInterval(()=>this.pull(), 1200);
+    if(saved && saved.locNames && saved.locNames.length){
+      this.setState({
+        title: saved.title||"", locNames: saved.locNames, master: saved.master||[],
+        counts: saved.counts||{}, submitted: saved.submitted||{},
+        me: saved.me||"", code: saved.code||this.makeCode(), dup: saved.dup||{},
+        drive: saved.drive||this.state.drive, pushed: saved.pushed||{},
+        admin: saved.admin||saved.me||"", archive: saved.archive||[], joined: !!saved.joined,
+        removedIds: saved.removedIds||[],
+        screen: (saved.me ? "home" : "setup"), ready:true
+      }, ()=>this.save({}));
+    } else {
+      this.setState({ready:true, code:this.makeCode()});
+    }
+  }
+
+  makeCode(){
+    const A = "ACDEFGHJKLMNPQRTUVWXY3479";
+    let out = "";
+    for(let i=0;i<5;i++) out += A[Math.floor(Math.random()*A.length)];
+    return out;
+  }
+
+  save(patch){
+    const s = this.state;
+    const body = Object.assign({
+      title:s.title, locNames:s.locNames, master:s.master, counts:s.counts, submitted:s.submitted,
+      me:s.me, code:s.code, dup:s.dup, drive:s.drive, pushed:s.pushed,
+      admin:s.admin, archive:s.archive, joined:s.joined, removedIds:s.removedIds
+    }, patch);
+    try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
+    this.publish();
+  }
+
+  componentWillUnmount(){ if(this.timer) clearInterval(this.timer); }
+
+  cloudAll(){ try{ return JSON.parse(localStorage.getItem(CLOUD)||"{}"); }catch(e){ return {}; } }
+
+  /* synchronous read used while rendering: the last doc this device saw */
+  cloudGet(code){
+    if(this.cache && this.cache[code]) return this.cache[code];
+    return SB.on() ? null : (this.cloudAll()[code] || null);
+  }
+  cloudPut(code, doc){
+    if(!this.cache) this.cache = {};
+    this.cache[code] = doc;
+    if(SB.on()){
+      SB.put(code, doc).then(
+        ()=>{ if(this.state.netErr) this.setState({netErr:false}); },
+        ()=>this.setState({netErr:true})
+      );
+      return;
+    }
+    const all = this.cloudAll(); all[code] = doc;
+    try{ localStorage.setItem(CLOUD, JSON.stringify(all)); }catch(e){}
+  }
+  fetchDoc(code){
+    if(!SB.on()) return Promise.resolve(this.cloudAll()[code] || null);
+    return SB.get(code);
+  }
+
+  /* union of two count maps, newest entry per line wins; a line held by two
+     different names comes back as a clash rather than an overwrite */
+  mergeCounts(mine, theirs, dupIn, meName){
+    const counts = Object.assign({}, mine);
+    let dup = dupIn || {};
+    let changed = false;
+    Object.keys(theirs||{}).forEach(k=>{
+      const r = theirs[k], l = counts[k];
+      if(!l){ counts[k] = r; changed = true; return; }
+      const clash = r.by && l.by && r.by !== l.by;
+      if(clash && !dup[k]){
+        const mineSide = l.by === meName ? l : r;
+        const theirSide = l.by === meName ? r : l;
+        dup = Object.assign({}, dup, {[k]: {
+          mine: {c:mineSide.c||0, s:mineSide.s||0, by:mineSide.by},
+          theirs: {c:theirSide.c||0, s:theirSide.s||0, by:theirSide.by}
+        }});
+        changed = true;
+      }
+      if(!clash && (r.ts||0) > (l.ts||0)){ counts[k] = r; changed = true; }
+    });
+    return {counts:counts, dup:dup, changed:changed};
+  }
+
+  publish(){
+    const s = this.state;
+    if(!s.code || !s.locNames.length || !s.ready) return;
+    const prev = this.cloudGet(s.code) || {};
+    const merged = this.mergeCounts(s.counts, prev.counts, s.dup, s.me);
+    /* union the product list both ways so a counter's new line survives the
+       admin's next write; ids the admin deleted are recorded so the union
+       cannot resurrect them */
+    const removed = {};
+    (prev.removed||[]).forEach(id=>{ removed[id] = 1; });
+    (s.removedIds||[]).forEach(id=>{ removed[id] = 1; });
+    const byId = {}; const master = [];
+    (s.master||[]).concat(prev.master||[]).forEach(i=>{
+      if(i && !byId[i.id] && !removed[i.id]){ byId[i.id] = 1; master.push(i); }
+    });
+    const people = {};
+    (prev.people||[]).forEach(p=>{ if(p && p.name) people[p.name] = p; });
+    if(s.me.trim()) people[s.me.trim()] = {name:s.me.trim(), admin: s.me.trim()===s.admin, ts: Date.now()};
+    this.cloudPut(s.code, {
+      title: s.title, locNames: s.locNames, master: master,
+      counts: merged.counts, submitted: s.submitted, admin: s.admin,
+      removed: Object.keys(removed),
+      people: Object.keys(people).map(n=>people[n]), rev: Date.now()
+    });
+  }
+
+  pull(){
+    const s = this.state;
+    if(!s.ready || !s.code || !s.locNames.length || this.pulling) return;
+    this.pulling = true;
+    this.fetchDoc(s.code).then(doc=>{
+      this.pulling = false;
+      if(!doc || !doc.rev) return;
+      if(!this.cache) this.cache = {};
+      this.cache[s.code] = doc;
+      if(this.state.netErr) this.setState({netErr:false});
+      this.applyDoc(doc);
+    }, ()=>{ this.pulling = false; this.setState({netErr:true}); });
+  }
+
+  landJoin(code, doc){
+    if(!doc || !(doc.locNames||[]).length){
+      this.setState({joinNote:"Nothing on "+code+" yet. Whoever set it up has to hit Start counting first."});
+      return;
+    }
+    if(!this.cache) this.cache = {};
+    this.cache[code] = doc;
+    this.setState({
+      code: code, joined: true, viewAs: "counter",
+      title: doc.title||"", locNames: doc.locNames||[], master: doc.master||[],
+      counts: doc.counts||{}, submitted: doc.submitted||{}, dup: {},
+      admin: doc.admin || "the organiser",
+      screen: "home", joinCode: "", joinNote: "", justSaved: false
+    }, ()=>this.save({}));
+  }
+
+  applyDoc(doc){
+    const s = this.state;
+    const merged = this.mergeCounts(s.counts, doc.counts, s.dup, s.me);
+    const patch = {};
+    if(merged.changed){ patch.counts = merged.counts; patch.dup = merged.dup; }
+    if(JSON.stringify(doc.submitted||{}) !== JSON.stringify(s.submitted||{})) patch.submitted = doc.submitted||{};
+    if(JSON.stringify(doc.master||[]) !== JSON.stringify(s.master||[])) patch.master = doc.master||[];
+    if(s.joined){
+      if(JSON.stringify(doc.locNames||[]) !== JSON.stringify(s.locNames||[])) patch.locNames = doc.locNames||[];
+      if(doc.admin && doc.admin !== s.admin) patch.admin = doc.admin;
+    }
+    const peers = (doc.people||[]).map(p=>p.name).sort().join("|");
+    if(peers !== (s.peers||"")) patch.peers = peers;
+    if(Object.keys(patch).length){
+      patch.liveAt = Date.now();
+      this.setState(patch, ()=>{ try{ localStorage.setItem(STORE, JSON.stringify(Object.assign({}, JSON.parse(localStorage.getItem(STORE)||"{}"), {counts:this.state.counts, submitted:this.state.submitted, dup:this.state.dup, master:this.state.master, locNames:this.state.locNames, admin:this.state.admin}))); }catch(e){} });
+    }
+  }
+
+  locs(){
+    return this.state.locNames.map((n,i)=>Object.assign({name:n, abbr:abbrOf(n)}, TINTS[i%TINTS.length]));
+  }
+
+  seed(){}
+  persist(master){ this.save({master:master}); }
+
+  ck(loc, id){ return loc+"|"+id; }
+  units(it, e){ if(!it || !e) return 0; return (e.c||0)*it.carton + (e.s||0); }
+  fmt(n){ return Math.round(n*100)/100; }
+  countedIn(name){
+    const c = this.state.counts, pre = name+"|";
+    return Object.keys(c).filter(k=>k.indexOf(pre)===0 && this.byId(k.split("|")[1])).length;
+  }
+  unitsIn(name){
+    const c = this.state.counts, pre = name+"|";
+    return Object.keys(c).filter(k=>k.indexOf(pre)===0)
+      .reduce((a,k)=>a+this.units(this.byId(k.split("|")[1]), c[k]), 0);
+  }
+  byId(id){ return this.state.master.find(x=>x.id===id); }
+
+  press(k){
+    return ()=>{
+      const s = this.state;
+      if(!s.sheet || !s.loc) return;
+      const it = this.byId(s.sheet);
+      const key = this.ck(s.loc, s.sheet);
+      const me = s.me || "You";
+      const counts = Object.assign({}, s.counts);
+      const prev = counts[key];
+      let dup = s.dup;
+      if(prev && prev.by && prev.by!==me && !dup[key] && s.buf===null){
+        dup = Object.assign({}, dup);
+        dup[key] = { theirs:{c:prev.c||0, s:prev.s||0, by:prev.by}, mine:{c:0, s:0, by:me} };
+      }
+      const e = Object.assign({c:0,s:0,by:me}, (dup[key] && s.buf===null) ? {c:0,s:0} : (counts[key]||{}));
+      const cur = s.buf===null ? "" : s.buf;
+      let next;
+      if(k==="del") next = cur.length>1 ? cur.slice(0,-1) : "";
+      else if(k==="."){ if(!it.frac || s.field!=="s" || cur.indexOf(".")>=0) return; next = (cur||"0")+"."; }
+      else next = (cur==="0"?"":cur) + k;
+      if(next.replace(/[^0-9]/g,"").length>4) return;
+      let v = next===""||next==="." ? 0 : parseFloat(next);
+      if(s.addBase !== null && s.addBase !== undefined) v = s.addBase + v;
+      if(s.field==="c") e.c = Math.round(v); else e.s = Math.round(v*100)/100;
+      e.by = me;
+      e.ts = Date.now();
+      counts[key] = e;
+      if(dup[key]) dup = Object.assign({}, dup, {[key]: Object.assign({}, dup[key], {mine:{c:e.c, s:e.s, by:me}})});
+      this.setState({counts:counts, dup:dup, buf:next}, ()=>this.save({}));
+    };
+  }
+
+  /* ---- file import ---- */
+  async readSheet(file){
+    const name = (file.name||"").toLowerCase();
+    if(name.endsWith(".csv")) return this.parseCsv(await file.text());
+    return this.parseXlsx(new Uint8Array(await file.arrayBuffer()));
+  }
+  splitCsvLine(line){
+    const out=[]; let cur="", q=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){ if(q && line[i+1]==='"'){cur+='"';i++;} else q=!q; }
+      else if(ch==="," && !q){ out.push(cur); cur=""; }
+      else cur+=ch;
+    }
+    out.push(cur); return out;
+  }
+  looseTable(rows){
+    /* No usable header: treat the longest-text column as product names. */
+    const width = rows.reduce((a,r)=>Math.max(a, r.length), 0);
+    if(!width) return null;
+    let best=-1, bestScore=0;
+    for(let c=0;c<width;c++){
+      let score=0;
+      rows.forEach(r=>{
+        const v=String(r[c]||"").trim();
+        if(v.length>2 && !/^[\d.,$%\s]+$/.test(v)) score += Math.min(v.length, 40);
+      });
+      if(score>bestScore){ bestScore=score; best=c; }
+    }
+    if(best<0 || bestScore<12) return null;
+    const seen={}, out=[];
+    rows.forEach(r=>{
+      const nm=String(r[best]||"").trim();
+      if(nm.length<2) return;
+      if(/^(product|item|name|description|stock)\b/i.test(nm) && out.length===0) return;
+      if(/grand total|^total/i.test(nm)) return;
+      const k=nm.toUpperCase();
+      if(seen[k]) return; seen[k]=1;
+      /* a plain number beside the name is most likely a carton size */
+      let carton=1;
+      for(let c=0;c<width;c++){
+        if(c===best) continue;
+        const v=String(r[c]||"").trim();
+        if(/^\d{1,3}$/.test(v)){ carton=parseInt(v,10); break; }
+      }
+      out.push({code:"", cat:"UNSORTED", sub:"UNSORTED", name:nm, carton:carton, frac:false});
+    });
+    return out.length ? {items:out, locs:[]} : null;
+  }
+
+  fromTable(rows){
+    let head=-1;
+    for(let i=0;i<Math.min(rows.length,20);i++){
+      if(rows[i].some(c=>/product\s*name|^\s*(product|item|description)\s*$/i.test(String(c)))){ head=i; break; }
+    }
+    if(head<0) return this.looseTable(rows);
+    const H = rows[head].map(c=>String(c||"").toLowerCase().trim());
+    const col = (re)=>H.findIndex(h=>re.test(h));
+    let cn=col(/product\s*name/);
+    if(cn<0) cn=col(/^\s*(product|item|description)\s*$/);
+    if(cn<0) return this.looseTable(rows);
+    const cc=col(/^category/), cs=col(/sub\s*category/), cz=col(/carton|pack|case|units?\s*per/), cb=col(/barcode|\bsku\b|product\s*(id|code)|^code$/);
+    const known = [cn,cc,cs,cz,cb];
+    const locs = [];
+    rows[head].forEach((cell,ci)=>{
+      const raw = String(cell||"").trim();
+      if(!raw || known.indexOf(ci)>=0) return;
+      if(/grand\s*total|^total$|^#|^id$|^cost|^price|^value|^par\b/i.test(raw)) return;
+      if(locs.indexOf(raw)<0) locs.push(raw);
+    });
+    const out=[];
+    for(let i=head+1;i<rows.length;i++){
+      const r=rows[i]; const nm=String(r[cn]||"").trim();
+      if(!nm || /grand total/i.test(nm)) continue;
+      const cat=(cc>=0 ? String(r[cc]||"").trim() : "") || "UNSORTED";
+      const sub=(cs>=0 ? String(r[cs]||"").trim() : "") || cat;
+      const carton=(cz>=0 ? parseFloat(r[cz]) : 1) || 1;
+      out.push({code:cb>=0?String(r[cb]||""):"", cat:cat, sub:sub, name:nm, carton:carton,
+        frac: cat.toUpperCase().indexOf("SPIRIT")>=0 || /PMIX/i.test(sub) || /^POSTMIX/i.test(nm)});
+    }
+    return {items:out, locs:locs};
+  }
+  parseCsv(text){
+    const rows = text.split(/\r?\n/).filter(l=>l.length).map(l=>this.splitCsvLine(l));
+    return this.fromTable(rows);
+  }
+  async parseXlsx(buf){
+    const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+    let eocd=-1;
+    for(let i=buf.length-22;i>=0;i--){ if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break; } }
+    if(eocd<0) return null;
+    const n=dv.getUint16(eocd+10,true), cd=dv.getUint32(eocd+16,true);
+    let p=cd; const map={};
+    for(let i=0;i<n;i++){
+      const nl=dv.getUint16(p+28,true), el=dv.getUint16(p+30,true), cl=dv.getUint16(p+32,true);
+      map[new TextDecoder().decode(buf.slice(p+46,p+46+nl))]=dv.getUint32(p+42,true);
+      p+=46+nl+el+cl;
+    }
+    const get = async (nm)=>{
+      if(map[nm]===undefined) return "";
+      const lho=map[nm], nl=dv.getUint16(lho+26,true), el=dv.getUint16(lho+28,true);
+      const method=dv.getUint16(lho+8,true); const cs=dv.getUint32(lho+18,true);
+      const start=lho+30+nl+el;
+      const data = cs===0 ? buf.slice(start) : buf.slice(start, start+cs);
+      if(method===0) return new TextDecoder().decode(data);
+      return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+    };
+    const ssXml = await get("xl/sharedStrings.xml");
+    const strs = (ssXml.match(/<si>[\s\S]*?<\/si>/g)||[]).map(si=>
+      (si.match(/<t[^>]*>[\s\S]*?<\/t>/g)||[]).map(t=>t.replace(/<[^>]+>/g,"")).join(""));
+    const wb = await get("xl/workbook.xml");
+    const rels = await get("xl/_rels/workbook.xml.rels");
+    const rmap = {};
+    (rels.match(/<Relationship [^>]*>/g)||[]).forEach(r=>{
+      const id=(r.match(/Id="([^"]+)"/)||[])[1], t=(r.match(/Target="([^"]+)"/)||[])[1];
+      if(id&&t) rmap[id]=t.replace(/^\/?xl\//,"");
+    });
+    let target = null;
+    (wb.match(/<sheet [^>]*>/g)||[]).forEach(sh=>{
+      const nm=(sh.match(/name="([^"]+)"/)||[])[1];
+      const rid=(sh.match(/r:id="([^"]+)"/)||[])[1];
+      if(!target && /master|full stock/i.test(nm||"")) target = rmap[rid];
+    });
+    if(!target){
+      const first=(wb.match(/<sheet [^>]*>/)||[])[0];
+      target = rmap[(first&&first.match(/r:id="([^"]+)"/)||[])[1]] || "worksheets/sheet1.xml";
+    }
+    const sh = await get("xl/"+target);
+    const rows=[];
+    (sh.match(/<row[\s\S]*?<\/row>|<row[^>]*\/>/g)||[]).forEach(r=>{
+      const cells=[];
+      (r.match(/<c [^>]*\/>|<c [^>]*>[\s\S]*?<\/c>/g)||[]).forEach(c=>{
+        const ref=(c.match(/r="([A-Z]+)/)||[])[1]||"A";
+        let ci=0; for(let i=0;i<ref.length;i++) ci = ci*26 + (ref.charCodeAt(i)-64);
+        ci--;
+        const isStr=/t="s"/.test(c);
+        const inline=(c.match(/<is>[\s\S]*?<t[^>]*>([\s\S]*?)<\/t>/)||[])[1];
+        const v=(c.match(/<v>([\s\S]*?)<\/v>/)||[])[1];
+        cells[ci] = inline!==undefined ? inline : (v===undefined ? "" : (isStr ? strs[+v] : v));
+      });
+      rows.push(cells);
+    });
+    return this.fromTable(rows);
+  }
+
+  renderVals(){
+    const s = this.state;
+    const accent = this.props.accent || "#B0522F";
+    const master = s.master;
+    const LOCS = this.locs();
+    const dupOn = this.props.showClashes !== false;
+    const dupKeys = (dupOn ? Object.keys(s.dup) : []).filter(k=>{
+      const p = k.split("|");
+      return s.counts[k] && this.byId(p[1]) && s.locNames.indexOf(p[0])>=0;
+    });
+    const totalUnits = Object.keys(s.counts).reduce((a,k)=>
+      a + this.units(this.byId(k.split("|")[1]), s.counts[k]), 0);
+    const N = master.length;
+
+    const adminName = s.admin || s.me || "the organiser";
+    const amAdmin = !s.joined && s.viewAs === "admin";
+    const lock = (msg)=>()=>this.setState({lockNote:msg});
+    const vals = {
+      W: 402, H: 874,
+      amAdmin: amAdmin, notAdmin: !amAdmin,
+      adminName: adminName,
+      roleLabel: amAdmin ? "ADMIN" : "COUNTER",
+      roleInk: amAdmin ? "#B0522F" : "#6E6152",
+      roleBg: amAdmin ? "#FBEFE6" : "#F1EAE0",
+      roleBorder: amAdmin ? "#E9C5AB" : "#DFD3C4",
+      toggleRole: s.joined
+        ? lock("You joined "+(s.admin||"someone else")+"'s stocktake on code "+s.code+", so you count as yourself. Only they can reopen places or change existing products.")
+        : ()=>this.setState({viewAs: amAdmin ? "counter" : "admin", lockNote:""}),
+      lockOpen: !!s.lockNote,
+      lockNote: s.lockNote,
+      lockTitle: "Admin only",
+      closeLock: ()=>this.setState({lockNote:""}),
+      isPast: s.screen==="past",
+      openPast: ()=>this.setState({screen:"past"}),
+      pastCount: (s.archive||[]).length,
+      pastRowMeta: (s.archive||[]).length ? (s.archive||[]).length+" finished in "+(s.drive.folder||"My Drive") : "none finished yet",
+      pastEmpty: !(s.archive||[]).length,
+      pastAny: !!(s.archive||[]).length,
+      pastList: (s.archive||[]).slice().reverse().map(a=>({
+        title: a.title, file: a.file,
+        when: a.when,
+        meta: a.units+" units · "+a.locs+(a.locs===1?" place":" places")+" · by "+a.by
+      })),
+      finishOpen: s.finishOpen,
+      openFinish: amAdmin ? ()=>this.setState({finishOpen:true}) : lock(adminName+" closes the stocktake off. You can keep counting until then."),
+      closeFinish: ()=>this.setState({finishOpen:false}),
+      confirmFinish: ()=>{
+        const entry = {
+          title: s.title || "Untitled stocktake",
+          file: s.drive.fileName || "stocktake.log.json",
+          when: new Date().toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}),
+          units: this.fmt(this.state.locNames.reduce((a,n)=>a+this.unitsIn(n),0)),
+          locs: s.locNames.length, by: s.admin || s.me || "—"
+        };
+        const archive = (s.archive||[]).concat([entry]);
+        const drive = Object.assign({}, s.drive, {fileName:"", createdAt:0});
+        this.setState({archive:archive, drive:drive, counts:{}, submitted:{}, dup:{}, pushed:{},
+          title:"", finishOpen:false, screen:"setup", setupStep:1}, ()=>this.save({}));
+      },
+      isHome: s.screen==="home", isCount: s.screen==="count", isDone: s.screen==="done",
+      isTotals: s.screen==="totals", isMaster: s.screen==="master",
+      sessionUnits: this.fmt(totalUnits),
+      sessionLines: Object.keys(s.counts).filter(k=>this.byId(k.split("|")[1])).length,
+      clashCount: dupKeys.length,
+      clashLabel: (dupKeys.length===1 ? "1 line counted twice" : dupKeys.length+" lines counted twice")
+        + (s.viewAs==="admin" ? (dupKeys.length===1 ? " — pick which number stands" : " — pick which numbers stand")
+                              : " — waiting on "+(s.admin||"the organiser")),
+      locDoneLabel: Object.keys(s.submitted||{}).length + " of "+LOCS.length+" submitted",
+      goHome: ()=>this.setState({screen: (s.locNames.length && s.me.trim()) ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}),
+      openTotals: ()=>this.setState({screen:"totals"}),
+      openMaster: ()=>this.setState({screen:"master"}),
+      isSetup: s.screen==="setup",
+      openSetup: ()=>this.setState({screen:"setup"}),
+      isTeam: s.screen==="team",
+      openTeam: ()=>this.setState({screen:"team"}),
+      isDrive: s.screen==="drive",
+      openDrive: ()=>this.setState({screen:"drive"}),
+      me: s.me || "unnamed",
+      meValue: s.me,
+      onMe: (e)=>this.setState({me:e.target.value}, ()=>this.save({})),
+      joinCode: s.code,
+      joinCodeValue: s.joinCode,
+      onJoinCode: (e)=>this.setState({joinCode:e.target.value.toUpperCase()}),
+      joinNote: s.joinNote,
+      tryJoin: ()=>{
+        const c = (s.joinCode||"").trim().toUpperCase();
+        if(!c) return;
+        if(s.me.trim().length<2){ this.setState({joinNote:"Type your name first. Every line you count is signed with it."}); return; }
+        if(c===s.code && s.locNames.length){ this.setState({joinNote:"That is this stocktake's own code. Share it with the others."}); return; }
+        this.setState({joinNote:"Looking for "+c+"…"});
+        this.fetchDoc(c).then(doc=>this.landJoin(c, doc), ()=>this.setState({joinNote:"Could not reach the server. Check the connection and try again."}));
+      },
+      joinedAsCounter: s.joined,
+      joinedNote: s.joined ? "Joined "+(s.title||"a stocktake")+" on "+s.code+" · "+(s.admin||"organiser")+" runs it" : "",
+      netErr: !!s.netErr,
+      soloMode: !SB.on(),
+      appTitle: s.title.trim() || "Your stocktake",
+      titleValue: s.title,
+      onTitle: (e)=>this.setState({title:e.target.value}, ()=>this.save({})),
+      newLoc: s.newLoc,
+      onNewLoc: (e)=>this.setState({newLoc:e.target.value}),
+      addLocLabel: s.newLoc.trim().length>1 ? "ADD" : "NAME IT",
+      addLocBg: s.newLoc.trim().length>1 ? "#241D16" : "#C4B7A6",
+      addLoc: s.joined
+        ? lock("The places come from "+(s.admin||"the organiser")+"'s stocktake. Ask them to add one.")
+        : ()=>{
+        const n = s.newLoc.trim();
+        if(n.length<2 || s.locNames.indexOf(n)>=0) return;
+        this.setState({locNames: s.locNames.concat([n]), newLoc:""}, ()=>this.save({}));
+      },
+      setupLocs: s.locNames.map((n,i)=>({
+        name: n, abbr: abbrOf(n),
+        tint: TINTS[i%TINTS.length].tint, tintInk: TINTS[i%TINTS.length].tintInk,
+        rename: (e)=>{
+          const v = e.target.value;
+          const names = s.locNames.slice(); names[i] = v;
+          const counts = {}; const submitted = {};
+          Object.keys(s.counts).forEach(k=>{
+            const parts = k.split("|");
+            counts[(parts[0]===n ? v : parts[0])+"|"+parts[1]] = s.counts[k];
+          });
+          Object.keys(s.submitted||{}).forEach(k=>{ submitted[k===n?v:k] = s.submitted[k]; });
+          this.setState({locNames:names, counts:counts, submitted:submitted}, ()=>this.save({}));
+        },
+        remove: s.joined ? lock("Only "+(s.admin||"the organiser")+" can remove a place.") : ()=>{
+          const names = s.locNames.filter((x,j)=>j!==i);
+          const counts = Object.assign({}, s.counts);
+          Object.keys(counts).forEach(k=>{ if(k.split("|")[0]===n) delete counts[k]; });
+          const submitted = Object.assign({}, s.submitted||{}); delete submitted[n];
+          this.setState({locNames:names, counts:counts, submitted:submitted}, ()=>this.save({}));
+        }
+      })),
+      setupLocsCount: s.locNames.length
+        ? s.locNames.length+(s.locNames.length===1?" place":" places")
+        : "none yet",
+      setupMasterCount: master.length
+        ? master.length+(master.length===1?" product":" products")
+        : "empty — add products or attach a workbook",
+      canStart: s.locNames.length>0 && s.me.trim().length>1,
+      startBg: (s.locNames.length>0 && s.me.trim().length>1) ? "#241D16" : "#C4B7A6",
+      startLabel: s.me.trim().length<2 ? "Add your name first"
+        : (s.locNames.length===0 ? "Add a place first"
+          : (master.length ? "Start counting" : "Start with an empty list")),
+      folderValue: s.drive.folder,
+      onFolder: (e)=>this.setState({drive: Object.assign({}, s.drive, {folder:e.target.value})}, ()=>this.save({})),
+      justSaved: !!s.justSaved,
+      savedFileName: s.drive.fileName||"",
+      savedWhere: "in "+(s.drive.folder||"My Drive")+" · "+((s.drive.shared||[]).length ? (s.drive.shared.length+(s.drive.shared.length===1?" other person":" other people")+" can open it") : "only you so far"),
+      dismissSaved: ()=>this.setState({justSaved:false}),
+      startCounting: ()=>{
+        if(!(s.locNames.length && s.me.trim().length>1)) return;
+        const name = ((s.title||"stocktake").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"stocktake")+".log.json";
+        const drive = s.drive.connected
+          ? Object.assign({}, s.drive, {fileName:name, createdAt: s.drive.createdAt||Date.now(), lastSync: Date.now()})
+          : s.drive;
+        this.setState({screen:"home", drive:drive, admin: s.admin||s.me.trim(), justSaved: s.drive.connected}, ()=>this.save({}));
+      },
+      hasLocs: s.locNames.length>0,
+      noLocs: s.locNames.length===0,
+      team: (()=>{
+        const by = {};
+        Object.keys(s.counts).forEach(k=>{
+          if(!this.byId(k.split("|")[1])) return;
+          const e = s.counts[k];
+          const who = e.by || "Unknown";
+          if(!by[who]) by[who] = {name:who, lines:0, units:0, ts:0};
+          by[who].lines++;
+          by[who].units += this.units(this.byId(k.split("|")[1]), e);
+          if(e.ts && e.ts>by[who].ts) by[who].ts = e.ts;
+        });
+        const meName = s.me || "You";
+        if(!by[meName]) by[meName] = {name:meName, lines:0, units:0, ts:0};
+        const doc = s.code ? this.cloudGet(s.code) : null;
+        (doc && doc.people || []).forEach(p=>{
+          if(p && p.name && !by[p.name]) by[p.name] = {name:p.name, lines:0, units:0, ts:0};
+        });
+        const ago = (t)=>{
+          if(!t) return "no entries yet";
+          const m = Math.round((Date.now()-t)/60000);
+          return m<1 ? "just now" : (m<60 ? m+" min ago" : Math.round(m/60)+" h ago");
+        };
+        return Object.keys(by).map(n=>({
+          name: n, isMe: n===meName, badge: n===meName ? "YOU" : (n===s.admin ? "ADMIN" : ""),
+          initial: n.slice(0,1).toUpperCase(),
+          lines: by[n].lines + (by[n].lines===1?" line":" lines"),
+          units: this.fmt(by[n].units)+" units",
+          last: ago(by[n].ts),
+          tint: n===meName ? "#241D16" : "#C9B9A4"
+        }));
+      })(),
+      teamCount: (()=>{
+        const set = {};
+        Object.keys(s.counts).forEach(k=>{ if(s.counts[k].by && this.byId(k.split("|")[1])) set[s.counts[k].by]=1; });
+        if(s.me) set[s.me]=1;
+        return Object.keys(set).length;
+      })(),
+      syncPill: !s.drive.connected ? "NOT FILED TO DRIVE"
+        : (!s.online ? "OFFLINE — QUEUEING" : (s.syncing ? "SYNCING…" : "SYNCED TO DRIVE")),
+      driveRowMeta: s.drive.connected ? (s.drive.account||"connected") : "not connected · finished count is not filed",
+      pendingInk: "#E4A07A",
+      syncBg: (s.drive.connected && s.online && !s.syncing) ? "#B0522F" : "#C4B7A6",
+      syncLabel: s.syncing ? "Syncing…" : (!s.online ? "Waiting for signal" : "Sync now"),
+      driveOn: s.drive.connected,
+      driveOff: !s.drive.connected,
+      driveAccount: s.drive.account || "not signed in",
+      driveFileName: s.drive.fileName || ((s.title||"stocktake").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"stocktake")+".log.json",
+      driveFolder: s.drive.folder,
+      driveShared: (s.drive.shared||[]).map(a=>({email:a, initial:a.slice(0,1).toUpperCase()})),
+      driveSharedCount: (s.drive.shared||[]).length
+        ? (s.drive.shared.length+(s.drive.shared.length===1?" person":" people")+" have access")
+        : "only you",
+      connectDrive: ()=>{
+        const guess = (s.me||"you").trim().toLowerCase().replace(/[^a-z0-9]+/g,".");
+        this.setState({drive: Object.assign({}, s.drive, {
+          connected:true, account: guess+"@gmail.com", lastSync: Date.now(),
+          shared: s.drive.shared && s.drive.shared.length ? s.drive.shared : []
+        })}, ()=>this.save({}));
+      },
+      disconnectDrive: ()=>{
+        this.setState({drive: Object.assign({}, s.drive, {connected:false, account:""})}, ()=>this.save({}));
+      },
+      shareInput: s.shareInput||"",
+      onShareInput: (e)=>this.setState({shareInput:e.target.value}),
+      addShare: ()=>{
+        const v = (s.shareInput||"").trim().toLowerCase();
+        if(v.indexOf("@")<1 || (s.drive.shared||[]).indexOf(v)>=0) return;
+        this.setState({drive: Object.assign({}, s.drive, {shared:(s.drive.shared||[]).concat([v])}), shareInput:""}, ()=>this.save({}));
+      },
+      onlineLabel: s.online ? "ONLINE" : "OFFLINE — QUEUEING",
+      onlineDot: s.online ? "#4E7C59" : "#C08A2E",
+      toggleOnline: ()=>this.setState({online:!s.online}),
+      pendingCount: (()=>{
+        let n = 0;
+        Object.keys(s.counts).forEach(k=>{
+          if(!this.byId(k.split("|")[1])) return;
+          const e = s.counts[k];
+          if(!s.pushed[k] || s.pushed[k] < (e.ts||0)) n++;
+        });
+        return n;
+      })(),
+      lastSyncLabel: (()=>{
+        if(!s.drive.connected) return "not connected";
+        if(!s.drive.lastSync) return "never";
+        const m = Math.round((Date.now()-s.drive.lastSync)/60000);
+        return m<1 ? "just now" : (m<60 ? m+" min ago" : Math.round(m/60)+" h ago");
+      })(),
+      syncing: s.syncing,
+      syncNow: ()=>{
+        if(!s.drive.connected || !s.online || s.syncing) return;
+        this.setState({syncing:true});
+        setTimeout(()=>{
+          const pushed = Object.assign({}, this.state.pushed);
+          Object.keys(this.state.counts).forEach(k=>{ pushed[k] = Date.now(); });
+          this.setState({
+            syncing:false, pushed:pushed,
+            drive: Object.assign({}, this.state.drive, {lastSync: Date.now()})
+          }, ()=>this.save({}));
+        }, 900);
+      },
+      addDemoMate: ()=>{
+        const names = ["Sam","Priya","Marco","Tess"].filter(n=>n!==(s.me||""));
+        const used = {};
+        Object.keys(s.counts).forEach(k=>{ used[s.counts[k].by]=1; });
+        const who = names.find(n=>!used[n]) || "Alex";
+        const loc = s.locNames[0];
+        if(!loc || !s.master.length) return;
+        const counts = Object.assign({}, s.counts);
+        const mine = Object.keys(counts).filter(k=>k.split("|")[0]===loc);
+        let added = 0;
+        s.master.forEach(it=>{
+          const key = this.ck(loc, it.id);
+          if(added<4 && !counts[key]){
+            counts[key] = {c: 1+(added%3), s: added*2, by: who, ts: Date.now()-added*420000};
+            added++;
+          }
+        });
+        this.setState({counts:counts}, ()=>this.save({}));
+      },
+      grandUnits: this.fmt(totalUnits),
+      grandLines: Object.keys(s.counts).length + " of "+(N*LOCS.length)+" location lines have a figure",
+      masterMeta: N + (N===1?" product":" products") + " · used by every location",
+      masterFootnote: "Edits apply to all "+LOCS.length+" locations. Counts already entered are kept.",
+      openClashes: ()=>this.setState({clashOpen:true}),
+      closeClashes: ()=>this.setState({clashOpen:false}),
+      clashOpen: s.clashOpen,
+      clashes: dupKeys.map(key=>{
+        const it = this.byId(key.split("|")[1]), d = s.dup[key];
+        const resolve=(which)=>()=>{
+          const dup=Object.assign({}, s.dup); delete dup[key];
+          const counts=Object.assign({}, s.counts);
+          counts[key] = which==="mine"
+            ? {c:d.mine.c, s:d.mine.s, by:(d.mine.by||s.me||"You"), ts:Date.now()}
+            : {c:d.theirs.c, s:d.theirs.s, by:(d.theirs.by||"Them"), ts:Date.now()};
+          this.setState({dup:dup, counts:counts, clashOpen: Object.keys(dup).length>0});
+        };
+        return { name: it ? it.name : "",
+          where: key.split("|")[0],
+          mine: (d.mine.by||s.me||"You")+" · "+d.mine.c+"×"+(it?it.carton:1)+" + "+this.fmt(d.mine.s),
+          theirs: (d.theirs.by||"Them")+" · "+d.theirs.c+"×"+(it?it.carton:1)+" + "+this.fmt(d.theirs.s),
+          keepMine: amAdmin ? resolve("mine") : lock(adminName+" decides which count stands. Both numbers stay saved until then."),
+          keepTheirs: amAdmin ? resolve("theirs") : lock(adminName+" decides which count stands. Both numbers stay saved until then.") };
+      }),
+      clashBlurb: amAdmin
+        ? "Both numbers are kept until you pick. Nothing is overwritten in the meantime."
+        : "Both numbers are kept. "+adminName+" picks which one stands — you can carry on counting.",
+      clashAction: amAdmin ? "" : "WAITING ON "+String(adminName).toUpperCase(),
+      locations: LOCS.map(l=>{
+        const done = this.countedIn(l.name);
+        const pct = N ? Math.round(done/N*100) : 0;
+        const sub = (s.submitted||{})[l.name];
+        return { name:l.name, abbr:l.abbr, tint:l.tint, tintInk:l.tintInk,
+          meta: sub!==undefined ? "submitted · "+this.fmt(sub)+" units"
+              : (done ? done+" of "+N+" lines" : N+" lines · not started"),
+          pct: pct+"%", pctLabel: sub!==undefined ? "✓" : (done ? pct+"%" : "—"),
+          canReopen: sub!==undefined && amAdmin,
+          reopen: ()=>{
+            const nx = Object.assign({}, s.submitted||{}); delete nx[l.name];
+            this.setState({submitted:nx, screen:"count", loc:l.name, query:""}, ()=>this.save({}));
+          },
+          open: (sub!==undefined && !amAdmin)
+            ? lock(l.name+" is submitted. Only "+adminName+" can reopen it.")
+            : ()=>this.setState({screen:"count", loc:l.name, query:""}) };
+      })
+    };
+
+    /* ---- master list screen ---- */
+    if(s.screen==="master" || s.screen==="setup" || s.addOpen || s.importOpen){
+      const mq = s.mQuery.trim().toLowerCase();
+      const list = mq ? master.filter(i=>(i.name+" "+i.sub+" "+i.cat).toLowerCase().indexOf(mq)>=0) : master;
+      const cats=[]; const buckets={};
+      list.forEach(i=>{ if(!buckets[i.cat]){buckets[i.cat]=[]; cats.push(i.cat);} buckets[i.cat].push(i); });
+      vals.mQuery = s.mQuery;
+      vals.onMQuery = (e)=>this.setState({mQuery:e.target.value});
+      vals.masterGroups = cats.map(c=>({
+        cat:c, count: buckets[c].length+(buckets[c].length===1?" line":" lines"),
+        items: buckets[c].map(i=>({
+          name: i.name,
+          meta: (i.code ? i.code+" · " : "")+i.sub+" · ctn "+i.carton+(i.frac?" · part bottles":""),
+          edit: amAdmin
+            ? ()=>this.setState({addOpen:true, editId:i.id, confirmNoCat:false,
+                nf:{name:i.name, cat:i.cat, sub:i.sub, carton:String(i.carton), code:i.code||"", frac:!!i.frac, subNew:false, catNew:false}})
+            : lock("Only "+adminName+" can change a product that is already on the list. You can still add new ones."),
+          chev: amAdmin ? "›" : "🔒"
+        }))
+      }));
+      const allCats=[]; master.forEach(i=>{ if(allCats.indexOf(i.cat)<0) allCats.push(i.cat); });
+      const allCatsFirst = allCats[0] || "";
+      vals.catOptions = allCats.map(x=>({value:x, label:x})).concat([{value:"__new", label:"+ New category…"}]);
+      const catNew = !!s.nf.catNew || !allCats.length;
+      vals.nfCatNew = catNew;
+      vals.nfCatSelect = catNew ? "__new" : (allCats.indexOf(s.nf.cat)>=0 ? s.nf.cat : (allCats[0]||"__new"));
+      vals.addOpen = s.addOpen;
+      const editing = !!s.editId;
+      vals.isEditing = editing;
+      vals.addTitle = editing ? "Edit product" : "Add a product";
+      vals.addBlurb = editing
+        ? "Changes apply everywhere this product is counted. Counts already entered are kept."
+        : "It joins every location's list straight away.";
+      vals.openAdd = ()=>{
+        const cat = allCatsFirst;
+        const list = cat ? subsFor(cat) : [];
+        this.setState({addOpen:true, editId:null, confirmNoCat:false,
+          nf:{name:"", cat:cat, sub:(list[0]||""), carton:"24", code:"", frac:false,
+              subNew:!list.length, catNew:!cat}});
+      };
+      vals.closeAdd = ()=>this.setState({addOpen:false, editId:null, confirmNoCat:false});
+      vals.deleteLabel = "Delete from master list";
+      vals.deleteItem = ()=>{
+        const next = master.filter(x=>x.id!==s.editId);
+        const counts = Object.assign({}, s.counts);
+        Object.keys(counts).forEach(k=>{ if(k.split("|")[1]===s.editId) delete counts[k]; });
+        const gone = (s.removedIds||[]).concat([s.editId]);
+        this.setState({master:next, counts:counts, removedIds:gone, addOpen:false, editId:null},
+          ()=>this.save({}));
+      };
+      const nf = s.nf;
+      vals.nfName = nf.name; vals.nfSub = nf.sub; vals.nfCat = nf.cat; vals.nfCarton = nf.carton;
+      vals.nfCode = nf.code || "";
+      const setNf=(patch)=>this.setState({nf:Object.assign({}, nf, patch)});
+      vals.onNfName = (e)=>setNf({name:e.target.value});
+      vals.onNfSub = (e)=>setNf({sub:e.target.value});
+      const subsFor = (cat)=>{
+        const out=[]; master.forEach(i=>{ if(i.cat===cat && out.indexOf(i.sub)<0) out.push(i.sub); });
+        if(!out.length) master.forEach(i=>{ if(out.indexOf(i.sub)<0) out.push(i.sub); });
+        return out;
+      };
+      const subs = catNew ? [] : subsFor(nf.cat);
+      vals.subOptions = subs.map(x=>({value:x, label:x})).concat([{value:"__new", label:"+ New sub category…"}]);
+      vals.nfSubNew = !!nf.subNew || !subs.length;
+      vals.nfSubSelect = nf.subNew ? "__new" : (subs.indexOf(nf.sub)>=0 ? nf.sub : (subs[0]||"__new"));
+      vals.onNfSubPick = (e)=>{
+        const v = e.target.value;
+        if(v==="__new") setNf({subNew:true, sub:""});
+        else setNf({subNew:false, sub:v});
+      };
+      vals.onNfCat = (e)=>{
+        const v = e.target.value;
+        if(v==="__new"){ setNf({catNew:true, cat:"", subNew:true, sub:""}); return; }
+        const list = subsFor(v);
+        setNf({catNew:false, cat:v, subNew:!list.length, sub: list.indexOf(nf.sub)>=0 ? nf.sub : (list[0]||"")});
+      };
+      vals.onNfCatText = (e)=>setNf({cat:e.target.value});
+      vals.onNfCarton = (e)=>setNf({carton:e.target.value});
+      vals.onNfCode = (e)=>setNf({code:e.target.value});
+      vals.toggleNfFrac = ()=>setNf({frac:!nf.frac});
+      vals.nfFracTrack = nf.frac ? accent : "#DCCFBE";
+      vals.nfFracKnob = nf.frac ? "16px" : "2px";
+      const catText = catNew ? nf.cat.trim() : (vals.nfCatSelect||"");
+      const subText = (vals.nfSubNew ? nf.sub : vals.nfSubSelect) || "";
+      const unsorted = catText.trim().length<2 || subText.trim().length<1;
+      const valid = nf.name.trim().length>1;
+      vals.askUnsorted = valid && unsorted && !!s.confirmNoCat;
+      vals.unsortedNote = catText.trim().length<2
+        ? "No category. It will sit in an UNSORTED group in every place, which makes it harder to find while counting. You can set one later by tapping the product."
+        : "No sub category. It will sit under " + catText.trim().toUpperCase() + " · UNSORTED, which makes it harder to find while counting. You can set one later by tapping the product.";
+      vals.confirmUnsortedLabel = editing ? "Save it anyway" : "Add it anyway";
+      vals.cancelUnsorted = ()=>this.setState({confirmNoCat:false});
+      vals.saveBg = valid ? "#241D16" : "#C4B7A6";
+      vals.saveLabel = !valid ? "Name it first"
+        : (editing ? "Save changes" : "Add to master list");
+      vals.saveBlocked = !valid;
+      vals.saveNew = ()=>{
+        if(!valid) return;
+        if(unsorted && !s.confirmNoCat){ this.setState({confirmNoCat:true}); return; }
+        const catFinal = catText.trim().toUpperCase() || "UNSORTED";
+        const fields = { code:(nf.code||"").trim(), cat:catFinal,
+          sub:subText.trim().toUpperCase() || catFinal,
+          name:nf.name.trim(), carton:parseFloat(nf.carton)||1, frac:nf.frac };
+        let next;
+        if(editing) next = master.map(x=>x.id===s.editId ? Object.assign({}, x, fields) : x);
+        else next = master.concat([Object.assign({id:"n"+Date.now()}, fields)]);
+        this.persist(next);
+        this.setState({master:next, addOpen:false, editId:null, confirmNoCat:false,
+          nf:{name:"", cat:fields.cat, sub:fields.sub, carton:nf.carton, code:"", frac:false, subNew:false, catNew:false}}, ()=>this.save({}));
+      };
+      vals.importOpen = s.importOpen;
+      vals.openImport = ()=>this.setState({importOpen:true, imported:null, importName:""});
+      vals.closeImport = ()=>this.setState({importOpen:false});
+      vals.importFileLabel = s.importName || "Choose a file";
+      const parsed = s.imported;
+      const imp = parsed ? parsed.items : null;
+      const impLocs = parsed ? parsed.locs : [];
+      vals.importHint = imp===null
+        ? (s.importName ? "Could not read a product list from that file — it needs at least one column of product names" : ".xlsx or .csv from this phone")
+        : imp.length+(imp.length===1?" product":" products")
+          + (impLocs.length ? " and "+impLocs.length+(impLocs.length===1?" place":" places") : "")
+          + " read from "+s.importName;
+      vals.importReady = !!(imp && imp.length);
+      const newLocs = impLocs.filter(n=>s.locNames.indexOf(n)<0);
+      vals.hasNewLocs = newLocs.length>0;
+      vals.newLocsLabel = newLocs.length
+        ? ("Places found in the file: "+newLocs.join(", "))
+        : "";
+      vals.takeLocsLabel = "Add "+newLocs.length+(newLocs.length===1?" place":" places");
+      vals.takeLocs = ()=>{
+        if(!newLocs.length) return;
+        this.setState({locNames: s.locNames.concat(newLocs)}, ()=>this.save({}));
+      };
+      const newOnes = imp ? imp.filter(r=>!master.some(m=>m.name.trim().toUpperCase()===r.name.trim().toUpperCase())) : [];
+      vals.mergeLabel = "Add "+newOnes.length+" new only";
+      const norm = (v)=>String(v||"").trim().toUpperCase();
+      const matchExisting = (r)=>master.find(m=>
+        (r.code && m.code && norm(m.code)===norm(r.code)) || norm(m.name)===norm(r.name));
+      const rebuild = (rows, locNames)=>{
+        const next = rows.map((r,i)=>{
+          const m = matchExisting(r);
+          return m ? Object.assign({}, m, r, {id:m.id}) : Object.assign({id:"x"+i+"-"+Date.now()}, r);
+        });
+        const keepId = {}; next.forEach(n=>{ keepId[n.id]=true; });
+        const keepLoc = {}; locNames.forEach(n=>{ keepLoc[n]=true; });
+        const counts = Object.assign({}, s.counts);
+        Object.keys(counts).forEach(k=>{
+          const p = k.split("|");
+          if(!keepLoc[p[0]] || !keepId[p[1]]) delete counts[k];
+        });
+        const submitted = {};
+        Object.keys(s.submitted||{}).forEach(n=>{ if(keepLoc[n]) submitted[n] = s.submitted[n]; });
+        return {master:next, counts:counts, submitted:submitted};
+      };
+      const countedNow = (()=>{
+        const ids = {};
+        Object.keys(s.counts).forEach(k=>{ ids[k.split("|")[1]] = true; });
+        return ids;
+      })();
+      const keptByBuild = {};
+      if(imp) imp.forEach(r=>{ const m = matchExisting(r); if(m) keptByBuild[m.id]=true; });
+      const buildDrops = Object.keys(countedNow).filter(id=>!keptByBuild[id] && master.some(m=>m.id===id)).length;
+      vals.buildAll = ()=>{
+        if(!imp || !imp.length) return;
+        const locNames = s.locNames.concat(newLocs);
+        const built = rebuild(imp, locNames);
+        this.persist(built.master);
+        this.setState({
+          master: built.master, counts: built.counts, submitted: built.submitted,
+          locNames: locNames,
+          title: s.title || s.importName.replace(/\.(xlsx|csv)$/i,""),
+          imported:null, importOpen:false, importName:""
+        }, ()=>this.save({}));
+      };
+      vals.buildAllLabel = "Build my stocktake from this file";
+      vals.buildAllNote = imp
+        ? ((impLocs.length
+            ? "Creates "+imp.length+" products and "+newLocs.length+(newLocs.length===1?" place":" places")+", and names the stocktake after the file. "
+            : "Creates "+imp.length+" products. No place columns found, so add those yourself. ")
+          + (buildDrops
+              ? "Drops "+buildDrops+(buildDrops===1?" counted line":" counted lines")+" not in this file; everything matched by name keeps its counts."
+              : "Anything matched by name keeps the counts you have already entered."))
+        : "";
+      vals.onFile = (e)=>{
+        const file = e.target.files && e.target.files[0];
+        if(!file) return;
+        this.setState({importName:file.name, imported:null});
+        this.readSheet(file).then(rows=>this.setState({imported:rows}))
+          .catch(()=>this.setState({imported:null}));
+      };
+      const countedIds = {};
+      Object.keys(s.counts).forEach(k=>{ countedIds[k.split("|")[1]] = true; });
+      const keptIds = {};
+      if(imp) imp.forEach(r=>{ const m = matchExisting(r); if(m) keptIds[m.id] = true; });
+      const droppedCounted = Object.keys(countedIds).filter(id=>!keptIds[id] && master.some(m=>m.id===id));
+      vals.replaceWarn = droppedCounted.length
+        ? "Replacing drops "+droppedCounted.length+(droppedCounted.length===1?" counted line":" counted lines")+" that are not in this file. Everything matched by name keeps its counts."
+        : "Products matched by name keep the counts you have already entered.";
+      vals.applyReplace = ()=>{
+        if(!imp || !imp.length) return;
+        const built = rebuild(imp, s.locNames);
+        this.persist(built.master);
+        this.setState({master:built.master, counts:built.counts, submitted:built.submitted,
+          imported:null, importOpen:false, importName:""}, ()=>this.save({}));
+      };
+      vals.applyMerge = ()=>{
+        if(!newOnes.length){ this.setState({importOpen:false, imported:null, importName:""}); return; }
+        const next = master.concat(newOnes.map((r,i)=>Object.assign({id:"a"+i+"-"+Date.now()}, r)));
+        this.persist(next);
+        this.setState({master:next, imported:null, importOpen:false, importName:""});
+      };
+    }
+
+    /* ---- totals ---- */
+    if(s.screen==="totals"){
+      const mode = s.totalsMode || "cat";
+      vals.catBg = mode==="cat" ? "#241D16" : "#FFFCF7";
+      vals.catInk = mode==="cat" ? "#F6F0E7" : "#6E6152";
+      vals.locBg = mode==="loc" ? "#241D16" : "#FFFCF7";
+      vals.locInk = mode==="loc" ? "#F6F0E7" : "#6E6152";
+      vals.byCat = ()=>this.setState({totalsMode:"cat"});
+      vals.byLoc = ()=>this.setState({totalsMode:"loc"});
+      const exp = s.expanded || {};
+      const entries = Object.keys(s.counts).map(k=>{
+        const parts = k.split("|");
+        return { key:k, loc:parts[0], it:this.byId(parts[1]), e:s.counts[k] };
+      }).filter(x=>x.it);
+      const order=[]; const bucket={};
+      entries.forEach(x=>{
+        const g = mode==="cat" ? x.it.cat : x.loc;
+        if(!bucket[g]){ bucket[g]=[]; order.push(g); }
+        bucket[g].push(x);
+      });
+      vals.totalRows = order.map(g=>{
+        const rows = bucket[g];
+        const units = rows.reduce((a,x)=>a+this.units(x.it,x.e),0);
+        const on = !!exp[g];
+        return {
+          label: g, units: this.fmt(units),
+          lines: rows.length+(rows.length===1?" line":" lines"),
+          caret: on ? "none" : "rotate(-90deg)",
+          bar: Math.max(3, Math.round(units/Math.max(1,totalUnits)*100))+"%",
+          toggle: ()=>{ const e=Object.assign({}, exp); if(e[g]) delete e[g]; else e[g]=true; this.setState({expanded:e}); },
+          items: (on ? rows : []).map(x=>({
+            name: x.it.name,
+            units: String(this.fmt(this.units(x.it,x.e))),
+            split: (mode==="cat" ? x.loc : x.it.sub)+" · "+(x.e.c||0)+"×"+x.it.carton+" + "+this.fmt(x.e.s||0)
+          }))
+        };
+      });
+      vals.hasTotals = entries.length>0;
+      vals.noTotals = entries.length===0;
+      vals.exportNote = "One row per counted product, a Grand Total column and one column per place ("
+        + LOCS.length + (LOCS.length===1?" place" : " places") + "), ready to paste into a spreadsheet.";
+      vals.exportCsv = ()=>{
+        if(!entries.length) return;
+        const locNames = LOCS.map(l=>l.name);
+        const slug = (s.title||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
+        const d = new Date();
+        const stamp = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+        const fileName = (slug ? slug+"-" : "stocktake-")+stamp+".csv";
+        const head = ["Barcode","Product Name","Sub Category","Category","Carton Size","Grand Total"].concat(locNames);
+        const lines = [head.join(",")];
+        const seen = {};
+        entries.forEach(x=>{ seen[x.it.id]=true; });
+        master.filter(i=>seen[i.id]).forEach(i=>{
+          const per = locNames.map(n=>{
+            const e = s.counts[this.ck(n,i.id)];
+            return e ? this.fmt(this.units(i,e)) : 0;
+          });
+          const grand = per.reduce((a,b)=>a+b,0);
+          lines.push([i.code, '"'+i.name+'"', i.sub, i.cat, i.carton, this.fmt(grand)].concat(per).join(","));
+        });
+        const blob = new Blob([lines.join("\n")], {type:"text/csv"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        a.click();
+      };
+    }
+
+    /* ---- count / done ---- */
+    if(s.screen==="count" || s.sheet || s.screen==="done"){
+      const locName = s.loc || s.doneLoc;
+      const items = master;
+      const cAt = (it)=>s.counts[this.ck(locName, it.id)];
+      const q = s.query.trim().toLowerCase();
+      const hid = s.hidden[locName] || {};
+      const collapsed = (s.collapsed||{})[locName] || {};
+      const hideEmpty = !!s.hideEmpty[locName];
+      const subHasCount = {};
+      items.forEach(i=>{ if(cAt(i)) subHasCount[i.sub]=true; });
+      const isHidden = (it)=> hid["c:"+it.cat] || hid["s:"+it.sub] || (hideEmpty && !subHasCount[it.sub]);
+      const visible = items.filter(i=>!isHidden(i));
+      const only = (s.only||{})[locName] || null;
+      const shown = q ? items.filter(i=>(i.name+" "+i.sub).toLowerCase().indexOf(q)>=0)
+                      : (only ? visible.filter(i=>i.sub===only) : visible);
+      const setHid = (next)=>{ const h=Object.assign({}, s.hidden); h[locName]=next; this.setState({hidden:h}); };
+      const nDone = this.countedIn(locName);
+      vals.hasHidden = !q && visible.length < items.length;
+      const hiddenN = items.length - visible.length;
+      vals.hiddenLabel = hiddenN + (hiddenN===1 ? " line hidden — not stocked here" : " lines hidden — not stocked here");
+      vals.showAll = ()=>{
+        const h=Object.assign({}, s.hidden); h[locName]={};
+        const e=Object.assign({}, s.hideEmpty); e[locName]=false;
+        this.setState({hidden:h, hideEmpty:e});
+      };
+      vals.toggleHideEmpty = ()=>{ const e=Object.assign({}, s.hideEmpty); e[locName]=!hideEmpty; this.setState({hideEmpty:e}); };
+      vals.hideEmptyLabel = hideEmpty ? "SHOWING COUNTED ONLY" : "HIDE UNCOUNTED GROUPS";
+      vals.hideEmptyBg = hideEmpty ? "#241D16" : "#FFFCF7";
+      vals.hideEmptyBorder = hideEmpty ? "#241D16" : "#E3D8C9";
+      vals.hideEmptyInk = hideEmpty ? "#F6F0E7" : "#6E6152";
+      vals.manageOpen = s.manageOpen;
+      vals.openManage = ()=>this.setState({manageOpen:true});
+      vals.closeManage = ()=>this.setState({manageOpen:false});
+      const catOrder=[]; const catSubs={};
+      items.forEach(i=>{
+        if(!catSubs[i.cat]){ catSubs[i.cat]=[]; catOrder.push(i.cat); }
+        if(catSubs[i.cat].indexOf(i.sub)<0) catSubs[i.cat].push(i.sub);
+      });
+      const swatch=(on)=>({track: on?accent:"#DCCFBE", knob: on?"16px":"2px", ink: on?"#241D16":"#B3A493"});
+      vals.manageCats = catOrder.map(cat=>{
+        const catOn = !hid["c:"+cat];
+        const cs = swatch(catOn);
+        return {
+          name:cat, count: items.filter(i=>i.cat===cat).length+" lines",
+          track:cs.track, knob:cs.knob, ink:cs.ink,
+          toggle: ()=>{ const n=Object.assign({}, hid); if(catOn) n["c:"+cat]=true; else delete n["c:"+cat]; setHid(n); },
+          subs: catSubs[cat].map(sub=>{
+            const on = catOn && !hid["s:"+sub];
+            const ss = swatch(on);
+            return { name:sub, count: items.filter(i=>i.sub===sub).length,
+              track:ss.track, knob:ss.knob, ink:ss.ink,
+              toggle: ()=>{ const n=Object.assign({}, hid); if(!hid["s:"+sub]) n["s:"+sub]=true; else { delete n["s:"+sub]; delete n["c:"+cat]; } setHid(n); } };
+          })
+        };
+      });
+      const order=[]; const bySub={};
+      shown.forEach(i=>{ if(!bySub[i.sub]){ bySub[i.sub]=[]; order.push(i.sub); } bySub[i.sub].push(i); });
+      vals.locName = locName;
+      vals.locProgress = nDone+" of "+visible.length+" lines · rest submit as zero";
+      vals.query = s.query;
+      vals.onQuery = (e)=>this.setState({query:e.target.value});
+      vals.clearQuery = ()=>this.setState({query:""});
+      const setOnly=(sub)=>()=>{ const o=Object.assign({}, s.only||{}); o[locName]=(only===sub)?null:sub; this.setState({only:o}); };
+      const chipStyle=(on)=> on ? {bg:"#241D16", border:"#241D16", ink:"#F6F0E7"} : {bg:"#FFFCF7", border:"#E3D8C9", ink:"#6E6152"};
+      const allSubs=[]; visible.forEach(i=>{ if(allSubs.indexOf(i.sub)<0) allSubs.push(i.sub); });
+      vals.chips = [Object.assign({label:"ALL", jump:setOnly(null)}, chipStyle(!only))]
+        .concat(allSubs.map(sub=>Object.assign({label:sub, jump:setOnly(sub)}, chipStyle(only===sub))));
+      vals.groups = order.map(sub=>{
+        const list = bySub[sub];
+        return {
+          sub:sub, anchor:"g-"+sub.replace(/[^A-Z]/g,""),
+          done: list.filter(i=>cAt(i)).length+"/"+list.length,
+          hide: ()=>{ const n=Object.assign({}, hid); n["s:"+sub]=true; setHid(n); },
+          caret: collapsed[sub] ? "rotate(-90deg)" : "none",
+          toggle: ()=>{
+            const c=Object.assign({}, collapsed);
+            if(c[sub]) delete c[sub]; else c[sub]=true;
+            const all=Object.assign({}, s.collapsed); all[locName]=c;
+            this.setState({collapsed:all});
+          },
+          items: (collapsed[sub] && !q && !only ? [] : list).map(it=>{
+            const e = cAt(it);
+            const isDup = dupKeys.indexOf(this.ck(locName,it.id))>=0;
+            return {
+              name: it.name,
+              meta: isDup ? ("counted twice · " + (s.me||"you") + " and " + ((s.dup[this.ck(locName,it.id)]||{theirs:{}}).theirs.by || "someone else"))
+                : (e ? (e.c||0)+"×"+it.carton+" + "+this.fmt(e.s||0)+" single"+((e.s===1)?"":"s")+((e.by && e.by!==(s.me||"You"))?" · "+e.by:"")
+                     : "ctn "+it.carton+(it.frac?" · part bottles ok":"")),
+              val: e ? String(this.fmt(this.units(it,e))) : "—",
+              valSub: e ? "units" : "not counted",
+              valInk: isDup ? accent : (e ? "#241D16" : "#C4B7A6"),
+              subInk: isDup ? accent : "#A0917F",
+              rowBg: isDup ? "#FDF4EC" : (e ? "#FFFCF7" : "#F9F5EE"),
+              open: ()=>this.setState({sheet:it.id, field:"c", buf:null, addBase:null, historyOpen:false})
+            };
+          })
+        };
+      });
+      vals.openSubmit = ()=>this.setState({submitOpen:true});
+      vals.closeSubmit = ()=>this.setState({submitOpen:false});
+      vals.submitOpen = s.submitOpen;
+      const zeros = visible.length - nDone;
+      vals.submitBody = nDone+(nDone===1?" line":" lines")+" counted, "+zeros+" will submit as zero. It saves on the phone now and syncs when you are back on signal.";
+      vals.confirmSubmit = ()=>{
+        const sub = Object.assign({}, s.submitted||{});
+        sub[locName] = this.unitsIn(locName);
+        this.setState({screen:"done", doneLoc:locName, submitOpen:false, sheet:null, submitted:sub}, ()=>this.save({}));
+      };
+      vals.doneName = locName;
+      vals.doneLines = nDone;
+      vals.doneUnits = this.fmt(this.unitsIn(locName));
+      vals.doneZeros = zeros;
+      vals.doneLow = items.filter(i=>{ const e=cAt(i); return e && this.units(i,e)<=6; }).length;
+    }
+
+    /* ---- keypad sheet ---- */
+    vals.sheetOpen = !!s.sheet;
+    if(s.sheet){
+      const it = this.byId(s.sheet);
+      const key = this.ck(s.loc, s.sheet);
+      const e = s.counts[key] || {c:0,s:0};
+      const idx = master.indexOf(it);
+      vals.sheetName = it ? it.name : "";
+      vals.sheetMeta = it ? (it.sub+" · carton "+it.carton+(it.frac?" · decimals ok":"")) : "";
+      vals.sheetCarton = it ? it.carton : 1;
+      const theirEntry = s.dup[key] ? s.dup[key].theirs : null;
+      vals.sheetClash = !!theirEntry;
+      vals.sheetClashLabel = theirEntry ? ("ALSO COUNTED BY "+String(theirEntry.by||"").toUpperCase()) : "";
+      vals.otherLabel = theirEntry && it
+        ? (theirEntry.by+" has "+theirEntry.c+"×"+it.carton+" + "+this.fmt(theirEntry.s)+" = "+this.fmt(this.units(it,theirEntry))+" units")
+        : "";
+      vals.useTheirs = ()=>{
+        if(!theirEntry) return;
+        const counts = Object.assign({}, s.counts);
+        counts[key] = {c:theirEntry.c, s:theirEntry.s, by:theirEntry.by, ts:Date.now()};
+        const dup = Object.assign({}, s.dup); delete dup[key];
+        this.setState({counts:counts, dup:dup, buf:null, addBase:null}, ()=>this.save({}));
+      };
+      const adding = s.addBase!==null && s.addBase!==undefined;
+      const typed = s.buf===null||s.buf==="" ? 0 : parseFloat(s.buf)||0;
+      vals.cartonVal = String(s.field==="c" && s.buf!==null && !adding ? s.buf : this.fmt(e.c||0));
+      vals.singleVal = String(s.field==="s" && s.buf!==null && !adding ? s.buf : this.fmt(e.s||0));
+      vals.addLabel = adding
+        ? (this.fmt(s.addBase)+" + "+this.fmt(typed)+" = "+this.fmt(s.addBase+typed)+"  ·  TAP TO CANCEL")
+        : ("+ ADD TO THIS "+(s.field==="c"?"CARTON":"SINGLES")+" COUNT");
+      vals.addBg = adding ? "#FBEFE6" : "#FFFCF7";
+      vals.addBorder = adding ? accent : "#E3D8C9";
+      vals.addInk = adding ? "#8E3F22" : "#6E6152";
+      vals.toggleAdd = ()=>{
+        if(adding) this.setState({addBase:null, buf:null});
+        else this.setState({addBase: s.field==="c" ? (e.c||0) : (e.s||0), buf:null});
+      };
+      vals.singleLabel = it && it.frac ? "SINGLES / PART" : "SINGLES";
+      vals.cartonBg = s.field==="c" ? "#FFFCF7" : "#F1EAE0";
+      vals.cartonBorder = s.field==="c" ? accent : "#DFD3C4";
+      vals.singleBg = s.field==="s" ? "#FFFCF7" : "#F1EAE0";
+      vals.singleBorder = s.field==="s" ? accent : "#DFD3C4";
+      vals.focusCartons = ()=>this.setState({field:"c", buf:null, addBase:null});
+      vals.focusSingles = ()=>this.setState({field:"s", buf:null, addBase:null});
+      vals.sheetTotalLabel = this.fmt(this.units(it,e))+" units total";
+      vals.historyOpen = s.historyOpen;
+      vals.historyToggleLabel = s.historyOpen ? "HIDE HISTORY" : "NO PREVIOUS COUNTS";
+      vals.toggleHistory = ()=>this.setState({historyOpen:!s.historyOpen});
+      vals.history = [];
+      const keys = ["1","2","3","4","5","6","7","8","9", (it&&it.frac)?".":"", "0","del"];
+      vals.keys = keys.map(k=>({
+        label: k==="del" ? "⌫" : k,
+        bg: k===""?"transparent":(k==="del"||k==="."?"#F1EAE0":"#FFFCF7"),
+        border: k===""?"transparent":"#E3D8C9",
+        ink: k===""?"transparent":"#241D16",
+        press: k==="" ? ()=>{} : this.press(k)
+      }));
+      vals.closeSheet = ()=>this.setState({sheet:null, buf:null, addBase:null});
+      vals.nextItem = ()=>{
+        const nx = master[idx+1];
+        if(nx) this.setState({sheet:nx.id, field:"c", buf:null, addBase:null, historyOpen:false});
+        else this.setState({sheet:null, buf:null, addBase:null});
+      };
+    }
+    return vals;
+  }
+}
+</script>
+</body>
+</html>
