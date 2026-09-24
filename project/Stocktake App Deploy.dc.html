@@ -1359,6 +1359,9 @@ const TINTS = [
 ];
 const LEGACY = "stocktake.setup.v1";
 const CLOUD = "stocktake.cloud.v1";
+/* Settings-type fields synced by last-writer-wins per-field timestamp (metaAt),
+   so a device with a stale value can never overwrite a newer one across devices. */
+const META_FIELDS = ["title","locNames","hidden","hideEmpty"];
 
 /* Supabase: paste the project URL and anon key here (or set window.STOCKTAKE_SB
    before this script). Left blank, the app falls back to the same-browser store. */
@@ -1444,6 +1447,10 @@ class Component extends DCLogic {
     if(authed){ try{ localStorage.setItem(AUTHKEY, JSON.stringify(sess)); }catch(e){} }
     let saved = null;
     try{ saved = JSON.parse(localStorage.getItem(STORE)||"null"); }catch(e){}
+    /* Per-field last-edit timestamps for the "settings" fields (title, locNames,
+       hidden, hideEmpty) so a device holding an older value can't overwrite a
+       newer one — the same protection counts/products/submits already have. */
+    this._metaAt = (saved && saved.metaAt) || {};
     this.timer = setInterval(()=>this.pull(), 1200);
     const joined = !!(saved && saved.joined);
     const gate = !authed && !joined;
@@ -1454,6 +1461,7 @@ class Component extends DCLogic {
       this.setState({
         title: saved.title||"", locNames: saved.locNames, master: saved.master||[],
         counts: saved.counts||{}, submitted: saved.submitted||{}, subAt: saved.subAt||{},
+        hidden: saved.hidden||{}, hideEmpty: saved.hideEmpty||{},
         me: saved.me||"", code: saved.code||this.makeCode(), owner: saved.owner||((authed&&sess&&sess.uid)||""), dup: saved.dup||{},
         drive: saved.drive||this.state.drive, pushed: saved.pushed||{},
         admin: saved.admin||saved.me||"", archive: saved.archive||[], joined: joined,
@@ -1634,12 +1642,27 @@ class Component extends DCLogic {
     return out;
   }
 
+  /* Bump the last-edit timestamp for any settings field that changed since the
+     last save, so its value carries a version other devices compare against. */
+  stampMeta(){
+    const s = this.state;
+    this._metaAt = this._metaAt || {};
+    const cur = {};
+    META_FIELDS.forEach(f=>{ cur[f] = JSON.stringify(s[f] === undefined ? null : s[f]); });
+    if(this._metaSnap){
+      const now = Date.now();
+      META_FIELDS.forEach(f=>{ if(this._metaSnap[f] !== cur[f]) this._metaAt[f] = now; });
+    }
+    this._metaSnap = cur;
+  }
+
   save(patch){
     if(this.state.review!=null) return;
     const s = this.state;
+    this.stampMeta();
     const body = Object.assign({
       title:s.title, locNames:s.locNames, master:s.master, counts:s.counts, submitted:s.submitted, subAt:s.subAt,
-      me:s.me, code:s.code, dup:s.dup, drive:s.drive, pushed:s.pushed,
+      me:s.me, code:s.code, dup:s.dup, drive:s.drive, pushed:s.pushed, metaAt:this._metaAt,
       admin:s.admin, owner:s.owner, archive:s.archive, joined:s.joined, removedIds:s.removedIds, resetAt:s.resetAt
     }, patch);
     try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
@@ -1793,10 +1816,19 @@ class Component extends DCLogic {
     const subMerge = justReset
       ? {submitted:s.submitted||{}, subAt:s.subAt||{}}
       : this.mergeSub(s.submitted, s.subAt, prev.submitted, prev.subAt);
+    /* Settings fields (title, locNames, hidden, hideEmpty): keep whichever value
+       has the newer per-field timestamp, so this write can't push a stale value
+       over a newer one another device wrote. A reset publishes our fresh values. */
+    const meta={}, metaAtOut=Object.assign({}, this._metaAt||{});
+    META_FIELDS.forEach(f=>{
+      const ta=(this._metaAt||{})[f]||0, tb=(prev.metaAt||{})[f]||0;
+      if(!justReset && tb>ta){ meta[f]=prev[f]; metaAtOut[f]=tb; }
+      else { meta[f]=s[f]; }
+    });
     this.cloudPut(s.code, {
-      title: s.title, locNames: s.locNames, master: master,
+      title: meta.title, locNames: meta.locNames, master: master,
       counts: merged.counts, submitted: subMerge.submitted, subAt: subMerge.subAt, admin: s.admin,
-      hidden: s.hidden||{}, hideEmpty: s.hideEmpty||{},
+      hidden: meta.hidden||{}, hideEmpty: meta.hideEmpty||{}, metaAt: metaAtOut,
       resetAt: resetAt,
       removed: Object.keys(removed),
       people: cleanPeople, rev: Date.now()
@@ -1877,19 +1909,27 @@ class Component extends DCLogic {
       if(JSON.stringify(ms.subAt) !== JSON.stringify(s.subAt||{})) patch.subAt = ms.subAt;
       if(Object.keys(ms.submitted).some(l=> (doc.submitted||{})[l]===undefined)) republishMaster = true;
     }
-    if(s.joined){
-      if(JSON.stringify(doc.locNames||[]) !== JSON.stringify(s.locNames||[])) patch.locNames = doc.locNames||[];
-      if(doc.admin && doc.admin !== s.admin) patch.admin = doc.admin;
-    }
-    if(!recentLocalWrite){
-      if(JSON.stringify(doc.hidden||{}) !== JSON.stringify(s.hidden||{})) patch.hidden = doc.hidden||{};
-      if(JSON.stringify(doc.hideEmpty||{}) !== JSON.stringify(s.hideEmpty||{})) patch.hideEmpty = doc.hideEmpty||{};
-    }
+    if(s.joined && doc.admin && doc.admin !== s.admin) patch.admin = doc.admin;
+    /* Settings fields (title, locNames, hidden, hideEmpty): adopt the remote
+       value only when its per-field timestamp is newer than ours, so a stale
+       write never reverts a newer one. A field we ourselves just edited is held
+       for the guard window; a field we've never edited (ours=0) always follows
+       the cloud — so a counter still tracks the admin's locations/title live. */
+    this._metaAt = this._metaAt || {};
+    this._metaSnap = this._metaSnap || {};
+    META_FIELDS.forEach(f=>{
+      const ta=(this._metaAt[f]||0), tb=((doc.metaAt||{})[f]||0);
+      if(tb>ta){
+        if(ta>0 && recentLocalWrite) return;
+        if(JSON.stringify(doc[f]) !== JSON.stringify(s[f])){ patch[f]=doc[f]; this._metaSnap[f]=JSON.stringify(doc[f]===undefined?null:doc[f]); }
+        this._metaAt[f]=tb;
+      } else if(ta>tb){ republishMaster = true; }
+    });
     const peers = (doc.people||[]).map(p=>p.name).sort().join("|");
     if(peers !== (s.peers||"")) patch.peers = peers;
     if(Object.keys(patch).length){
       patch.liveAt = Date.now();
-      this.setState(patch, ()=>{ try{ localStorage.setItem(STORE, JSON.stringify(Object.assign({}, JSON.parse(localStorage.getItem(STORE)||"{}"), {counts:this.state.counts, submitted:this.state.submitted, subAt:this.state.subAt, dup:this.state.dup, master:this.state.master, locNames:this.state.locNames, admin:this.state.admin, hidden:this.state.hidden, hideEmpty:this.state.hideEmpty}))); }catch(e){} if(republishMaster) this.publish(); });
+      this.setState(patch, ()=>{ try{ localStorage.setItem(STORE, JSON.stringify(Object.assign({}, JSON.parse(localStorage.getItem(STORE)||"{}"), {counts:this.state.counts, submitted:this.state.submitted, subAt:this.state.subAt, dup:this.state.dup, master:this.state.master, locNames:this.state.locNames, admin:this.state.admin, hidden:this.state.hidden, hideEmpty:this.state.hideEmpty, metaAt:this._metaAt}))); }catch(e){} if(republishMaster) this.publish(); });
     } else if(republishMaster){
       this.publish();
     }
