@@ -1714,7 +1714,12 @@ class Component extends DCLogic {
     }, patch);
     try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
     this._localWriteAt = Date.now();
-    if(s.started && s.authed && s.owner && !s.joined && s.locNames && s.locNames.length && s.me && s.admin && s.admin===s.me && (Object.keys(s.counts||{}).length || Object.keys(s.submitted||{}).length || (s.title||"").trim())) this.setOwnCode(s.owner, s.code);
+    /* Point the account's active-stocktake pointer at this code as soon as the
+       stocktake is started, so another device signing in resumes it right away
+       — even before any counts, title or submits exist. `started` keeps this from
+       firing during setup and `!joined` excludes counters, so the owner's live
+       stocktake is tracked regardless of what display name they count under. */
+    if(s.started && s.authed && s.owner && !s.joined && s.locNames && s.locNames.length && s.me) this.setOwnCode(s.owner, s.code);
     this.publish();
   }
 
