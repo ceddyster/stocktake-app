@@ -1431,7 +1431,7 @@ class Component extends DCLogic {
       mQuery:"", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
       imported:null, importName:"",
-      menuOpen:false, confirm:null, resetAt:0,
+      menuOpen:false, confirm:null, resetAt:0, started:false,
       authed:false, authEmail:"", authView:"admin", authMode:"in", authEmailInput:"", authPwInput:"", authBusy:false, authErr:"", googleConfirm:null,
       theme: (()=>{ try{ return localStorage.getItem("stocktake.theme")==="light" ? "light" : "dark"; }catch(e){ return "dark"; } })()
     };
@@ -1457,6 +1457,14 @@ class Component extends DCLogic {
     // A doc belongs to the account that owns it. If a different account is
     // signed in on this device, don't inherit the previous owner's stocktake.
     const alien = authed && sess && sess.uid && saved && saved.owner && saved.owner !== sess.uid;
+    /* Has this stocktake actually been started (Start counting pressed)? Only
+       then does it publish/exist in the cloud and land on the home screen. A
+       just-closed or never-started setup stays on the Set-it-up page. Legacy
+       saves (no `started` field) are treated as started if they have a name and
+       locations, or if this device joined as a counter. */
+    const startedVal = saved && (saved.started!==undefined
+      ? saved.started
+      : !!((saved.me && (saved.locNames||[]).length) || saved.joined));
     if(saved && saved.locNames && saved.locNames.length && !alien){
       this.setState({
         title: saved.title||"", locNames: saved.locNames, master: saved.master||[],
@@ -1464,10 +1472,10 @@ class Component extends DCLogic {
         hidden: saved.hidden||{}, hideEmpty: saved.hideEmpty||{},
         me: saved.me||"", code: saved.code||this.makeCode(), owner: saved.owner||((authed&&sess&&sess.uid)||""), dup: saved.dup||{}, dupCleared: saved.dupCleared||{},
         drive: saved.drive||this.state.drive, pushed: saved.pushed||{},
-        admin: saved.admin||saved.me||"", archive: saved.archive||[], joined: joined,
+        admin: saved.admin||saved.me||"", archive: saved.archive||[], joined: joined, started: startedVal,
         removedIds: saved.removedIds||[], resetAt: saved.resetAt||0,
         authed: authed, authEmail: (sess&&sess.email)||"",
-        screen: gate ? "auth" : (saved.me ? "home" : "setup"), ready:true
+        screen: gate ? "auth" : ((saved.me && startedVal) ? "home" : "setup"), ready:true
       }, ()=>this.save({}));
     } else {
       this.setState({ready:true, code:this.makeCode(), owner:(authed&&sess&&sess.uid)||"", authed:authed, authEmail:(sess&&sess.email)||"", screen: gate ? "auth" : "setup"}, ()=>{ if(authed) this.save({}); });
@@ -1579,7 +1587,7 @@ class Component extends DCLogic {
         this.cache[code] = doc;
         const nm = (this.state.me && this.state.me.trim()) ? this.state.me : (doc.admin||"");
         this.setState({
-          code:code, owner:uid, joined:false, viewAs:"admin",
+          code:code, owner:uid, joined:false, viewAs:"admin", started:true,
           title:doc.title||"", locNames:doc.locNames||[], master:doc.master||[],
           counts:doc.counts||{}, submitted:doc.submitted||{}, subAt:doc.subAt||{}, dup:doc.dup||{}, dupCleared:doc.dupCleared||{}, resetAt:doc.resetAt||0,
           admin:doc.admin||nm, me:nm||this.state.me, screen:"home", ready:true, setupStep:1
@@ -1639,7 +1647,7 @@ class Component extends DCLogic {
       this.setState({
         authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
         me: nm, admin: s.admin || nm, owner: uid,
-        screen: (s.locNames.length ? "home" : "setup"), menuOpen:false
+        screen: ((s.started && s.locNames.length) ? "home" : "setup"), menuOpen:false
       }, ()=>{ this.save({}); this.resumeOwn(uid); });
     } else {
       // New account (or a different one) on this device: start blank.
@@ -1648,7 +1656,7 @@ class Component extends DCLogic {
         authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
         me: nm, admin: nm, owner: uid,
         title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
-        archive:[], removedIds:[], joined:false, resetAt:0, code:this.makeCode(),
+        archive:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
         screen:"setup", setupStep:1, menuOpen:false
       }, ()=>{ this.save({}); this.resumeOwn(uid); });
     }
@@ -1663,7 +1671,7 @@ class Component extends DCLogic {
   leaveJoin(){
     try{ localStorage.removeItem(STORE); }catch(e){}
     this.setState({
-      joined:false, viewAs:"admin", menuOpen:false,
+      joined:false, viewAs:"admin", menuOpen:false, started:false,
       title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
       archive:[], removedIds:[], resetAt:0, admin:"", me:"", code:this.makeCode(),
       joinCode:"", joinName:"", joinNote:"", authView:"join", screen:"auth"
@@ -1702,11 +1710,11 @@ class Component extends DCLogic {
       title:s.title, locNames:s.locNames, master:s.master, counts:s.counts, submitted:s.submitted, subAt:s.subAt,
       me:s.me, code:s.code, dup:s.dup, dupCleared:s.dupCleared, drive:s.drive, pushed:s.pushed, metaAt:this._metaAt,
       hidden:s.hidden, hideEmpty:s.hideEmpty,
-      admin:s.admin, owner:s.owner, archive:s.archive, joined:s.joined, removedIds:s.removedIds, resetAt:s.resetAt
+      admin:s.admin, owner:s.owner, archive:s.archive, joined:s.joined, started:s.started, removedIds:s.removedIds, resetAt:s.resetAt
     }, patch);
     try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
     this._localWriteAt = Date.now();
-    if(s.authed && s.owner && !s.joined && s.locNames && s.locNames.length && s.me && s.admin && s.admin===s.me && (Object.keys(s.counts||{}).length || Object.keys(s.submitted||{}).length || (s.title||"").trim())) this.setOwnCode(s.owner, s.code);
+    if(s.started && s.authed && s.owner && !s.joined && s.locNames && s.locNames.length && s.me && s.admin && s.admin===s.me && (Object.keys(s.counts||{}).length || Object.keys(s.submitted||{}).length || (s.title||"").trim())) this.setOwnCode(s.owner, s.code);
     this.publish();
   }
 
@@ -1849,6 +1857,11 @@ class Component extends DCLogic {
   publish(){
     const s = this.state;
     if(!s.code || !s.locNames.length || !s.ready) return;
+    /* A stocktake doesn't exist in the cloud until it's been started: an admin
+       setting up (or on the just-closed Set-it-up page) publishes nothing until
+       they press Start counting. Counters only ever reach here after joining a
+       started stocktake, so they're allowed through. */
+    if(!s.started && !s.joined) return;
     /* First write for a code after a reload: our cache is cold, so cloudGet()
        returns nothing and a blind write would clobber whatever counts / dup /
        submits already live in the cloud from other devices. Fetch the current
@@ -1954,7 +1967,7 @@ class Component extends DCLogic {
     if(!this.cache) this.cache = {};
     this.cache[code] = doc;
     this.setState({
-      code: code, joined: true, viewAs: "counter",
+      code: code, joined: true, viewAs: "counter", started: true,
       title: doc.title||"", locNames: doc.locNames||[], master: doc.master||[],
       counts: doc.counts||{}, submitted: doc.submitted||{}, subAt: doc.subAt||{}, dup: doc.dup||{}, dupCleared: doc.dupCleared||{}, resetAt: doc.resetAt||0,
       hidden: doc.hidden||{}, hideEmpty: doc.hideEmpty||{},
@@ -1975,7 +1988,7 @@ class Component extends DCLogic {
       if(s.joined){
         try{ localStorage.removeItem(STORE); }catch(e){}
         this.setState({
-          joined:false, viewAs:"admin", menuOpen:false,
+          joined:false, viewAs:"admin", menuOpen:false, started:false,
           title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
           archive:[], removedIds:[], resetAt:0, admin:"", me:"", code:this.makeCode(),
           joinCode:"", joinName:"", joinNote:"That stocktake was closed by the organiser.", authView:"join", screen:"auth"
@@ -1985,7 +1998,7 @@ class Component extends DCLogic {
         this.setState({
           counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, hidden:{}, hideEmpty:{},
           only:{}, collapsed:{}, title:"", resetAt:Date.now(), code:this.makeCode(),
-          finishOpen:false, menuOpen:false, screen:"setup", setupStep:1, postClose:true
+          finishOpen:false, menuOpen:false, screen:"setup", setupStep:1, started:false
         }, ()=>{ this.save({}); if(owner){ this.syncArchive(owner); this.resumeOwn(owner); } });
       }
       return;
@@ -2609,10 +2622,11 @@ class Component extends DCLogic {
         const drive = Object.assign({}, s.drive, {fileName:"", createdAt:0});
         /* Land on the Set-it-up page rather than auto-starting the next count.
            The saved locations & product list are kept (so nothing is lost) and
-           the prompt below asks whether to reuse them or start blank. postClose
-           marks this as a just-finished setup so Back offers to log out. */
+           the prompt below asks whether to reuse them or start blank. started:false
+           means nothing publishes and no new stocktake exists until Start counting;
+           it also makes Back offer to log out. */
         this.setState({archive:archive, drive:drive, counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
-          resetAt:Date.now(), title:"", code:newCode, finishOpen:false, screen:"setup", setupStep:1, postClose:true,
+          resetAt:Date.now(), title:"", code:newCode, finishOpen:false, screen:"setup", setupStep:1, started:false,
           confirm:{ kind:"reuse", title:"Set up the next stocktake", note:"Your saved locations and product list are ready to reuse for the next count. Start from a blank setup instead?", label:"Start a blank setup", cancel:"Keep my list" }
         }, ()=>{ this.save({}); if(owner) this.syncArchive(owner); });
       },
@@ -2641,9 +2655,9 @@ class Component extends DCLogic {
       /* Setup has no "home" to return to on a brand-new account (nothing set
          up yet) or right after a full "start new, wipe everything" reset —
          send the back button to sign-in/join instead of leaving it dead. */
-      setupBack: (s.postClose || s.locNames.length===0)
-        ? (()=>this.setState({confirm:{kind:"logout", title:"Log out?", note:"You'll be signed out on this device. Your saved locations and product list stay for next time.", label:"Log out", cancel:"Stay signed in"}}))
-        : (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""})),
+      setupBack: s.started
+        ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
+        : (()=>this.setState({confirm:{kind:"logout", title:"Log out?", note:"You'll be signed out on this device. Your saved locations and product list stay for next time.", label:"Log out", cancel:"Stay signed in"}})),
       isAuth: s.screen==="auth",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
@@ -2838,7 +2852,7 @@ class Component extends DCLogic {
           // A new stocktake gets a fresh join code so old counters and the
           // previous team roster don't carry into it.
           const newCode = this.makeCode();
-          const base = {code:newCode, counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, hidden:{}, hideEmpty:{}, only:{}, collapsed:{}, confirm:null, menuOpen:false, resetAt:now, title:"", admin:"", screen:"setup", setupStep:1, wipeExtra:true};
+          const base = {code:newCode, counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, hidden:{}, hideEmpty:{}, only:{}, collapsed:{}, confirm:null, menuOpen:false, resetAt:now, title:"", admin:"", screen:"setup", setupStep:1, started:false, wipeExtra:true};
           const extra = wipe ? {master:[], locNames:[]} : {};
           this.setState(Object.assign(base, extra), ()=>this.save({}));
         }
@@ -2931,7 +2945,7 @@ class Component extends DCLogic {
         const drive = s.drive.connected
           ? Object.assign({}, s.drive, {fileName:name, createdAt: s.drive.createdAt||Date.now(), lastSync: Date.now()})
           : s.drive;
-        this.setState({screen:"home", drive:drive, admin: s.admin||s.me.trim(), justSaved: s.drive.connected, postClose:false}, ()=>this.save({}));
+        this.setState({screen:"home", drive:drive, admin: s.admin||s.me.trim(), justSaved: s.drive.connected, started:true}, ()=>this.save({}));
       },
       hasLocs: s.locNames.length>0,
       noLocs: s.locNames.length===0,
