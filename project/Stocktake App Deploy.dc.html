@@ -1923,6 +1923,9 @@ class Component extends DCLogic {
       dup: dm.dup, dupCleared: dm.dupCleared,
       hidden: meta.hidden||{}, hideEmpty: meta.hideEmpty||{}, metaAt: metaAtOut,
       resetAt: resetAt,
+      /* Preserve a finalised stamp: once a stocktake is closed off, a stray
+         publish from a device that hasn't yet noticed must not un-finalise it. */
+      finalAt: prev.finalAt || undefined,
       removed: Object.keys(removed),
       people: cleanPeople, rev: Date.now()
     });
@@ -1962,6 +1965,31 @@ class Component extends DCLogic {
 
   applyDoc(doc){
     const s = this.state;
+    /* The stocktake on this code was closed off on another device. Drop it here
+       too so it doesn't linger: the organiser's other devices land on a fresh
+       setup (keeping locations & products, new code), and a counter is returned
+       to the join screen. The finished stocktake reaches Past via the per-account
+       archive sync, so we don't add a duplicate archive entry here. */
+    if(doc.finalAt && doc.finalAt > (this._seenFinalAt||0)){
+      this._seenFinalAt = doc.finalAt;
+      if(s.joined){
+        try{ localStorage.removeItem(STORE); }catch(e){}
+        this.setState({
+          joined:false, viewAs:"admin", menuOpen:false,
+          title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
+          archive:[], removedIds:[], resetAt:0, admin:"", me:"", code:this.makeCode(),
+          joinCode:"", joinName:"", joinNote:"That stocktake was closed by the organiser.", authView:"join", screen:"auth"
+        });
+      } else {
+        const owner = s.owner;
+        this.setState({
+          counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, hidden:{}, hideEmpty:{},
+          only:{}, collapsed:{}, title:"", resetAt:Date.now(), code:this.makeCode(),
+          finishOpen:false, menuOpen:false, screen:"setup", setupStep:1
+        }, ()=>{ this.save({}); if(owner){ this.syncArchive(owner); this.resumeOwn(owner); } });
+      }
+      return;
+    }
     const myReset = s.resetAt||0;
     const resetAt = Math.max(myReset, doc.resetAt||0);
     const merged = this.mergeCounts(s.counts, doc.counts, s.dup, this.uid(), resetAt, s.dupCleared);
@@ -2567,10 +2595,20 @@ class Component extends DCLogic {
         };
         const archive = (s.archive||[]).concat([entry]);
         const owner = this.state.owner;
+        /* Mark the closed stocktake's cloud doc as finalised so the organiser's
+           OTHER devices (and any counters still on it) see it's done and drop it,
+           instead of lingering on stale data under a code that's finished with. */
+        const oldCode = s.code;
+        const prevDoc = this.cloudGet(oldCode) || {};
+        this._seenFinalAt = Date.now();
+        this.cloudPut(oldCode, Object.assign({}, prevDoc, {finalAt: this._seenFinalAt, rev: Date.now()}));
         if(owner) this.clearOwnCode(owner);
+        /* A fresh stocktake gets a fresh join code, so the next count never syncs
+           against the finished one's cloud doc. */
+        const newCode = this.makeCode();
         const drive = Object.assign({}, s.drive, {fileName:"", createdAt:0});
         this.setState({archive:archive, drive:drive, counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
-          resetAt:Date.now(), title:"", finishOpen:false, screen:"setup", setupStep:1}, ()=>{ this.save({}); if(owner) this.syncArchive(owner); });
+          resetAt:Date.now(), title:"", code:newCode, finishOpen:false, screen:"setup", setupStep:1}, ()=>{ this.save({}); if(owner) this.syncArchive(owner); });
       },
       closeCsv: ()=>vals.confirmFinish("csv"),
       closeXlsx: ()=>vals.confirmFinish("xlsx"),
