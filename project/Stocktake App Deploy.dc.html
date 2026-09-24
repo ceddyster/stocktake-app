@@ -659,7 +659,7 @@ Sign in with Google
 </sc-if>
 <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
 <button onClick="{{ runConfirm }}" style="width:100%;min-height:46px;padding:14px;border-radius:12px;background:var(--primary);border:none;cursor:pointer;font:600 13.5px/1 'Public Sans',sans-serif;color:var(--on-primary)" style-hover="background:var(--primary)">{{ confirmLabel }}</button>
-<button onClick="{{ closeConfirm }}" style="width:100%;min-height:44px;padding:12px;border-radius:12px;background:transparent;border:none;cursor:pointer;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">Not now</button>
+<button onClick="{{ closeConfirm }}" style="width:100%;min-height:44px;padding:12px;border-radius:12px;background:transparent;border:none;cursor:pointer;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ confirmCancel }}</button>
 </div>
 </div>
 </sc-if>
@@ -1985,7 +1985,7 @@ class Component extends DCLogic {
         this.setState({
           counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, hidden:{}, hideEmpty:{},
           only:{}, collapsed:{}, title:"", resetAt:Date.now(), code:this.makeCode(),
-          finishOpen:false, menuOpen:false, screen:"setup", setupStep:1
+          finishOpen:false, menuOpen:false, screen:"setup", setupStep:1, postClose:true
         }, ()=>{ this.save({}); if(owner){ this.syncArchive(owner); this.resumeOwn(owner); } });
       }
       return;
@@ -2607,8 +2607,14 @@ class Component extends DCLogic {
            against the finished one's cloud doc. */
         const newCode = this.makeCode();
         const drive = Object.assign({}, s.drive, {fileName:"", createdAt:0});
+        /* Land on the Set-it-up page rather than auto-starting the next count.
+           The saved locations & product list are kept (so nothing is lost) and
+           the prompt below asks whether to reuse them or start blank. postClose
+           marks this as a just-finished setup so Back offers to log out. */
         this.setState({archive:archive, drive:drive, counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
-          resetAt:Date.now(), title:"", code:newCode, finishOpen:false, screen:"setup", setupStep:1}, ()=>{ this.save({}); if(owner) this.syncArchive(owner); });
+          resetAt:Date.now(), title:"", code:newCode, finishOpen:false, screen:"setup", setupStep:1, postClose:true,
+          confirm:{ kind:"reuse", title:"Set up the next stocktake", note:"Your saved locations and product list are ready to reuse for the next count. Start from a blank setup instead?", label:"Start a blank setup", cancel:"Keep my list" }
+        }, ()=>{ this.save({}); if(owner) this.syncArchive(owner); });
       },
       closeCsv: ()=>vals.confirmFinish("csv"),
       closeXlsx: ()=>vals.confirmFinish("xlsx"),
@@ -2635,7 +2641,9 @@ class Component extends DCLogic {
       /* Setup has no "home" to return to on a brand-new account (nothing set
          up yet) or right after a full "start new, wipe everything" reset —
          send the back button to sign-in/join instead of leaving it dead. */
-      setupBack: s.locNames.length>0 ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""})) : (()=>this.signOut()),
+      setupBack: (s.postClose || s.locNames.length===0)
+        ? (()=>this.setState({confirm:{kind:"logout", title:"Log out?", note:"You'll be signed out on this device. Your saved locations and product list stay for next time.", label:"Log out", cancel:"Stay signed in"}}))
+        : (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""})),
       isAuth: s.screen==="auth",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
@@ -2791,6 +2799,7 @@ class Component extends DCLogic {
       confirmTitle: s.confirm && s.confirm.title,
       confirmNote: s.confirm && s.confirm.note,
       confirmLabel: s.confirm && s.confirm.label,
+      confirmCancel: (s.confirm && s.confirm.cancel) || "Not now",
       closeConfirm: ()=>this.setState({confirm:null}),
       confirmCanWipe: !!(s.confirm && s.confirm.kind==="new"),
       wipeAllOn: !!s.wipeExtra,
@@ -2800,7 +2809,13 @@ class Component extends DCLogic {
       toggleWipe: ()=>this.setState({wipeExtra:!s.wipeExtra}),
       runConfirm: ()=>{
         const c = this.state.confirm; if(!c) return;
-        if(c.kind==="clearMine"){
+        if(c.kind==="logout"){
+          this.setState({confirm:null}, ()=>this.signOut());
+        } else if(c.kind==="reuse"){
+          /* "Start a blank setup" after a close: clear the reusable locations &
+             product list. Cancelling (or tapping away) keeps them. */
+          this.setState({ locNames:[], master:[], hidden:{}, hideEmpty:{}, removedIds:[], confirm:null }, ()=>this.save({}));
+        } else if(c.kind==="clearMine"){
           const me = this.uid();
           const local = Object.assign({}, this.state.counts);
           Object.keys(local).forEach(k=>{ if((local[k].by||"")===me) delete local[k]; });
@@ -2916,7 +2931,7 @@ class Component extends DCLogic {
         const drive = s.drive.connected
           ? Object.assign({}, s.drive, {fileName:name, createdAt: s.drive.createdAt||Date.now(), lastSync: Date.now()})
           : s.drive;
-        this.setState({screen:"home", drive:drive, admin: s.admin||s.me.trim(), justSaved: s.drive.connected}, ()=>this.save({}));
+        this.setState({screen:"home", drive:drive, admin: s.admin||s.me.trim(), justSaved: s.drive.connected, postClose:false}, ()=>this.save({}));
       },
       hasLocs: s.locNames.length>0,
       noLocs: s.locNames.length===0,
