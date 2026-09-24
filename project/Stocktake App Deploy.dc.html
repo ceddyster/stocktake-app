@@ -1522,11 +1522,49 @@ class Component extends DCLogic {
       err=>{ console.error("[owncode] cloud lookup failed, falling back to this device's local copy:", err); return this.ownCodeAll()[uid] || null; }
     );
   }
+
+  /* Past (finished) stocktakes are the organiser's own history, not part of any
+     one join-code doc (which gets reset and reused), so they live in a per-
+     account cloud row keyed a:<uid> — the same pattern as the owncode pointer.
+     Union-merged by entry id so two devices that each finished a stocktake keep
+     all of them. */
+  archiveKey(uid){ return "a:"+uid; }
+  mergeArchive(a, b){
+    a=a||[]; b=b||[];
+    const idOf=(e)=> (e && e.id) || ("legacy\u0001"+((e&&e.when)||"")+"\u0001"+((e&&e.title)||"")+"\u0001"+((e&&e.by)||""));
+    const map={};
+    a.concat(b).forEach(e=>{ if(!e) return; const k=idOf(e); if(!map[k]) map[k]=e; });
+    return Object.keys(map).map(k=>map[k]).sort((x,y)=>((x.ts||0)-(y.ts||0)));
+  }
+  fetchArchive(uid){
+    if(!uid || !SB.on()) return Promise.resolve(this.state.archive||[]);
+    return SB.get(this.archiveKey(uid)).then(
+      d=> (d && d.archive) || [],
+      err=>{ console.error("[archive] cloud lookup failed, using this device's local copy:", err); return this.state.archive||[]; }
+    );
+  }
+  pushArchive(uid, archive){
+    if(!uid || !SB.on()) return;
+    SB.put(this.archiveKey(uid), {archive: archive||[], ts:Date.now()}).catch(err=>console.error("[archive] cloud sync failed:", err));
+  }
+  /* Pull the account's cloud archive, union it with what's on this device, and
+     push the result back so every device shares one Past-stocktakes list. Only
+     the organiser owns an archive, so counters (joined) are skipped. */
+  syncArchive(uid){
+    if(!uid || !SB.on() || this.state.joined) return;
+    this.fetchArchive(uid).then(cloud=>{
+      const merged = this.mergeArchive(this.state.archive, cloud);
+      if(JSON.stringify(merged) !== JSON.stringify(this.state.archive||[])) this.setState({archive:merged}, ()=>this.save({}));
+      if(JSON.stringify(merged) !== JSON.stringify(cloud||[])) this.pushArchive(uid, merged);
+    });
+  }
+
   /* On login, reopen this account's active unfinalised/unsubmitted stocktake
      from the cloud instead of dropping the admin on a blank new one. */
   resumeOwn(uid){
     if(!uid) return;
     if(this.state.review!=null) return;
+    this.syncArchive(uid);
     this.fetchOwnCode(uid).then(code=>{
       if(!code){ console.info("[owncode] no active stocktake pointer found for this account"); return; }
       const st = this.state;
@@ -1663,6 +1701,7 @@ class Component extends DCLogic {
     const body = Object.assign({
       title:s.title, locNames:s.locNames, master:s.master, counts:s.counts, submitted:s.submitted, subAt:s.subAt,
       me:s.me, code:s.code, dup:s.dup, dupCleared:s.dupCleared, drive:s.drive, pushed:s.pushed, metaAt:this._metaAt,
+      hidden:s.hidden, hideEmpty:s.hideEmpty,
       admin:s.admin, owner:s.owner, archive:s.archive, joined:s.joined, removedIds:s.removedIds, resetAt:s.resetAt
     }, patch);
     try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
@@ -2518,6 +2557,7 @@ class Component extends DCLogic {
       confirmFinish: (fmt)=>{
         if(fmt==="xlsx") this.downloadXlsx(); else this.downloadCsv();
         const entry = {
+          id: "ar"+Date.now().toString(36)+Math.random().toString(36).slice(2,6), ts: Date.now(),
           title: s.title || "Untitled stocktake",
           file: s.drive.fileName || "stocktake.log.json",
           when: new Date().toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}),
@@ -2526,10 +2566,11 @@ class Component extends DCLogic {
           snap: { title:s.title, counts:s.counts, submitted:s.submitted, master:s.master, locNames:s.locNames, dup:s.dup, drive:Object.assign({}, s.drive) }
         };
         const archive = (s.archive||[]).concat([entry]);
-        if(this.state.owner) this.clearOwnCode(this.state.owner);
+        const owner = this.state.owner;
+        if(owner) this.clearOwnCode(owner);
         const drive = Object.assign({}, s.drive, {fileName:"", createdAt:0});
         this.setState({archive:archive, drive:drive, counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
-          resetAt:Date.now(), title:"", finishOpen:false, screen:"setup", setupStep:1}, ()=>this.save({}));
+          resetAt:Date.now(), title:"", finishOpen:false, screen:"setup", setupStep:1}, ()=>{ this.save({}); if(owner) this.syncArchive(owner); });
       },
       closeCsv: ()=>vals.confirmFinish("csv"),
       closeXlsx: ()=>vals.confirmFinish("xlsx"),
