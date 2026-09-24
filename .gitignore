@@ -1,2 +1,5 @@
 # Packaged deploy bundle (build artifact; the served folder is project/deploy/)
 project/deploy.zip
+# Original handoff material, not needed for the deployed app
+chats/
+project/uploads/
