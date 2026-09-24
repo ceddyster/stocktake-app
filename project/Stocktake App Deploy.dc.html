@@ -1422,7 +1422,7 @@ class Component extends DCLogic {
       screen:"setup", setupStep:1, newLoc:"", locPick:{}, clearMineOpen:false, clearPick:{}, adminClearOpen:false, adminClearMode:"loc", adminClearPick:{},
       loc:null, counts:{}, query:"", sheet:null, field:"c",
       hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null,
-      submitted:{}, totalsMode:"cat", expanded:{}, groupMode:"sub", sortMode:"none", sortOpen:false,
+      submitted:{}, subAt:{}, totalsMode:"cat", expanded:{}, groupMode:"sub", sortMode:"none", sortOpen:false,
       buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, subOpen:false,
       overwriteWarn:null, overwriteBy:"", overwriteOk:{}, review:null, reviewTitle:"", reviewWhen:"",
       mQuery:"", addOpen:false, importOpen:false,
@@ -1453,7 +1453,7 @@ class Component extends DCLogic {
     if(saved && saved.locNames && saved.locNames.length && !alien){
       this.setState({
         title: saved.title||"", locNames: saved.locNames, master: saved.master||[],
-        counts: saved.counts||{}, submitted: saved.submitted||{},
+        counts: saved.counts||{}, submitted: saved.submitted||{}, subAt: saved.subAt||{},
         me: saved.me||"", code: saved.code||this.makeCode(), owner: saved.owner||((authed&&sess&&sess.uid)||""), dup: saved.dup||{},
         drive: saved.drive||this.state.drive, pushed: saved.pushed||{},
         admin: saved.admin||saved.me||"", archive: saved.archive||[], joined: joined,
@@ -1535,7 +1535,7 @@ class Component extends DCLogic {
         this.setState({
           code:code, owner:uid, joined:false, viewAs:"admin",
           title:doc.title||"", locNames:doc.locNames||[], master:doc.master||[],
-          counts:doc.counts||{}, submitted:doc.submitted||{}, dup:{}, resetAt:doc.resetAt||0,
+          counts:doc.counts||{}, submitted:doc.submitted||{}, subAt:doc.subAt||{}, dup:{}, resetAt:doc.resetAt||0,
           admin:doc.admin||nm, me:nm||this.state.me, screen:"home", ready:true, setupStep:1
         }, ()=>this.save({}));
       }, ()=>{});
@@ -1601,7 +1601,7 @@ class Component extends DCLogic {
       this.setState({
         authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
         me: nm, admin: nm, owner: uid,
-        title:"", locNames:[], master:[], counts:{}, submitted:{}, dup:{}, pushed:{},
+        title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, pushed:{},
         archive:[], removedIds:[], joined:false, resetAt:0, code:this.makeCode(),
         screen:"setup", setupStep:1, menuOpen:false
       }, ()=>{ this.save({}); this.resumeOwn(uid); });
@@ -1618,7 +1618,7 @@ class Component extends DCLogic {
     try{ localStorage.removeItem(STORE); }catch(e){}
     this.setState({
       joined:false, viewAs:"admin", menuOpen:false,
-      title:"", locNames:[], master:[], counts:{}, submitted:{}, dup:{}, pushed:{},
+      title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, pushed:{},
       archive:[], removedIds:[], resetAt:0, admin:"", me:"", code:this.makeCode(),
       joinCode:"", joinName:"", joinNote:"", authView:"join", screen:"auth"
     });
@@ -1638,7 +1638,7 @@ class Component extends DCLogic {
     if(this.state.review!=null) return;
     const s = this.state;
     const body = Object.assign({
-      title:s.title, locNames:s.locNames, master:s.master, counts:s.counts, submitted:s.submitted,
+      title:s.title, locNames:s.locNames, master:s.master, counts:s.counts, submitted:s.submitted, subAt:s.subAt,
       me:s.me, code:s.code, dup:s.dup, drive:s.drive, pushed:s.pushed,
       admin:s.admin, owner:s.owner, archive:s.archive, joined:s.joined, removedIds:s.removedIds, resetAt:s.resetAt
     }, patch);
@@ -1732,6 +1732,30 @@ class Component extends DCLogic {
     return {counts:counts, dup:dup, changed:changed};
   }
 
+  /* Merge two submitted maps by their per-location timestamps (subAt) so a
+     submit or a reopen made on one device is never clobbered by another
+     device's stale write. Latest action per location wins; on a tie (or
+     legacy data with no timestamps) a submitted location is kept. Returns the
+     merged {submitted, subAt}. */
+  mergeSub(aSub, aAt, bSub, bAt){
+    aSub=aSub||{}; aAt=aAt||{}; bSub=bSub||{}; bAt=bAt||{};
+    const locs={};
+    Object.keys(aSub).forEach(l=>locs[l]=1); Object.keys(bSub).forEach(l=>locs[l]=1);
+    Object.keys(aAt).forEach(l=>locs[l]=1); Object.keys(bAt).forEach(l=>locs[l]=1);
+    const outSub={}, outAt={};
+    Object.keys(locs).forEach(l=>{
+      const ta=aAt[l]||0, tb=bAt[l]||0, at=Math.max(ta,tb);
+      if(at) outAt[l]=at;
+      const aHas=aSub[l]!==undefined, bHas=bSub[l]!==undefined;
+      let has, val;
+      if(ta>tb){ has=aHas; val=aSub[l]; }
+      else if(tb>ta){ has=bHas; val=bSub[l]; }
+      else { has=aHas||bHas; val = aHas?aSub[l]:bSub[l]; }
+      if(has) outSub[l]=val;
+    });
+    return {submitted:outSub, subAt:outAt};
+  }
+
   publish(){
     const s = this.state;
     if(!s.code || !s.locNames.length || !s.ready) return;
@@ -1763,9 +1787,15 @@ class Component extends DCLogic {
       const owned = parr.some(q=> q.id && q.name===p.name);
       return !shadowed && !owned;
     });
+    /* Union submitted with the cloud's copy (by per-location timestamp) so this
+       write can't wipe a location another device just submitted; a reset starts
+       fresh. */
+    const subMerge = justReset
+      ? {submitted:s.submitted||{}, subAt:s.subAt||{}}
+      : this.mergeSub(s.submitted, s.subAt, prev.submitted, prev.subAt);
     this.cloudPut(s.code, {
       title: s.title, locNames: s.locNames, master: master,
-      counts: merged.counts, submitted: s.submitted, admin: s.admin,
+      counts: merged.counts, submitted: subMerge.submitted, subAt: subMerge.subAt, admin: s.admin,
       hidden: s.hidden||{}, hideEmpty: s.hideEmpty||{},
       resetAt: resetAt,
       removed: Object.keys(removed),
@@ -1798,7 +1828,7 @@ class Component extends DCLogic {
     this.setState({
       code: code, joined: true, viewAs: "counter",
       title: doc.title||"", locNames: doc.locNames||[], master: doc.master||[],
-      counts: doc.counts||{}, submitted: doc.submitted||{}, dup: {}, resetAt: doc.resetAt||0,
+      counts: doc.counts||{}, submitted: doc.submitted||{}, subAt: doc.subAt||{}, dup: {}, resetAt: doc.resetAt||0,
       hidden: doc.hidden||{}, hideEmpty: doc.hideEmpty||{},
       admin: doc.admin || "the organiser",
       screen: "home", joinCode: "", joinNote: "", justSaved: false
@@ -1813,7 +1843,6 @@ class Component extends DCLogic {
     const patch = {};
     if(resetAt > myReset) patch.resetAt = resetAt;
     if(merged.changed || resetAt > myReset){ patch.counts = merged.counts; patch.dup = merged.dup; }
-    if(JSON.stringify(doc.submitted||{}) !== JSON.stringify(s.submitted||{})) patch.submitted = doc.submitted||{};
     // Don't let a poll that read the cloud BEFORE our last write landed revert
     // a just-made local edit to the product list (caused edits to "not register").
     const recentLocalWrite = (Date.now() - (this._localWriteAt||0)) < 4000;
@@ -1840,6 +1869,13 @@ class Component extends DCLogic {
          list straight back so the cloud — and the other device — recovers it,
          instead of waiting for our next manual save. */
       if(mergedMaster.some(it=> it && !remoteById[it.id])) republishMaster = true;
+      /* Same treatment for submitted/locked locations: merge by per-location
+         timestamp instead of overwriting, so a location submitted on one device
+         isn't dropped back to "in progress" by another device's stale write. */
+      const ms = this.mergeSub(s.submitted, s.subAt, doc.submitted, doc.subAt);
+      if(JSON.stringify(ms.submitted) !== JSON.stringify(s.submitted||{})) patch.submitted = ms.submitted;
+      if(JSON.stringify(ms.subAt) !== JSON.stringify(s.subAt||{})) patch.subAt = ms.subAt;
+      if(Object.keys(ms.submitted).some(l=> (doc.submitted||{})[l]===undefined)) republishMaster = true;
     }
     if(s.joined){
       if(JSON.stringify(doc.locNames||[]) !== JSON.stringify(s.locNames||[])) patch.locNames = doc.locNames||[];
@@ -1853,7 +1889,7 @@ class Component extends DCLogic {
     if(peers !== (s.peers||"")) patch.peers = peers;
     if(Object.keys(patch).length){
       patch.liveAt = Date.now();
-      this.setState(patch, ()=>{ try{ localStorage.setItem(STORE, JSON.stringify(Object.assign({}, JSON.parse(localStorage.getItem(STORE)||"{}"), {counts:this.state.counts, submitted:this.state.submitted, dup:this.state.dup, master:this.state.master, locNames:this.state.locNames, admin:this.state.admin, hidden:this.state.hidden, hideEmpty:this.state.hideEmpty}))); }catch(e){} if(republishMaster) this.publish(); });
+      this.setState(patch, ()=>{ try{ localStorage.setItem(STORE, JSON.stringify(Object.assign({}, JSON.parse(localStorage.getItem(STORE)||"{}"), {counts:this.state.counts, submitted:this.state.submitted, subAt:this.state.subAt, dup:this.state.dup, master:this.state.master, locNames:this.state.locNames, admin:this.state.admin, hidden:this.state.hidden, hideEmpty:this.state.hideEmpty}))); }catch(e){} if(republishMaster) this.publish(); });
     } else if(republishMaster){
       this.publish();
     }
@@ -1878,7 +1914,7 @@ class Component extends DCLogic {
       title: "",
       locNames: clearAll ? [] : (s.locNames||prev.locNames||[]),
       master:  clearAll ? [] : (s.master||prev.master||[]),
-      counts: {}, submitted: {}, dup: {},
+      counts: {}, submitted: {}, subAt: {}, dup: {},
       admin: s.admin, removed: (prev.removed||[]),
       people: (prev.people||[]), resetAt: now, rev: now
     };
@@ -2393,7 +2429,7 @@ class Component extends DCLogic {
         const archive = (s.archive||[]).concat([entry]);
         if(this.state.owner) this.clearOwnCode(this.state.owner);
         const drive = Object.assign({}, s.drive, {fileName:"", createdAt:0});
-        this.setState({archive:archive, drive:drive, counts:{}, submitted:{}, dup:{}, pushed:{},
+        this.setState({archive:archive, drive:drive, counts:{}, submitted:{}, subAt:{}, dup:{}, pushed:{},
           resetAt:Date.now(), title:"", finishOpen:false, screen:"setup", setupStep:1}, ()=>this.save({}));
       },
       closeCsv: ()=>vals.confirmFinish("csv"),
@@ -2531,18 +2567,21 @@ class Component extends DCLogic {
         Object.keys(local).forEach(k=>{ const p=k.split("|"); const hit = mode==="loc" ? sel[p[0]] : sel[(local[k].by||"")]; if(hit) delete local[k]; });
         const dup=Object.assign({}, this.state.dup);
         Object.keys(dup).forEach(k=>{ const p=k.split("|"); const d=dup[k]||{}; const hit = mode==="loc" ? sel[p[0]] : (sel[((d.mine||{}).by||"")] || sel[((d.theirs||{}).by||"")]); if(hit) delete dup[k]; });
+        const now=Date.now();
         const submitted=Object.assign({}, this.state.submitted||{});
-        if(mode==="loc") Object.keys(submitted).forEach(n=>{ if(sel[n]) delete submitted[n]; });
+        const subAt=Object.assign({}, this.state.subAt||{});
+        if(mode==="loc") Object.keys(submitted).forEach(n=>{ if(sel[n]){ delete submitted[n]; subAt[n]=now; } });
         if(this.state.code){
           const prev=this.cloudGet(this.state.code)||{};
           const cc=Object.assign({}, prev.counts||{});
           Object.keys(cc).forEach(k=>{ const p=k.split("|"); const hit = mode==="loc" ? sel[p[0]] : sel[(cc[k].by||"")]; if(hit) delete cc[k]; });
           const psub=Object.assign({}, prev.submitted||{});
-          if(mode==="loc") Object.keys(psub).forEach(n=>{ if(sel[n]) delete psub[n]; });
+          const psubAt=Object.assign({}, prev.subAt||{});
+          if(mode==="loc") Object.keys(psub).forEach(n=>{ if(sel[n]){ delete psub[n]; psubAt[n]=now; } });
           if(this.cache) delete this.cache[this.state.code];
-          this.cloudPut(this.state.code, Object.assign({}, prev, {counts:cc, submitted:psub, rev:Date.now()}));
+          this.cloudPut(this.state.code, Object.assign({}, prev, {counts:cc, submitted:psub, subAt:psubAt, rev:Date.now()}));
         }
-        this.setState({counts:local, dup:dup, submitted:submitted, pushed:{}, adminClearOpen:false, adminClearPick:{}, menuOpen:false, screen:"home"}, ()=>this.save({}));
+        this.setState({counts:local, dup:dup, submitted:submitted, subAt:subAt, pushed:{}, adminClearOpen:false, adminClearPick:{}, menuOpen:false, screen:"home"}, ()=>this.save({}));
       },
       runClearMine: ()=>{
         const me=this.uid();
@@ -2553,18 +2592,21 @@ class Component extends DCLogic {
         Object.keys(local).forEach(k=>{ const p=k.split("|"); if(sel[p[0]] && ((local[k].by||"")===me)) delete local[k]; });
         const dup=Object.assign({}, this.state.dup);
         Object.keys(dup).forEach(k=>{ const p=k.split("|"); if(sel[p[0]] && (((dup[k].mine||{}).by||"")===me)) delete dup[k]; });
+        const now=Date.now();
         const submitted=Object.assign({}, this.state.submitted||{});
-        Object.keys(submitted).forEach(n=>{ if(sel[n]) delete submitted[n]; });
+        const subAt=Object.assign({}, this.state.subAt||{});
+        Object.keys(submitted).forEach(n=>{ if(sel[n]){ delete submitted[n]; subAt[n]=now; } });
         if(this.state.code){
           const prev=this.cloudGet(this.state.code)||{};
           const cc=Object.assign({}, prev.counts||{});
           Object.keys(cc).forEach(k=>{ const p=k.split("|"); if(sel[p[0]] && ((cc[k].by||"")===me)) delete cc[k]; });
           const psub=Object.assign({}, prev.submitted||{});
-          Object.keys(psub).forEach(n=>{ if(sel[n]) delete psub[n]; });
+          const psubAt=Object.assign({}, prev.subAt||{});
+          Object.keys(psub).forEach(n=>{ if(sel[n]){ delete psub[n]; psubAt[n]=now; } });
           if(this.cache) delete this.cache[this.state.code];
-          this.cloudPut(this.state.code, Object.assign({}, prev, {counts:cc, submitted:psub, rev:Date.now()}));
+          this.cloudPut(this.state.code, Object.assign({}, prev, {counts:cc, submitted:psub, subAt:psubAt, rev:Date.now()}));
         }
-        this.setState({counts:local, dup:dup, submitted:submitted, pushed:{}, clearMineOpen:false, clearPick:{}, menuOpen:false, screen:"home"}, ()=>this.save({}));
+        this.setState({counts:local, dup:dup, submitted:submitted, subAt:subAt, pushed:{}, clearMineOpen:false, clearPick:{}, menuOpen:false, screen:"home"}, ()=>this.save({}));
       },
       askNew: amAdmin ? ()=>this.setState({menuOpen:false, wipeExtra:true, confirm:{kind:"new", title:"Start a new stocktake?", note:"Clears the current counts and the stocktake name for everyone and issues a fresh join code, then takes you back to setup.", label:"Yes, start new"}}) : lock("Only "+adminName+" can start a new stocktake."),
       confirmOpen: !!s.confirm,
@@ -2596,14 +2638,14 @@ class Component extends DCLogic {
           this.setState({counts:local, dup:dup, submitted:{}, pushed:{}, confirm:null, menuOpen:false, screen:"home"}, ()=>this.save({}));
         } else if(c.kind==="clear"){
           const now = this.pushReset(false);
-          this.setState({counts:{}, submitted:{}, dup:{}, pushed:{}, hidden:{}, hideEmpty:{}, only:{}, collapsed:{}, confirm:null, menuOpen:false, resetAt:now, screen:"home"}, ()=>this.save({}));
+          this.setState({counts:{}, submitted:{}, subAt:{}, dup:{}, pushed:{}, hidden:{}, hideEmpty:{}, only:{}, collapsed:{}, confirm:null, menuOpen:false, resetAt:now, screen:"home"}, ()=>this.save({}));
         } else if(c.kind==="new"){
           const wipe = this.state.wipeExtra !== false;
           const now = this.pushReset(wipe);
           // A new stocktake gets a fresh join code so old counters and the
           // previous team roster don't carry into it.
           const newCode = this.makeCode();
-          const base = {code:newCode, counts:{}, submitted:{}, dup:{}, pushed:{}, hidden:{}, hideEmpty:{}, only:{}, collapsed:{}, confirm:null, menuOpen:false, resetAt:now, title:"", admin:"", screen:"setup", setupStep:1, wipeExtra:true};
+          const base = {code:newCode, counts:{}, submitted:{}, subAt:{}, dup:{}, pushed:{}, hidden:{}, hideEmpty:{}, only:{}, collapsed:{}, confirm:null, menuOpen:false, resetAt:now, title:"", admin:"", screen:"setup", setupStep:1, wipeExtra:true};
           const extra = wipe ? {master:[], locNames:[]} : {};
           this.setState(Object.assign(base, extra), ()=>this.save({}));
         }
@@ -2655,20 +2697,22 @@ class Component extends DCLogic {
         rename: (e)=>{
           const v = e.target.value;
           const names = s.locNames.slice(); names[i] = v;
-          const counts = {}; const submitted = {};
+          const counts = {}; const submitted = {}; const subAt = {};
           Object.keys(s.counts).forEach(k=>{
             const parts = k.split("|");
             counts[(parts[0]===n ? v : parts[0])+"|"+parts[1]] = s.counts[k];
           });
           Object.keys(s.submitted||{}).forEach(k=>{ submitted[k===n?v:k] = s.submitted[k]; });
-          this.setState({locNames:names, counts:counts, submitted:submitted}, ()=>this.save({}));
+          Object.keys(s.subAt||{}).forEach(k=>{ subAt[k===n?v:k] = s.subAt[k]; });
+          this.setState({locNames:names, counts:counts, submitted:submitted, subAt:subAt}, ()=>this.save({}));
         },
         remove: s.joined ? lock("Only "+(s.admin||"the organiser")+" can remove a location.") : ()=>{
           const names = s.locNames.filter((x,j)=>j!==i);
           const counts = Object.assign({}, s.counts);
           Object.keys(counts).forEach(k=>{ if(k.split("|")[0]===n) delete counts[k]; });
           const submitted = Object.assign({}, s.submitted||{}); delete submitted[n];
-          this.setState({locNames:names, counts:counts, submitted:submitted}, ()=>this.save({}));
+          const subAt = Object.assign({}, s.subAt||{}); subAt[n] = Date.now();
+          this.setState({locNames:names, counts:counts, submitted:submitted, subAt:subAt}, ()=>this.save({}));
         }
       })),
       setupLocsCount: s.locNames.length
@@ -2892,7 +2936,8 @@ class Component extends DCLogic {
           canReopen: sub!==undefined && amAdmin,
           reopen: ()=>{
             const nx = Object.assign({}, s.submitted||{}); delete nx[l.name];
-            this.setState({submitted:nx, screen:"count", loc:l.name, query:""}, ()=>this.save({}));
+            const at = Object.assign({}, s.subAt||{}); at[l.name] = Date.now();
+            this.setState({submitted:nx, subAt:at, screen:"count", loc:l.name, query:""}, ()=>this.save({}));
           },
           open: (sub!==undefined && !amAdmin)
             ? lock(l.name+" is submitted. Only "+adminName+" can reopen it.")
@@ -3097,9 +3142,10 @@ class Component extends DCLogic {
           const p = k.split("|");
           if(!keepLoc[p[0]] || !keepId[p[1]]) delete counts[k];
         });
-        const submitted = {};
+        const submitted = {}; const subAt = {};
         Object.keys(s.submitted||{}).forEach(n=>{ if(keepLoc[n]) submitted[n] = s.submitted[n]; });
-        return {master:next, counts:counts, submitted:submitted};
+        Object.keys(s.subAt||{}).forEach(n=>{ if(keepLoc[n]) subAt[n] = s.subAt[n]; });
+        return {master:next, counts:counts, submitted:submitted, subAt:subAt};
       };
       const countedNow = (()=>{
         const ids = {};
@@ -3116,7 +3162,7 @@ class Component extends DCLogic {
         const keep = {}; built.master.forEach(n=>{ keep[n.id]=1; });
         const gone = (s.removedIds||[]).concat((s.master||[]).filter(m=>!keep[m.id]).map(m=>m.id));
         this.setState({
-          master: built.master, counts: built.counts, submitted: built.submitted,
+          master: built.master, counts: built.counts, submitted: built.submitted, subAt: built.subAt,
           removedIds: gone, locNames: locNames,
           title: s.title || s.importName.replace(/\.(xlsx|csv)$/i,""),
           imported:null, importOpen:false, importName:""
@@ -3152,7 +3198,7 @@ class Component extends DCLogic {
         const built = rebuild(imp, s.locNames);
         const keep = {}; built.master.forEach(n=>{ keep[n.id]=1; });
         const gone = (s.removedIds||[]).concat((s.master||[]).filter(m=>!keep[m.id]).map(m=>m.id));
-        this.setState({master:built.master, counts:built.counts, submitted:built.submitted,
+        this.setState({master:built.master, counts:built.counts, submitted:built.submitted, subAt:built.subAt,
           removedIds:gone, imported:null, importOpen:false, importName:""}, ()=>this.save({}));
       };
       vals.applyMerge = ()=>{
@@ -3395,7 +3441,8 @@ class Component extends DCLogic {
         if(locClashes>0) return;
         const sub = Object.assign({}, s.submitted||{});
         sub[locName] = this.unitsIn(locName);
-        this.setState({screen:"home", loc:null, doneLoc:null, submitOpen:false, sheet:null, submitted:sub}, ()=>this.save({}));
+        const subAt = Object.assign({}, s.subAt||{}); subAt[locName] = Date.now();
+        this.setState({screen:"home", loc:null, doneLoc:null, submitOpen:false, sheet:null, submitted:sub, subAt:subAt}, ()=>this.save({}));
       };
       vals.doneName = locName;
       vals.doneLines = nDone;
