@@ -1426,7 +1426,7 @@ class Component extends DCLogic {
       loc:null, counts:{}, query:"", sheet:null, field:"c",
       hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null,
       submitted:{}, subAt:{}, totalsMode:"cat", expanded:{}, groupMode:"sub", sortMode:"none", sortOpen:false,
-      buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, subOpen:false,
+      buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, dupCleared:{}, subOpen:false,
       overwriteWarn:null, overwriteBy:"", overwriteOk:{}, review:null, reviewTitle:"", reviewWhen:"",
       mQuery:"", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
@@ -1462,7 +1462,7 @@ class Component extends DCLogic {
         title: saved.title||"", locNames: saved.locNames, master: saved.master||[],
         counts: saved.counts||{}, submitted: saved.submitted||{}, subAt: saved.subAt||{},
         hidden: saved.hidden||{}, hideEmpty: saved.hideEmpty||{},
-        me: saved.me||"", code: saved.code||this.makeCode(), owner: saved.owner||((authed&&sess&&sess.uid)||""), dup: saved.dup||{},
+        me: saved.me||"", code: saved.code||this.makeCode(), owner: saved.owner||((authed&&sess&&sess.uid)||""), dup: saved.dup||{}, dupCleared: saved.dupCleared||{},
         drive: saved.drive||this.state.drive, pushed: saved.pushed||{},
         admin: saved.admin||saved.me||"", archive: saved.archive||[], joined: joined,
         removedIds: saved.removedIds||[], resetAt: saved.resetAt||0,
@@ -1543,7 +1543,7 @@ class Component extends DCLogic {
         this.setState({
           code:code, owner:uid, joined:false, viewAs:"admin",
           title:doc.title||"", locNames:doc.locNames||[], master:doc.master||[],
-          counts:doc.counts||{}, submitted:doc.submitted||{}, subAt:doc.subAt||{}, dup:{}, resetAt:doc.resetAt||0,
+          counts:doc.counts||{}, submitted:doc.submitted||{}, subAt:doc.subAt||{}, dup:doc.dup||{}, dupCleared:doc.dupCleared||{}, resetAt:doc.resetAt||0,
           admin:doc.admin||nm, me:nm||this.state.me, screen:"home", ready:true, setupStep:1
         }, ()=>this.save({}));
       }, ()=>{});
@@ -1609,7 +1609,7 @@ class Component extends DCLogic {
       this.setState({
         authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
         me: nm, admin: nm, owner: uid,
-        title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, pushed:{},
+        title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
         archive:[], removedIds:[], joined:false, resetAt:0, code:this.makeCode(),
         screen:"setup", setupStep:1, menuOpen:false
       }, ()=>{ this.save({}); this.resumeOwn(uid); });
@@ -1626,7 +1626,7 @@ class Component extends DCLogic {
     try{ localStorage.removeItem(STORE); }catch(e){}
     this.setState({
       joined:false, viewAs:"admin", menuOpen:false,
-      title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, pushed:{},
+      title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
       archive:[], removedIds:[], resetAt:0, admin:"", me:"", code:this.makeCode(),
       joinCode:"", joinName:"", joinNote:"", authView:"join", screen:"auth"
     });
@@ -1662,7 +1662,7 @@ class Component extends DCLogic {
     this.stampMeta();
     const body = Object.assign({
       title:s.title, locNames:s.locNames, master:s.master, counts:s.counts, submitted:s.submitted, subAt:s.subAt,
-      me:s.me, code:s.code, dup:s.dup, drive:s.drive, pushed:s.pushed, metaAt:this._metaAt,
+      me:s.me, code:s.code, dup:s.dup, dupCleared:s.dupCleared, drive:s.drive, pushed:s.pushed, metaAt:this._metaAt,
       admin:s.admin, owner:s.owner, archive:s.archive, joined:s.joined, removedIds:s.removedIds, resetAt:s.resetAt
     }, patch);
     try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
@@ -1732,6 +1732,7 @@ class Component extends DCLogic {
      different names comes back as a clash rather than an overwrite */
   mergeCounts(mine, theirs, dupIn, meName){
     const cut = arguments.length>4 ? (arguments[4]||0) : 0;
+    const cleared = arguments.length>5 ? (arguments[5]||{}) : {};
     const fresh = (m)=>{ if(!cut) return Object.assign({}, m||{}); const o={}; Object.keys(m||{}).forEach(k=>{ if((m[k].ts||0) > cut) o[k]=m[k]; }); return o; };
     const counts = fresh(mine);
     theirs = fresh(theirs);
@@ -1740,19 +1741,46 @@ class Component extends DCLogic {
     Object.keys(theirs||{}).forEach(k=>{
       const r = theirs[k], l = counts[k];
       if(!l){ counts[k] = r; changed = true; return; }
-      const clash = r.by && l.by && r.by !== l.by;
+      /* Raise a clash only if it hasn't already been resolved for this line
+         (dupCleared[k] stamped at/after these counts). Once resolved, treat the
+         line as a normal count so the admin's chosen number (written with a
+         newer ts) propagates instead of staying frozen on the old rival value. */
+      const clashTs = Math.max(l.ts||0, r.ts||0);
+      const resolved = cleared[k] && cleared[k] >= clashTs;
+      const clash = r.by && l.by && r.by !== l.by && !resolved;
       if(clash && !dup[k]){
         const mineSide = l.by === meName ? l : r;
         const theirSide = l.by === meName ? r : l;
         dup = Object.assign({}, dup, {[k]: {
           mine: {c:mineSide.c||0, s:mineSide.s||0, by:mineSide.by},
-          theirs: {c:theirSide.c||0, s:theirSide.s||0, by:theirSide.by}
+          theirs: {c:theirSide.c||0, s:theirSide.s||0, by:theirSide.by}, ts: clashTs
         }});
         changed = true;
       }
       if(!clash && (r.ts||0) > (l.ts||0)){ counts[k] = r; changed = true; }
     });
     return {counts:counts, dup:dup, changed:changed};
+  }
+
+  /* Merge two clash maps so "counted twice" is consistent on every device.
+     Newest clash entry per line wins; a line whose resolution tombstone
+     (dupCleared) is at/after the clash's timestamp is dropped (the admin picked
+     a number), and stays dropped until a genuinely newer clash is raised. */
+  mergeDup(aDup, aCl, bDup, bCl){
+    aDup=aDup||{}; aCl=aCl||{}; bDup=bDup||{}; bCl=bCl||{};
+    const cleared={};
+    Object.keys(aCl).forEach(k=>{ cleared[k]=Math.max(cleared[k]||0, aCl[k]||0); });
+    Object.keys(bCl).forEach(k=>{ cleared[k]=Math.max(cleared[k]||0, bCl[k]||0); });
+    const dup={}, keys={};
+    Object.keys(aDup).forEach(k=>keys[k]=1); Object.keys(bDup).forEach(k=>keys[k]=1);
+    Object.keys(keys).forEach(k=>{
+      const a=aDup[k], b=bDup[k];
+      const e = !a ? b : !b ? a : ((b.ts||0) > (a.ts||0) ? b : a);
+      if(!e) return;
+      if(cleared[k] && cleared[k] >= (e.ts||0)) return;
+      dup[k]=e;
+    });
+    return {dup:dup, dupCleared:cleared};
   }
 
   /* Merge two submitted maps by their per-location timestamps (subAt) so a
@@ -1782,9 +1810,35 @@ class Component extends DCLogic {
   publish(){
     const s = this.state;
     if(!s.code || !s.locNames.length || !s.ready) return;
+    /* First write for a code after a reload: our cache is cold, so cloudGet()
+       returns nothing and a blind write would clobber whatever counts / dup /
+       submits already live in the cloud from other devices. Fetch the current
+       doc first so the merge below has something real to union against. If a
+       fetch is already in flight, this publish is dropped — the 1.2s pull loop
+       (and the fetch's own _doPublish) re-syncs. Offline (fetch fails) we fall
+       back to a local write. */
+    if(SB.on() && !(this.cache && this.cache[s.code])){
+      if(this._pubFetch) return;
+      this._pubFetch = true;
+      this.fetchDoc(s.code).then(doc=>{
+        this._pubFetch = false;
+        if(doc && doc.rev){ if(!this.cache) this.cache = {}; this.cache[s.code] = doc; }
+        this._doPublish();
+      }, ()=>{ this._pubFetch = false; this._doPublish(); });
+      return;
+    }
+    this._doPublish();
+  }
+  _doPublish(){
+    const s = this.state;
+    if(!s.code || !s.locNames.length || !s.ready) return;
     const prev = this.cloudGet(s.code) || {};
     const resetAt = Math.max(s.resetAt||0, prev.resetAt||0);
-    const merged = this.mergeCounts(s.counts, prev.counts, s.dup, this.uid(), resetAt);
+    const justReset = (s.resetAt||0) > (prev.resetAt||0);
+    const merged = this.mergeCounts(s.counts, prev.counts, s.dup, this.uid(), resetAt, justReset ? {} : s.dupCleared);
+    /* Merge the clash map + resolution tombstones with the cloud so "counted
+       twice" and its resolution are shared across devices, not device-local. */
+    const dm = justReset ? {dup:{}, dupCleared:{}} : this.mergeDup(merged.dup, s.dupCleared, prev.dup, prev.dupCleared);
     /* union the product list both ways so a counter's new line survives the
        admin's next write; ids the admin deleted are recorded so the union
        cannot resurrect them */
@@ -1792,7 +1846,6 @@ class Component extends DCLogic {
     (prev.removed||[]).forEach(id=>{ removed[id] = 1; });
     (s.removedIds||[]).forEach(id=>{ removed[id] = 1; });
     const byId = {}; const master = [];
-    const justReset = (s.resetAt||0) > (prev.resetAt||0);
     const carry = justReset ? [] : (prev.master||[]);
     (s.master||[]).concat(carry).forEach(i=>{
       if(i && !byId[i.id] && !removed[i.id]){ byId[i.id] = 1; master.push(i); }
@@ -1828,6 +1881,7 @@ class Component extends DCLogic {
     this.cloudPut(s.code, {
       title: meta.title, locNames: meta.locNames, master: master,
       counts: merged.counts, submitted: subMerge.submitted, subAt: subMerge.subAt, admin: s.admin,
+      dup: dm.dup, dupCleared: dm.dupCleared,
       hidden: meta.hidden||{}, hideEmpty: meta.hideEmpty||{}, metaAt: metaAtOut,
       resetAt: resetAt,
       removed: Object.keys(removed),
@@ -1860,7 +1914,7 @@ class Component extends DCLogic {
     this.setState({
       code: code, joined: true, viewAs: "counter",
       title: doc.title||"", locNames: doc.locNames||[], master: doc.master||[],
-      counts: doc.counts||{}, submitted: doc.submitted||{}, subAt: doc.subAt||{}, dup: {}, resetAt: doc.resetAt||0,
+      counts: doc.counts||{}, submitted: doc.submitted||{}, subAt: doc.subAt||{}, dup: doc.dup||{}, dupCleared: doc.dupCleared||{}, resetAt: doc.resetAt||0,
       hidden: doc.hidden||{}, hideEmpty: doc.hideEmpty||{},
       admin: doc.admin || "the organiser",
       screen: "home", joinCode: "", joinNote: "", justSaved: false
@@ -1871,10 +1925,15 @@ class Component extends DCLogic {
     const s = this.state;
     const myReset = s.resetAt||0;
     const resetAt = Math.max(myReset, doc.resetAt||0);
-    const merged = this.mergeCounts(s.counts, doc.counts, s.dup, this.uid(), resetAt);
+    const merged = this.mergeCounts(s.counts, doc.counts, s.dup, this.uid(), resetAt, s.dupCleared);
+    /* Fold in the cloud's clash map + resolution tombstones so a "counted twice"
+       raised (or resolved) on another device shows consistently here. */
+    const dm = this.mergeDup(merged.dup, s.dupCleared, doc.dup, doc.dupCleared);
     const patch = {};
     if(resetAt > myReset) patch.resetAt = resetAt;
-    if(merged.changed || resetAt > myReset){ patch.counts = merged.counts; patch.dup = merged.dup; }
+    if(merged.changed || resetAt > myReset){ patch.counts = merged.counts; }
+    if(JSON.stringify(dm.dup) !== JSON.stringify(s.dup||{})) patch.dup = dm.dup;
+    if(JSON.stringify(dm.dupCleared) !== JSON.stringify(s.dupCleared||{})) patch.dupCleared = dm.dupCleared;
     // Don't let a poll that read the cloud BEFORE our last write landed revert
     // a just-made local edit to the product list (caused edits to "not register").
     const recentLocalWrite = (Date.now() - (this._localWriteAt||0)) < 4000;
@@ -1929,7 +1988,7 @@ class Component extends DCLogic {
     if(peers !== (s.peers||"")) patch.peers = peers;
     if(Object.keys(patch).length){
       patch.liveAt = Date.now();
-      this.setState(patch, ()=>{ try{ localStorage.setItem(STORE, JSON.stringify(Object.assign({}, JSON.parse(localStorage.getItem(STORE)||"{}"), {counts:this.state.counts, submitted:this.state.submitted, subAt:this.state.subAt, dup:this.state.dup, master:this.state.master, locNames:this.state.locNames, admin:this.state.admin, hidden:this.state.hidden, hideEmpty:this.state.hideEmpty, metaAt:this._metaAt}))); }catch(e){} if(republishMaster) this.publish(); });
+      this.setState(patch, ()=>{ try{ localStorage.setItem(STORE, JSON.stringify(Object.assign({}, JSON.parse(localStorage.getItem(STORE)||"{}"), {counts:this.state.counts, submitted:this.state.submitted, subAt:this.state.subAt, dup:this.state.dup, dupCleared:this.state.dupCleared, master:this.state.master, locNames:this.state.locNames, admin:this.state.admin, hidden:this.state.hidden, hideEmpty:this.state.hideEmpty, metaAt:this._metaAt}))); }catch(e){} if(republishMaster) this.publish(); });
     } else if(republishMaster){
       this.publish();
     }
@@ -1954,7 +2013,7 @@ class Component extends DCLogic {
       title: "",
       locNames: clearAll ? [] : (s.locNames||prev.locNames||[]),
       master:  clearAll ? [] : (s.master||prev.master||[]),
-      counts: {}, submitted: {}, subAt: {}, dup: {},
+      counts: {}, submitted: {}, subAt: {}, dup: {}, dupCleared: {},
       admin: s.admin, removed: (prev.removed||[]),
       people: (prev.people||[]), resetAt: now, rev: now
     };
@@ -2160,7 +2219,7 @@ class Component extends DCLogic {
       }
       if(prev && prev.by && prev.by!==me && !dup[key] && s.buf===null){
         dup = Object.assign({}, dup);
-        dup[key] = { theirs:{c:prev.c||0, s:prev.s||0, by:prev.by}, mine:{c:0, s:0, by:me} };
+        dup[key] = { theirs:{c:prev.c||0, s:prev.s||0, by:prev.by}, mine:{c:0, s:0, by:me}, ts:Date.now() };
       }
       const e = Object.assign({c:0,s:0,by:me}, (dup[key] && s.buf===null) ? {c:0,s:0} : (counts[key]||{}));
       const cur = s.buf===null ? "" : s.buf;
@@ -2469,7 +2528,7 @@ class Component extends DCLogic {
         const archive = (s.archive||[]).concat([entry]);
         if(this.state.owner) this.clearOwnCode(this.state.owner);
         const drive = Object.assign({}, s.drive, {fileName:"", createdAt:0});
-        this.setState({archive:archive, drive:drive, counts:{}, submitted:{}, subAt:{}, dup:{}, pushed:{},
+        this.setState({archive:archive, drive:drive, counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
           resetAt:Date.now(), title:"", finishOpen:false, screen:"setup", setupStep:1}, ()=>this.save({}));
       },
       closeCsv: ()=>vals.confirmFinish("csv"),
@@ -2678,14 +2737,14 @@ class Component extends DCLogic {
           this.setState({counts:local, dup:dup, submitted:{}, pushed:{}, confirm:null, menuOpen:false, screen:"home"}, ()=>this.save({}));
         } else if(c.kind==="clear"){
           const now = this.pushReset(false);
-          this.setState({counts:{}, submitted:{}, subAt:{}, dup:{}, pushed:{}, hidden:{}, hideEmpty:{}, only:{}, collapsed:{}, confirm:null, menuOpen:false, resetAt:now, screen:"home"}, ()=>this.save({}));
+          this.setState({counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, hidden:{}, hideEmpty:{}, only:{}, collapsed:{}, confirm:null, menuOpen:false, resetAt:now, screen:"home"}, ()=>this.save({}));
         } else if(c.kind==="new"){
           const wipe = this.state.wipeExtra !== false;
           const now = this.pushReset(wipe);
           // A new stocktake gets a fresh join code so old counters and the
           // previous team roster don't carry into it.
           const newCode = this.makeCode();
-          const base = {code:newCode, counts:{}, submitted:{}, subAt:{}, dup:{}, pushed:{}, hidden:{}, hideEmpty:{}, only:{}, collapsed:{}, confirm:null, menuOpen:false, resetAt:now, title:"", admin:"", screen:"setup", setupStep:1, wipeExtra:true};
+          const base = {code:newCode, counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, hidden:{}, hideEmpty:{}, only:{}, collapsed:{}, confirm:null, menuOpen:false, resetAt:now, title:"", admin:"", screen:"setup", setupStep:1, wipeExtra:true};
           const extra = wipe ? {master:[], locNames:[]} : {};
           this.setState(Object.assign(base, extra), ()=>this.save({}));
         }
@@ -2945,12 +3004,14 @@ class Component extends DCLogic {
       clashes: dupKeys.map(key=>{
         const it = this.byId(key.split("|")[1]), d = s.dup[key];
         const resolve=(which)=>()=>{
+          const now=Date.now();
           const dup=Object.assign({}, s.dup); delete dup[key];
+          const dupCleared=Object.assign({}, s.dupCleared||{}); dupCleared[key]=now;
           const counts=Object.assign({}, s.counts);
           counts[key] = which==="mine"
-            ? {c:d.mine.c, s:d.mine.s, by:(d.mine.by||s.me||"You"), ts:Date.now()}
-            : {c:d.theirs.c, s:d.theirs.s, by:(d.theirs.by||"Them"), ts:Date.now()};
-          this.setState({dup:dup, counts:counts, clashOpen: Object.keys(dup).length>0});
+            ? {c:d.mine.c, s:d.mine.s, by:(d.mine.by||s.me||"You"), ts:now}
+            : {c:d.theirs.c, s:d.theirs.s, by:(d.theirs.by||"Them"), ts:now};
+          this.setState({dup:dup, dupCleared:dupCleared, counts:counts, clashOpen: Object.keys(dup).length>0}, ()=>this.save({}));
         };
         return { name: it ? it.name : "",
           where: key.split("|")[0],
@@ -3508,10 +3569,12 @@ class Component extends DCLogic {
         : "";
       vals.useTheirs = ()=>{
         if(!theirEntry) return;
+        const now=Date.now();
         const counts = Object.assign({}, s.counts);
-        counts[key] = {c:theirEntry.c, s:theirEntry.s, by:theirEntry.by, ts:Date.now()};
+        counts[key] = {c:theirEntry.c, s:theirEntry.s, by:theirEntry.by, ts:now};
         const dup = Object.assign({}, s.dup); delete dup[key];
-        this.setState({counts:counts, dup:dup, buf:null, addBase:null}, ()=>this.save({}));
+        const dupCleared = Object.assign({}, s.dupCleared||{}); dupCleared[key]=now;
+        this.setState({counts:counts, dup:dup, dupCleared:dupCleared, buf:null, addBase:null}, ()=>this.save({}));
       };
       const adding = s.addBase!==null && s.addBase!==undefined;
       const typed = s.buf===null||s.buf==="" ? 0 : parseFloat(s.buf)||0;
