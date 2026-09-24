@@ -642,6 +642,15 @@ Sign in with Google
 </span>
 </button>
 </sc-if>
+<sc-if value="{{ amAdmin }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ askCancel }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--danger, #C0473B);border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
+<span style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;font:600 15px/1 'Public Sans',sans-serif;color:var(--danger, #C0473B)">✕</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 13px/1.2 'Public Sans',sans-serif;color:var(--danger, #C0473B)">Cancel stocktake</span>
+<span style="display:block;margin-top:3px;font:400 10px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Clears all counts, removes counters' access, back to setup.</span>
+</span>
+</button>
+</sc-if>
 </div>
 </div>
 </sc-if>
@@ -2814,6 +2823,7 @@ class Component extends DCLogic {
         this.setState({counts:local, dup:dup, submitted:submitted, subAt:subAt, pushed:{}, clearMineOpen:false, clearPick:{}, menuOpen:false, screen:"home"}, ()=>this.save({}));
       },
       askNew: amAdmin ? ()=>this.setState({menuOpen:false, wipeExtra:true, confirm:{kind:"new", title:"Start a new stocktake?", note:"Clears the current counts and the stocktake name for everyone and issues a fresh join code, then takes you back to setup.", label:"Yes, start new"}}) : lock("Only "+adminName+" can start a new stocktake."),
+      askCancel: amAdmin ? ()=>this.setState({menuOpen:false, confirm:{kind:"cancel", title:"Cancel this stocktake?", note:"Every count is cleared and counters lose access to the code. The stocktake is discarded — not saved to Past stocktakes — and you go back to setup, where you can reuse or clear your locations and product list.", label:"Yes, cancel stocktake", cancel:"Keep counting"}}) : lock("Only "+adminName+" can cancel the stocktake."),
       confirmOpen: !!s.confirm,
       confirmTitle: s.confirm && s.confirm.title,
       confirmNote: s.confirm && s.confirm.note,
@@ -2830,6 +2840,23 @@ class Component extends DCLogic {
         const c = this.state.confirm; if(!c) return;
         if(c.kind==="logout"){
           this.setState({confirm:null}, ()=>this.signOut());
+        } else if(c.kind==="cancel"){
+          /* Cancel = discard the stocktake: clear every count, finalise the cloud
+             doc so counters lose access, drop the account pointer, and go back to
+             setup on a fresh code (nothing published until Start counting). Unlike
+             a close it is NOT exported or saved to Past stocktakes. Then offer the
+             same reuse-or-blank choice for the locations & product list. */
+          const st = this.state;
+          const owner = st.owner, oldCode = st.code;
+          const prevDoc = this.cloudGet(oldCode) || {};
+          this._seenFinalAt = Date.now();
+          this.cloudPut(oldCode, Object.assign({}, prevDoc, {finalAt: this._seenFinalAt, rev: Date.now()}));
+          if(owner) this.clearOwnCode(owner);
+          this.setState({
+            counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, title:"",
+            resetAt:Date.now(), code:this.makeCode(), started:false, menuOpen:false, screen:"setup", setupStep:1,
+            confirm:{ kind:"reuse", title:"Set up the next stocktake", note:"Your saved locations and product list are ready to reuse for the next count. Start from a blank setup instead?", label:"Start a blank setup", cancel:"Keep my list" }
+          }, ()=>this.save({}));
         } else if(c.kind==="reuse"){
           /* "Start a blank setup" after a close: clear the reusable locations &
              product list. Cancelling (or tapping away) keeps them. */
@@ -3755,7 +3782,7 @@ class Component extends DCLogic {
     }
     if(reviewing){
       const noop=()=>{};
-      ["confirmSubmit","useTheirs","confirmOverwrite","reopen","askClear","askNew","confirmDo",
+      ["confirmSubmit","useTheirs","confirmOverwrite","reopen","askClear","askNew","askCancel","confirmDo",
        "connectDrive","disconnectDrive","addShare","syncNow","toggleOnline","onFolder","onTitle","onMe",
        "addLoc","takeLocs","startCounting","saveNew","deleteItem","buildAll","applyReplace","applyMerge",
        "toggleRole"].forEach(k=>{ if(typeof vals[k]==="function") vals[k]=noop; });
