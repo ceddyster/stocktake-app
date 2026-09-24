@@ -3376,17 +3376,34 @@ class Component extends DCLogic {
         const rows = bucket[g];
         const units = rows.reduce((a,x)=>a+this.units(x.it,x.e),0);
         const on = !!exp[g];
+        /* In category mode a product counted in several locations should show as
+           ONE line with its combined total, not a line per location. In location
+           mode each row is already a single product in that location, so keep the
+           per-line detail there. */
+        const distinct = mode==="cat"
+          ? Object.keys(rows.reduce((m,x)=>{ m[x.it.id]=1; return m; }, {})).length
+          : rows.length;
+        let items = [];
+        if(on && mode==="cat"){
+          const byProd={}, ord=[];
+          rows.forEach(x=>{ const id=x.it.id; if(!byProd[id]){ byProd[id]={it:x.it, units:0, locs:0}; ord.push(id); } byProd[id].units+=this.units(x.it,x.e); byProd[id].locs+=1; });
+          items = ord.map(id=>{ const p=byProd[id]; return {
+            name: p.it.name, units: String(this.fmt(p.units)),
+            split: p.it.sub+" · counted in "+p.locs+(p.locs===1?" location":" locations")
+          }; });
+        } else if(on){
+          items = rows.map(x=>({
+            name: x.it.name, units: String(this.fmt(this.units(x.it,x.e))),
+            split: x.it.sub+" · "+(x.e.c||0)+"×"+x.it.carton+" + "+this.fmt(x.e.s||0)
+          }));
+        }
         return {
           label: g, units: this.fmt(units),
-          lines: rows.length+(rows.length===1?" product":" products"),
+          lines: distinct+(distinct===1?" product":" products"),
           caret: on ? "none" : "rotate(-90deg)",
           bar: Math.max(3, Math.round(units/Math.max(1,totalUnits)*100))+"%",
           toggle: ()=>{ const e=Object.assign({}, exp); if(e[g]) delete e[g]; else e[g]=true; this.setState({expanded:e}); },
-          items: (on ? rows : []).map(x=>({
-            name: x.it.name,
-            units: String(this.fmt(this.units(x.it,x.e))),
-            split: (mode==="cat" ? x.loc : x.it.sub)+" · "+(x.e.c||0)+"×"+x.it.carton+" + "+this.fmt(x.e.s||0)
-          }))
+          items: items
         };
       });
       vals.hasTotals = entries.length>0;
