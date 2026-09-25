@@ -879,7 +879,7 @@ Sign in with Google
 </sc-if>
 <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
 <button onClick="{{ runConfirm }}" style="width:100%;min-height:46px;padding:14px;border-radius:12px;background:var(--primary);border:none;cursor:pointer;font:600 13.5px/1 'Public Sans',sans-serif;color:var(--on-primary)" style-hover="background:var(--primary)">{{ confirmLabel }}</button>
-<button onClick="{{ closeConfirm }}" style="width:100%;min-height:44px;padding:12px;border-radius:12px;background:transparent;border:none;cursor:pointer;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ confirmCancel }}</button>
+<button onClick="{{ confirmSecondary }}" style="width:100%;min-height:44px;padding:12px;border-radius:12px;background:transparent;border:none;cursor:pointer;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ confirmCancel }}</button>
 </div>
 </div>
 </sc-if>
@@ -1662,6 +1662,7 @@ class Component extends DCLogic {
 
   componentDidMount(){
     this.applyThemeBg();
+    this._recoverPending = false;
     const hashSess = this.readHashTokens();
     let sess = null;
     try{ sess = JSON.parse(localStorage.getItem(AUTHKEY)||"null"); }catch(e){}
@@ -1688,6 +1689,13 @@ class Component extends DCLogic {
     const startedVal = saved && (saved.started!==undefined
       ? saved.started
       : !!((saved.me && (saved.locNames||[]).length) || saved.joined));
+    /* A device coming back with an old, started stocktake in its localStorage
+       must not silently treat it as the account's active one — that's what let a
+       dormant device resurrect a finished stocktake and rebroadcast it. Hold off
+       broadcasting the pointer/doc until resumeOwn() reconciles against the cloud
+       pointer (the source of truth), which then confirms, switches, drops, or
+       prompts the user to recover it. */
+    this._recoverPending = !!(authed && !joined && startedVal && saved && (saved.locNames||[]).length && !alien);
     if(saved && saved.locNames && saved.locNames.length && !alien){
       this.setState({
         title: saved.title||"", locNames: saved.locNames, master: saved.master||[],
@@ -1956,33 +1964,91 @@ class Component extends DCLogic {
     }, ()=>this.setState({orgMsg:"Couldn't open that stocktake."}));
   }
 
-  /* On login, reopen this account's active unfinalised/unsubmitted stocktake
-     from the cloud instead of dropping the admin on a blank new one. */
+  /* On login, reconcile against the cloud pointer (u:<uid>) — the single source
+     of truth for "the account's active stocktake" — instead of trusting this
+     device's localStorage. This is what stops a dormant device from resurrecting
+     a finished/old stocktake and rebroadcasting it:
+       • pointer names the stocktake we're already holding → confirm it (resume sync);
+       • pointer names a DIFFERENT one → switch to it (cloud wins);
+       • pointer is null but we hold a started stocktake → it isn't the account's
+         active one. If its cloud doc was closed elsewhere, drop it; otherwise it
+         was never finished, so ask the user (recover or discard).
+     Only a SUCCESSFUL cloud read reconciles; offline or a failed read trusts the
+     local copy this session so we never discard a genuine in-progress stocktake. */
   resumeOwn(uid){
-    if(!uid) return;
-    if(this.state.review!=null) return;
+    if(!uid){ this._recoverPending = false; return; }
+    if(this.state.review!=null){ this._recoverPending = false; return; }
     this.syncArchive(uid);
-    this.fetchOwnCode(uid).then(code=>{
-      if(!code){ console.info("[owncode] no active stocktake pointer found for this account"); return; }
+    if(!SB.on()){ this._recoverPending = false; return; }
+    const localOwn = ()=>{ const st=this.state; return !!(st.owner===uid && !st.joined && st.started && (st.locNames||[]).length && st.code); };
+    SB.get(this.ownCodeKey(uid)).then(rec=>{
+      const ptr = (rec && rec.ownCode) ? rec.ownCode : null;
       const st = this.state;
-      /* Only skip when we're already on the SAME stocktake the pointer names.
-         The old guard skipped for ANY owned stocktake, so a device holding a
-         different (older) stocktake of this account never switched to the
-         pointer's one — that's what kept two devices on different stocktakes. */
-      if(st.code===code && st.owner===uid && !st.joined && (st.locNames||[]).length){ console.info("[owncode] already on pointer stocktake "+code); return; }
-      this.fetchDoc(code).then(doc=>{
-        if(!doc || !(doc.locNames||[]).length){ console.warn("[owncode] pointer code "+code+" found but its document is empty/missing"); return; }
-        if(!this.cache) this.cache = {};
-        this.cache[code] = doc;
-        const nm = (this.state.me && this.state.me.trim()) ? this.state.me : (doc.admin||"");
-        this.setState({
-          code:code, owner:uid, joined:false, viewAs:"admin", started:true,
-          title:doc.title||"", locNames:doc.locNames||[], master:doc.master||[],
-          counts:doc.counts||{}, submitted:doc.submitted||{}, subAt:doc.subAt||{}, dup:doc.dup||{}, dupCleared:doc.dupCleared||{}, resetAt:doc.resetAt||0,
-          admin:doc.admin||nm, me:nm||this.state.me, screen:"hub", ready:true, setupStep:1
-        }, ()=>this.save({}));
-      }, ()=>{});
-    });
+      if(ptr){
+        /* Already fully on the pointer's stocktake — just confirm and let syncing
+           resume (guard lifts). */
+        if(st.code===ptr && st.owner===uid && !st.joined && st.started && (st.locNames||[]).length){
+          console.info("[owncode] confirmed active stocktake "+ptr);
+          this._recoverPending = false; this.save({}); return;
+        }
+        /* Switch to whatever the cloud says is active (unless it's finished). */
+        this.fetchDoc(ptr).then(doc=>{
+          if(!doc || !(doc.locNames||[]).length){ console.warn("[owncode] pointer code "+ptr+" has no document"); this._recoverPending = false; return; }
+          if(doc.finalAt){ this.clearOwnCode(uid); this._recoverPending = false; return; }
+          if(!this.cache) this.cache = {};
+          this.cache[ptr] = doc;
+          const nm = (this.state.me && this.state.me.trim()) ? this.state.me : (doc.admin||"");
+          this._recoverPending = false;
+          this.setState({
+            code:ptr, owner:uid, joined:false, viewAs:"admin", started:true,
+            title:doc.title||"", locNames:doc.locNames||[], master:doc.master||[],
+            counts:doc.counts||{}, submitted:doc.submitted||{}, subAt:doc.subAt||{}, dup:doc.dup||{}, dupCleared:doc.dupCleared||{}, resetAt:doc.resetAt||0,
+            admin:doc.admin||nm, me:nm||this.state.me, screen:"hub", ready:true, setupStep:1
+          }, ()=>this.save({}));
+        }, ()=>{ this._recoverPending = false; });
+        return;
+      }
+      /* Pointer is null: the account has no active stocktake in the cloud. */
+      if(!localOwn()){ this._recoverPending = false; return; }
+      this.fetchDoc(st.code).then(doc=>{
+        if(doc && doc.finalAt){ console.info("[owncode] local stocktake was closed elsewhere — dropping"); this.clearOwnCode(uid); this._recoverPending = false; this.dropOwnToHub(); return; }
+        this.promptRecoverOwn();
+      }, ()=>{ this.promptRecoverOwn(); });
+    }, ()=>{ console.warn("[owncode] cloud pointer read failed — keeping local this session"); this._recoverPending = false; });
+  }
+  /* Word/Excel-style "recover unsaved work" prompt: this device holds a started
+     stocktake the cloud doesn't list as the account's active one, and it was
+     never formally closed. Let the user resume it (and re-adopt it account-wide)
+     or discard it. _recoverPending stays true so nothing syncs until they pick. */
+  promptRecoverOwn(){
+    const s = this.state;
+    const n = (s.locNames||[]).length;
+    const nm = (s.title && s.title.trim()) ? ("“"+s.title.trim()+"”") : "An unfinished stocktake";
+    this.setState({ screen:"hub", menuOpen:false, confirm:{
+      kind:"recoverOwn",
+      title:"Unfinished stocktake found",
+      note: nm+" is still open on this device ("+n+(n===1?" location":" locations")+"), but it isn’t your account’s current stocktake. Resume it here, or discard it?",
+      label:"Resume stocktake",
+      cancel:"Discard it"
+    }});
+  }
+  resumeRecover(){
+    const uid = this.state.owner;
+    this._recoverPending = false;
+    this.setState({confirm:null, started:true, screen:"hub", setupStep:1}, ()=>{ this.save({}); if(uid) this.setOwnCode(uid, this.state.code); });
+  }
+  discardRecover(){
+    const uid = this.state.owner;
+    if(uid) this.clearOwnCode(uid);
+    this.setState({confirm:null}, ()=>this.dropOwnToHub());
+  }
+  /* Drop the current (stale/discarded) stocktake and land on the home screen with
+     nothing active, keeping the reusable locations & product list. */
+  dropOwnToHub(){
+    this.setState({
+      counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
+      resetAt:Date.now(), code:this.makeCode(), started:false, menuOpen:false, screen:"hub", setupStep:1
+    }, ()=>{ this._recoverPending = false; this.save({}); });
   }
   startGoogle(hint){ try{ window.location.href = AUTH.googleUrl(window.location.origin+window.location.pathname, hint||""); }catch(e){} }
   hydrateUser(sess){
@@ -2110,7 +2176,7 @@ class Component extends DCLogic {
        — even before any counts, title or submits exist. `started` keeps this from
        firing during setup and `!joined` excludes counters, so the owner's live
        stocktake is tracked regardless of what display name they count under. */
-    if(s.started && s.authed && s.owner && !s.joined && s.locNames && s.locNames.length && s.me) this.setOwnCode(s.owner, s.code);
+    if(s.started && s.authed && s.owner && !s.joined && s.locNames && s.locNames.length && s.me && !this._recoverPending) this.setOwnCode(s.owner, s.code);
     this.publish();
   }
 
@@ -2253,6 +2319,10 @@ class Component extends DCLogic {
   publish(){
     const s = this.state;
     if(!s.code || !s.locNames.length || !s.ready) return;
+    /* Login reconciliation is deciding whether this device's local stocktake is
+       still the account's active one. Until it resolves, don't push this doc to
+       the cloud — a stale copy must not resurrect a finished stocktake. */
+    if(this._recoverPending) return;
     /* A stocktake doesn't exist in the cloud until it's been started: an admin
        setting up (or on the just-closed Set-it-up page) publishes nothing until
        they press Start counting. Counters only ever reach here after joining a
@@ -3294,7 +3364,8 @@ class Component extends DCLogic {
       confirmNote: s.confirm && s.confirm.note,
       confirmLabel: s.confirm && s.confirm.label,
       confirmCancel: (s.confirm && s.confirm.cancel) || "Not now",
-      closeConfirm: ()=>this.setState({confirm:null}),
+      closeConfirm: ()=>{ const c=this.state.confirm; if(c && c.kind==="recoverOwn"){ this.resumeRecover(); } else { this.setState({confirm:null}); } },
+      confirmSecondary: ()=>{ const c=this.state.confirm; if(c && c.kind==="recoverOwn"){ this.discardRecover(); } else { this.setState({confirm:null}); } },
       confirmCanWipe: !!(s.confirm && s.confirm.kind==="new"),
       wipeAllOn: !!s.wipeExtra,
       wipeTrack: s.wipeExtra ? accent : "var(--line)",
@@ -3307,6 +3378,8 @@ class Component extends DCLogic {
           this.setState({confirm:null}, ()=>this.signOut());
         } else if(c.kind==="leaveOrg"){
           this.leaveOrg();
+        } else if(c.kind==="recoverOwn"){
+          this.resumeRecover();
         } else if(c.kind==="cancel"){
           /* Cancel = discard the stocktake: clear every count, finalise the cloud
              doc so counters lose access, drop the account pointer, and go back to
