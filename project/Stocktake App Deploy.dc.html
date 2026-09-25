@@ -4350,8 +4350,8 @@ class Component extends DCLogic {
             return {
               name: it.name,
               meta: isDup ? ("counted twice · " + (s.me||"you") + " and " + (this.disp((s.dup[this.ck(locName,it.id)]||{theirs:{}}).theirs.by) || "someone else"))
-                : (e ? (e.c||0)+"×"+it.carton+" + "+this.fmt(e.s||0)+" single"+((e.s===1)?"":"s")+((e.by && e.by!==this.uid())?" · "+this.disp(e.by):"")
-                     : "ctn "+it.carton),
+                : (e ? "Cartons "+(e.c||0)+" · Loose "+this.fmt(e.s||0)+((e.by && e.by!==this.uid())?" · "+this.disp(e.by):"")
+                     : "Carton Size "+it.carton),
               val: e ? String(this.fmt(this.units(it,e))) : "—",
               valSub: e ? "units" : "not counted",
               valInk: isDup ? accent : (e ? "var(--primary)" : "var(--ink-4)"),
