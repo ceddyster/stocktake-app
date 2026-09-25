@@ -682,14 +682,19 @@ Sign in with Google
 </div>
 </sc-if>
 <sc-for list="{{ pastList }}" as="p" hint-placeholder-count="0">
-<button onClick="{{ p.open }}" style="display:block;width:100%;text-align:left;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;cursor:{{ p.cursor }};font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--line-2)">
+<div style="background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow);overflow:hidden">
+<button onClick="{{ p.open }}" style="display:block;width:100%;text-align:left;padding:14px 14px 10px;background:transparent;border:none;cursor:{{ p.cursor }};font-family:'Public Sans',sans-serif" style-hover="background:var(--surface-2)">
 <div style="display:flex;align-items:baseline;gap:10px">
 <span style="flex:1;min-width:0;font:600 13.5px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ p.title }}</span>
 <span style="flex:none;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ p.when }}</span>
 </div>
 <div style="margin-top:7px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">{{ p.meta }}</div>
-<div style="margin-top:10px;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:{{ p.hintInk }}">{{ p.hint }}</div>
 </button>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 14px 12px">
+<span style="font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:{{ p.hintInk }}">{{ p.hint }}</span>
+<button onClick="{{ p.del }}" style="flex:none;min-height:30px;padding:6px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--bad)">DELETE</button>
+</div>
+</div>
 </sc-for>
 <sc-if value="{{ pastAny }}" hint-placeholder-val="{{ false }}">
 <div style="padding:13px 14px;background:var(--surface);border:1px dashed var(--line-2);border-radius:12px;font:400 11px/1.55 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">Finished stocktakes are read-only — tap one to view it.</div>
@@ -1640,7 +1645,7 @@ class Component extends DCLogic {
     this.state = {
       title:"", locNames:[], master:[], ready:false, me:"", code:"", owner:"", joinCode:"", joinName:"", joinNote:"",
       drive:{connected:false, account:"", folder:"Stocktakes", lastSync:0, shared:[]},
-      admin:"", viewAs:"admin", archive:[], lockNote:"", finishOpen:false, joined:false, liveAt:0, removedIds:[],
+      admin:"", viewAs:"admin", archive:[], archDeleted:[], pendingDelete:null, lockNote:"", finishOpen:false, joined:false, liveAt:0, removedIds:[],
       online:true, syncing:false, pushed:{}, saveState:"saved",
       screen:"setup", setupStep:1, newLoc:"", locPick:{}, clearMineOpen:false, clearPick:{}, adminClearOpen:false, adminClearMode:"loc", adminClearPick:{},
       loc:null, counts:{}, query:"", sheet:null, field:"c",
@@ -1702,7 +1707,7 @@ class Component extends DCLogic {
         hidden: saved.hidden||{}, hideEmpty: saved.hideEmpty||{},
         me: saved.me||"", code: saved.code||this.makeCode(), owner: saved.owner||((authed&&sess&&sess.uid)||""), dup: saved.dup||{}, dupCleared: saved.dupCleared||{},
         drive: saved.drive||this.state.drive, pushed: saved.pushed||{},
-        admin: saved.admin||saved.me||"", archive: saved.archive||[], joined: joined, started: startedVal,
+        admin: saved.admin||saved.me||"", archive: saved.archive||[], archDeleted: saved.archDeleted||[], joined: joined, started: startedVal,
         org: saved.org||null, orgId: saved.orgId||"",
         removedIds: saved.removedIds||[], resetAt: saved.resetAt||0,
         authed: authed, authEmail: (sess&&sess.email)||"",
@@ -1805,33 +1810,57 @@ class Component extends DCLogic {
      the whole org (keyed oa:<orgId>); otherwise they're the account's own
      (a:<uid>). This one switch org-scopes every archive read and write below. */
   archiveKey(uid){ return this.state.orgId ? ("oa:"+this.state.orgId) : ("a:"+uid); }
+  /* Stable id for a past-stocktake entry (falls back to a signature for legacy
+     rows saved before entries had ids), used for de-duping and for tombstones. */
+  entryId(e){ return (e && e.id) || ("legacy\u0001"+((e&&e.when)||"")+"\u0001"+((e&&e.title)||"")+"\u0001"+((e&&e.by)||"")); }
   mergeArchive(a, b){
     a=a||[]; b=b||[];
-    const idOf=(e)=> (e && e.id) || ("legacy\u0001"+((e&&e.when)||"")+"\u0001"+((e&&e.title)||"")+"\u0001"+((e&&e.by)||""));
     const map={};
-    a.concat(b).forEach(e=>{ if(!e) return; const k=idOf(e); if(!map[k]) map[k]=e; });
+    a.concat(b).forEach(e=>{ if(!e) return; const k=this.entryId(e); if(!map[k]) map[k]=e; });
     return Object.keys(map).map(k=>map[k]).sort((x,y)=>((x.ts||0)-(y.ts||0)));
   }
-  fetchArchive(uid){
-    if(!uid || !SB.on()) return Promise.resolve(this.state.archive||[]);
+  /* Union of two tombstone id lists (ids of past stocktakes the user deleted).
+     Kept alongside the archive so a delete on one device stays deleted on every
+     device instead of being resurrected by the union-merge below. */
+  mergeDeleted(a, b){ const set={}; (a||[]).concat(b||[]).forEach(id=>{ if(id) set[id]=1; }); return Object.keys(set); }
+  fetchArchiveDoc(uid){
+    if(!uid || !SB.on()) return Promise.resolve({archive:this.state.archive||[], deleted:this.state.archDeleted||[]});
     return SB.get(this.archiveKey(uid)).then(
-      d=> (d && d.archive) || [],
-      err=>{ console.error("[archive] cloud lookup failed, using this device's local copy:", err); return this.state.archive||[]; }
+      d=> ({archive:(d&&d.archive)||[], deleted:(d&&d.deleted)||[]}),
+      err=>{ console.error("[archive] cloud lookup failed, using this device's local copy:", err); return {archive:this.state.archive||[], deleted:this.state.archDeleted||[]}; }
     );
   }
-  pushArchive(uid, archive){
+  pushArchive(uid, archive, deleted){
     if(!uid || !SB.on()) return;
-    SB.put(this.archiveKey(uid), {archive: archive||[], ts:Date.now()}).catch(err=>console.error("[archive] cloud sync failed:", err));
+    SB.put(this.archiveKey(uid), {archive: archive||[], deleted: deleted||this.state.archDeleted||[], ts:Date.now()}).catch(err=>console.error("[archive] cloud sync failed:", err));
   }
-  /* Pull the account's cloud archive, union it with what's on this device, and
-     push the result back so every device shares one Past-stocktakes list. Only
-     the organiser owns an archive, so counters (joined) are skipped. */
+  /* Pull the account's cloud archive, union it with what's on this device (minus
+     any tombstoned/deleted entries), and push the result back so every device
+     shares one Past-stocktakes list. Only the organiser owns an archive, so
+     counters (joined) are skipped. */
   syncArchive(uid){
     if(!uid || !SB.on() || this.state.joined) return;
-    this.fetchArchive(uid).then(cloud=>{
-      const merged = this.mergeArchive(this.state.archive, cloud);
-      if(JSON.stringify(merged) !== JSON.stringify(this.state.archive||[])) this.setState({archive:merged}, ()=>this.save({}));
-      if(JSON.stringify(merged) !== JSON.stringify(cloud||[])) this.pushArchive(uid, merged);
+    this.fetchArchiveDoc(uid).then(doc=>{
+      const cloud = doc.archive||[];
+      const del = this.mergeDeleted(this.state.archDeleted, doc.deleted);
+      const merged = this.mergeArchive(this.state.archive, cloud).filter(e=> del.indexOf(this.entryId(e))<0);
+      if(JSON.stringify(merged) !== JSON.stringify(this.state.archive||[]) || JSON.stringify(del) !== JSON.stringify(this.state.archDeleted||[]))
+        this.setState({archive:merged, archDeleted:del}, ()=>this.save({}));
+      if(JSON.stringify(merged) !== JSON.stringify(cloud) || JSON.stringify(del) !== JSON.stringify(doc.deleted||[]))
+        this.pushArchive(uid, merged, del);
+    });
+  }
+  /* Permanently remove one past stocktake: drop it locally, tombstone its id so
+     it can't be re-merged from the cloud (or another device), then write the
+     pruned archive + tombstone back to the cloud. */
+  deletePast(id){
+    if(!id){ this.setState({confirm:null, pendingDelete:null}); return; }
+    const uid = this.state.owner;
+    const arch = (this.state.archive||[]).filter(e=> this.entryId(e)!==id);
+    const del = this.mergeDeleted(this.state.archDeleted, [id]);
+    this.setState({archive:arch, archDeleted:del, confirm:null, pendingDelete:null}, ()=>{
+      this.save({});
+      if(uid) this.pushArchive(uid, arch, del);
     });
   }
 
@@ -2166,7 +2195,7 @@ class Component extends DCLogic {
       title:s.title, locNames:s.locNames, master:s.master, counts:s.counts, submitted:s.submitted, subAt:s.subAt,
       me:s.me, code:s.code, dup:s.dup, dupCleared:s.dupCleared, drive:s.drive, pushed:s.pushed, metaAt:this._metaAt,
       hidden:s.hidden, hideEmpty:s.hideEmpty, org:s.org, orgId:s.orgId,
-      admin:s.admin, owner:s.owner, archive:s.archive, joined:s.joined, started:s.started, removedIds:s.removedIds, resetAt:s.resetAt
+      admin:s.admin, owner:s.owner, archive:s.archive, archDeleted:s.archDeleted, joined:s.joined, started:s.started, removedIds:s.removedIds, resetAt:s.resetAt
     }, patch);
     try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
     this._localWriteAt = Date.now();
@@ -3046,13 +3075,21 @@ class Component extends DCLogic {
       pastAny: !!(s.archive||[]).length,
       pastList: (s.archive||[]).map((a,i)=>Object.assign({}, a, {__i:i})).reverse().map(a=>{
         const can = !!a.snap;
+        const eid = this.entryId(a);
         return {
           title: a.title, when: a.when,
           meta: "Closed by "+(a.by||"—"),
           cursor: can ? "pointer" : "default",
           hint: can ? "READ ONLY" : "SUMMARY ONLY — NO SAVED COUNTS",
           hintInk: "var(--ink-3)",
-          open: can ? ()=>this.enterReview(a.__i) : null
+          open: can ? ()=>this.enterReview(a.__i) : null,
+          del: ()=>this.setState({ pendingDelete:eid, confirm:{
+            kind:"deletePast",
+            title:"Delete this stocktake?",
+            note:"“"+(a.title||"This stocktake")+"” will be permanently deleted from Past stocktakes for everyone, on every device. This can’t be undone.",
+            label:"Delete permanently",
+            cancel:"Keep it"
+          }})
         };
       }),
       finishOpen: s.finishOpen,
@@ -3379,6 +3416,8 @@ class Component extends DCLogic {
           this.leaveOrg();
         } else if(c.kind==="recoverOwn"){
           this.resumeRecover();
+        } else if(c.kind==="deletePast"){
+          this.deletePast(this.state.pendingDelete);
         } else if(c.kind==="cancel"){
           /* Cancel = discard the stocktake: clear every count, finalise the cloud
              doc so counters lose access, drop the account pointer, and go back to
