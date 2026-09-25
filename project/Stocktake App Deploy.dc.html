@@ -1233,8 +1233,28 @@ Sign in with Google
 <button onClick="{{ useTheirs }}" style="flex:none;padding:7px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--primary);cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink)">USE THEIRS</button>
 </div>
 </sc-if>
-<div style="padding:10px 18px 0">
-<button onClick="{{ toggleAdd }}" style="width:100%;padding:10px;border-radius:10px;cursor:pointer;background:{{ addBg }};border:1px solid {{ addBorder }};font:500 10px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:{{ addInk }}">{{ addLabel }}</button>
+<div style="padding:12px 18px 0">
+<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:40px;padding:9px 11px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)">
+<sc-if value="{{ tallyEmpty }}" hint-placeholder-val="{{ true }}">
+<span style="font:400 11.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">Type a count for the first spot, then tap Add — each spot shows here.</span>
+</sc-if>
+<sc-for list="{{ parts }}" as="pt" hint-placeholder-count="0">
+<sc-if value="{{ pt.plus }}" hint-placeholder-val="{{ false }}">
+<span style="font:700 15px/1 'Public Sans',sans-serif;color:var(--ink-4)">+</span>
+</sc-if>
+<span style="display:inline-flex;align-items:center;gap:7px;padding:6px 6px 6px 11px;border-radius:9px;background:var(--surface-3);border:1px solid var(--line-2);font:600 15px/1 'Public Sans',sans-serif;color:var(--ink)">{{ pt.v }}<button onClick="{{ pt.remove }}" style="width:20px;height:20px;flex:none;border:none;border-radius:6px;background:rgba(255,255,255,.06);color:var(--ink-3);cursor:pointer;font:400 12px/1 'Public Sans',sans-serif">✕</button></span>
+</sc-for>
+<sc-if value="{{ entryPlus }}" hint-placeholder-val="{{ false }}">
+<span style="font:700 15px/1 'Public Sans',sans-serif;color:var(--ink-4)">+</span>
+</sc-if>
+<sc-if value="{{ hasEntry }}" hint-placeholder-val="{{ false }}">
+<span style="display:inline-flex;align-items:center;padding:6px 11px;border-radius:9px;background:rgba(90,107,190,.22);border:1px solid var(--primary);font:700 15px/1 'Public Sans',sans-serif;color:var(--ink)">{{ entryDisplay }}</span>
+</sc-if>
+</div>
+</div>
+<div style="padding:10px 18px 0;display:flex;gap:8px">
+<button onClick="{{ clearTally }}" style="flex:none;padding:12px 15px;border-radius:11px;background:var(--surface);border:1px solid var(--line-2);cursor:pointer;font:600 11.5px/1 'Public Sans',sans-serif;color:var(--ink-2)">Clear</button>
+<button onClick="{{ addChip }}" style="flex:1;padding:12px;border-radius:11px;background:var(--surface);border:1px solid var(--primary);cursor:pointer;font:700 13px/1 'Public Sans',sans-serif;color:var(--ink)">＋ Add this spot</button>
 </div>
 <div style="padding:10px 18px 0;display:flex;align-items:baseline;justify-content:space-between">
 <span style="font:400 11px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ sheetTotalLabel }}</span>
@@ -1660,7 +1680,7 @@ class Component extends DCLogic {
       online:true, syncing:false, pushed:{}, saveState:"saved",
       screen:"setup", setupStep:1, newLoc:"", locPick:{}, clearMineOpen:false, clearPick:{}, adminClearOpen:false, adminClearMode:"loc", adminClearPick:{},
       loc:null, counts:{}, query:"", sheet:null, field:"c",
-      hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null,
+      hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null, cParts:[], sParts:[],
       submitted:{}, subAt:{}, totalsMode:"cat", expanded:{}, groupMode:"sub", sortMode:"none", sortOpen:false,
       buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, dupCleared:{}, subOpen:false,
       overwriteWarn:null, overwriteBy:"", overwriteOk:{}, review:null, reviewTitle:"", reviewWhen:"",
@@ -2830,7 +2850,10 @@ class Component extends DCLogic {
       const dot = next.indexOf(".");
       if(dot>=0 && next.length-dot-1>2) return;
       let v = next===""||next==="." ? 0 : parseFloat(next);
-      if(s.addBase !== null && s.addBase !== undefined) v = s.addBase + v;
+      /* The count for this field is the running tally (the chips already added)
+         plus whatever is being typed now, so typing shows the live total. */
+      const _tally = (s.field==="c" ? (s.cParts||[]) : (s.sParts||[])).reduce((a,b)=>a+b,0);
+      v = _tally + v;
       if(s.field==="c") e.c = Math.round(v); else e.s = Math.round(v*100)/100;
       e.by = me;
       e.ts = Date.now();
@@ -2847,6 +2870,64 @@ class Component extends DCLogic {
       }
       this.setState({counts:counts, dup:dup, buf:next, revealed:revealed}, ()=>this.save({}));
     };
+  }
+
+  /* ---- running-tally ("add each spot") helpers ----
+     The active field's count is the sum of its chips (cParts / sParts) plus the
+     number being typed. Adding a spot banks the typed number as a chip; removing
+     a chip or clearing recomputes the committed total. */
+  _activeParts(){ const s=this.state; return (s.field==="c" ? (s.cParts||[]) : (s.sParts||[])); }
+  _partsPatch(arr){ return this.state.field==="c" ? {cParts:arr} : {sParts:arr}; }
+  commitTally(){
+    const s=this.state; const it=this.byId(s.sheet); if(!it || !s.loc) return;
+    const key=this.ck(s.loc, s.sheet); const me=this.uid()||"You";
+    const parts = this._activeParts();
+    const entry = (s.buf===null||s.buf==="") ? 0 : (parseFloat(s.buf)||0);
+    const v = parts.reduce((a,b)=>a+b,0) + entry;
+    const counts=Object.assign({}, s.counts);
+    let dup=s.dup;
+    const e=Object.assign({c:0,s:0,by:me}, counts[key]||{});
+    if(s.field==="c") e.c=Math.round(v); else e.s=Math.round(v*100)/100;
+    e.by=me; e.ts=Date.now();
+    counts[key]=e;
+    if(dup[key]) dup=Object.assign({}, dup, {[key]:Object.assign({}, dup[key], {mine:{c:e.c, s:e.s, by:me}})});
+    this.setState({counts:counts, dup:dup}, ()=>this.save({}));
+  }
+  addChip(){
+    const s=this.state;
+    const entry = (s.buf===null||s.buf==="") ? 0 : (parseFloat(s.buf)||0);
+    if(entry<=0) return;
+    const arr = this._activeParts().slice();
+    arr.push(s.field==="c" ? Math.round(entry) : Math.round(entry*100)/100);
+    this.setState(Object.assign(this._partsPatch(arr), {buf:null}), ()=>this.commitTally());
+  }
+  removeChip(i){
+    const arr = this._activeParts().slice();
+    if(i<0 || i>=arr.length) return;
+    arr.splice(i,1);
+    this.setState(this._partsPatch(arr), ()=>this.commitTally());
+  }
+  clearTally(){
+    this.setState(Object.assign(this._partsPatch([]), {buf:null}), ()=>this.commitTally());
+  }
+  /* Fold the number being typed into a chip — used when leaving the field so the
+     tally and the committed total never drift apart. */
+  foldEntry(){
+    const s=this.state;
+    const entry = (s.buf===null||s.buf==="") ? 0 : (parseFloat(s.buf)||0);
+    if(entry<=0) return {};
+    const arr = this._activeParts().slice();
+    arr.push(s.field==="c" ? Math.round(entry) : Math.round(entry*100)/100);
+    return this._partsPatch(arr);
+  }
+  /* Open a product's keypad sheet, seeding each field's chips from the existing
+     count (only when it's this user's own, so we don't adopt a rival's number). */
+  openSheet(itemId){
+    const s=this.state; const me=this.uid()||"You";
+    const key=this.ck(s.loc, itemId); const e=(s.counts||{})[key]||{c:0,s:0,by:me};
+    const own = !e.by || e.by===me;
+    this.setState({ sheet:itemId, field:"c", buf:null, historyOpen:false,
+      cParts:(own && (e.c||0)>0) ? [e.c] : [], sParts:(own && (e.s||0)>0) ? [e.s] : [] });
   }
 
   /* ---- file import ---- */
@@ -4276,7 +4357,7 @@ class Component extends DCLogic {
               valInk: isDup ? accent : (e ? "var(--primary)" : "var(--ink-4)"),
               subInk: isDup ? accent : "var(--ink-3)",
               rowBg: isDup ? "var(--surface)" : (e ? "var(--surface)" : "var(--surface-3)"),
-              open: ()=>this.setState({sheet:it.id, field:"c", buf:null, addBase:null, historyOpen:false})
+              open: ()=>this.openSheet(it.id)
             };
           })
         };
@@ -4336,40 +4417,29 @@ class Component extends DCLogic {
         counts[key] = {c:theirEntry.c, s:theirEntry.s, by:theirEntry.by, ts:now};
         const dup = Object.assign({}, s.dup); delete dup[key];
         const dupCleared = Object.assign({}, s.dupCleared||{}); dupCleared[key]=now;
-        this.setState({counts:counts, dup:dup, dupCleared:dupCleared, buf:null, addBase:null}, ()=>this.save({}));
+        this.setState({counts:counts, dup:dup, dupCleared:dupCleared, buf:null,
+          cParts:(theirEntry.c>0?[theirEntry.c]:[]), sParts:(theirEntry.s>0?[theirEntry.s]:[])}, ()=>this.save({}));
       };
-      const adding = s.addBase!==null && s.addBase!==undefined;
-      const typed = s.buf===null||s.buf==="" ? 0 : parseFloat(s.buf)||0;
-      vals.cartonVal = String(s.field==="c" && s.buf!==null && !adding ? s.buf : this.fmt(e.c||0));
-      vals.singleVal = String(s.field==="s" && s.buf!==null && !adding ? s.buf : this.fmt(e.s||0));
-      vals.addLabel = adding
-        ? (typed>0
-            ? (this.fmt(s.addBase)+" + "+this.fmt(typed)+" = "+this.fmt(s.addBase+typed)+"  ·  TAP TO ADD & KEEP GOING")
-            : (this.fmt(s.addBase)+" so far  ·  TAP TO FINISH ADDING"))
-        : ("+ ADD TO THIS "+(s.field==="c"?"CARTON":"SINGLES")+" COUNT");
-      vals.addBg = adding ? "var(--surface)" : "var(--surface)";
-      vals.addBorder = adding ? accent : "var(--line)";
-      vals.addInk = adding ? "var(--ink)" : "var(--ink-2)";
-      vals.toggleAdd = ()=>{
-        if(adding){
-          if(typed>0){
-            // bank the running total and stay in add mode for the next addend
-            const banked = s.field==="c" ? (e.c||0) : (e.s||0);
-            this.setState({addBase: banked, buf:null});
-          } else {
-            this.setState({addBase:null, buf:null});
-          }
-        } else {
-          this.setState({addBase: s.field==="c" ? (e.c||0) : (e.s||0), buf:null});
-        }
-      };
+      /* Each box shows that field's running total (chips + what's being typed),
+         which press() commits on every keystroke. */
+      vals.cartonVal = this.fmt(e.c||0);
+      vals.singleVal = this.fmt(e.s||0);
+      /* Running-tally chips for the active field. */
+      const _active = s.field==="c" ? (s.cParts||[]) : (s.sParts||[]);
+      vals.parts = _active.map((v,i)=>({ v:this.fmt(v), plus:(i>0), remove:()=>this.removeChip(i) }));
+      vals.entryDisplay = (s.buf===null||s.buf==="") ? "" : String(s.buf);
+      vals.hasEntry = !(s.buf===null||s.buf==="");
+      vals.entryPlus = !(s.buf===null||s.buf==="") && _active.length>0;
+      vals.tallyEmpty = _active.length===0 && (s.buf===null||s.buf==="");
+      vals.addChip = ()=>this.addChip();
+      vals.clearTally = ()=>this.clearTally();
       vals.singleLabel = "SINGLES";
       vals.cartonBg = s.field==="c" ? "var(--surface)" : "var(--surface-3)";
       vals.cartonBorder = s.field==="c" ? accent : "var(--line-2)";
       vals.singleBg = s.field==="s" ? "var(--surface)" : "var(--surface-3)";
       vals.singleBorder = s.field==="s" ? accent : "var(--line-2)";
-      vals.focusCartons = ()=>this.setState({field:"c", buf:null, addBase:null});
-      vals.focusSingles = ()=>this.setState({field:"s", buf:null, addBase:null});
+      vals.focusCartons = ()=>this.setState(Object.assign({}, this.foldEntry(), {field:"c", buf:null}));
+      vals.focusSingles = ()=>this.setState(Object.assign({}, this.foldEntry(), {field:"s", buf:null}));
       vals.sheetTotalLabel = this.fmt(this.units(it,e))+" units total";
       vals.historyOpen = s.historyOpen;
       vals.historyToggleLabel = s.historyOpen ? "HIDE HISTORY" : "NO PREVIOUS COUNTS";
@@ -4383,7 +4453,7 @@ class Component extends DCLogic {
         ink: k===""?"transparent":"var(--ink)",
         press: k==="" ? ()=>{} : this.press(k)
       }));
-      vals.closeSheet = ()=>this.setState({sheet:null, buf:null, addBase:null});
+      vals.closeSheet = ()=>this.setState({sheet:null, buf:null, cParts:[], sParts:[]});
     }
     if(reviewing){
       const noop=()=>{};
