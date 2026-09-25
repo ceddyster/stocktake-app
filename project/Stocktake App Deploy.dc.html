@@ -688,12 +688,11 @@ Sign in with Google
 <span style="flex:none;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ p.when }}</span>
 </div>
 <div style="margin-top:7px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">{{ p.meta }}</div>
-<div style="margin-top:9px;padding:9px 10px;background:var(--surface-3);border:1px solid var(--surface-3);border-radius:9px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink);word-break:break-all;box-shadow:var(--inset-shadow)">{{ p.file }}</div>
 <div style="margin-top:10px;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:{{ p.hintInk }}">{{ p.hint }}</div>
 </button>
 </sc-for>
 <sc-if value="{{ pastAny }}" hint-placeholder-val="{{ false }}">
-<div style="padding:13px 14px;background:var(--surface);border:1px dashed var(--line-2);border-radius:12px;font:400 11px/1.55 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">Tap a finished stocktake to reopen it read-only. Everything stays locked except the export button. Nothing here can be counted into again.</div>
+<div style="padding:13px 14px;background:var(--surface);border:1px dashed var(--line-2);border-radius:12px;font:400 11px/1.55 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">Finished stocktakes are read-only — tap one to view it. Everything stays locked except the export button, and nothing here can be counted into again.</div>
 </sc-if>
 </div>
 </div>
@@ -3048,11 +3047,11 @@ class Component extends DCLogic {
       pastList: (s.archive||[]).map((a,i)=>Object.assign({}, a, {__i:i})).reverse().map(a=>{
         const can = !!a.snap;
         return {
-          title: a.title, file: a.file, when: a.when,
-          meta: a.units+" units · "+a.locs+(a.locs===1?" location":" locations")+" · by "+a.by,
+          title: a.title, when: a.when,
+          meta: "Closed by "+(a.by||"—"),
           cursor: can ? "pointer" : "default",
-          hint: can ? "TAP TO REOPEN ›" : "SUMMARY ONLY — NO SAVED COUNTS",
-          hintInk: can ? accent : "var(--ink-3)",
+          hint: can ? "READ ONLY" : "SUMMARY ONLY — NO SAVED COUNTS",
+          hintInk: "var(--ink-3)",
           open: can ? ()=>this.enterReview(a.__i) : null
         };
       }),
@@ -3715,7 +3714,7 @@ class Component extends DCLogic {
           meta: sub!==undefined ? ("Location closed · counted by "+(counters.length?counters.join(", "):"—"))
               : (done ? done+" of "+N+" products" : N+" products · not started"),
           pct: pct+"%", pctLabel: sub!==undefined ? "✓" : (done ? pct+"%" : "—"),
-          canReopen: sub!==undefined && amAdmin,
+          canReopen: sub!==undefined && amAdmin && !reviewing,
           reopen: ()=>{
             const nx = Object.assign({}, s.submitted||{}); delete nx[l.name];
             const at = Object.assign({}, s.subAt||{}); at[l.name] = Date.now();
