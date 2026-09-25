@@ -115,6 +115,66 @@ Sign in with Google
 </div>
 </sc-if>
 
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;overflow:auto;display:flex;flex-direction:column;justify-content:center;padding:28px 24px 40px;background:var(--bg)">
+<div style="width:100%;max-width:400px;margin:0 auto">
+<div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.18em;color:var(--ink-3)">STEP 2 OF 2</div>
+<div style="margin-top:11px;font:700 26px/1.08 'Public Sans',sans-serif;letter-spacing:-.02em;color:var(--ink)">Create your profile</div>
+<p style="margin:10px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">Your name goes on every count you enter and on the stocktakes you run. Both fields are required.</p>
+<div style="margin-top:22px">
+<label style="display:block;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-2)">FULL NAME <span style="color:var(--primary)">*</span></label>
+<input value="{{ meValue }}" onChange="{{ onMe }}" placeholder="Your name" style="margin-top:8px;width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);outline:none;font:400 14px/1 'Public Sans',sans-serif;color:var(--ink)" />
+</div>
+<div style="margin-top:14px">
+<label style="display:block;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-2)">EMAIL <span style="color:var(--primary)">*</span></label>
+<div style="margin-top:8px;width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);font:400 14px/1 'Public Sans',sans-serif;color:var(--ink-2);word-break:break-all">{{ authEmailReadonly }}</div>
+<div style="margin-top:6px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">This is your login email.</div>
+</div>
+<sc-if value="{{ hasAccountMsg }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:14px;padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:11px;font:400 11.5px/1.5 'Public Sans',sans-serif;color:var(--ink-2)">{{ accountMsg }}</div>
+</sc-if>
+<button onClick="{{ profileContinue }}" style="margin-top:20px;width:100%;min-height:50px;padding:15px;border-radius:12px;background:var(--primary);border:none;cursor:pointer;font:600 14px/1 'Public Sans',sans-serif;color:var(--on-primary)">Save &amp; continue</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAccount }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:16px 20px 14px;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px">
+<button onClick="{{ accountBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:700 20px/1.1 'Public Sans',sans-serif;letter-spacing:-.01em;color:var(--ink)">Account</div>
+<div style="margin-top:2px;font:400 11px/1 'Public Sans',sans-serif;color:var(--ink-3);word-break:break-all">{{ authEmailReadonly }}</div>
+</div>
+</div>
+<div style="flex:1;min-height:0;overflow:auto;padding:18px 20px 40px">
+<div style="width:100%;max-width:420px;margin:0 auto">
+<div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink)">PROFILE</div>
+<label style="display:block;margin-top:12px;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-2)">NAME</label>
+<input value="{{ meValue }}" onChange="{{ onMe }}" placeholder="Your name" style="margin-top:8px;width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;background:var(--surface);outline:none;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink)" />
+<label style="display:block;margin-top:12px;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-2)">EMAIL</label>
+<div style="margin-top:8px;width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);font:400 13px/1 'Public Sans',sans-serif;color:var(--ink-2);word-break:break-all">{{ authEmailReadonly }}</div>
+<button onClick="{{ saveProfileNow }}" style="margin-top:12px;width:100%;padding:12px;border-radius:11px;background:var(--surface);border:1px solid var(--line-2);cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--ink)">Save profile</button>
+<sc-if value="{{ hasAccountMsg }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:10px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;font:400 11px/1.5 'Public Sans',sans-serif;color:var(--ink-2)">{{ accountMsg }}</div>
+</sc-if>
+<div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--line)">
+<div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink)">CHANGE PASSWORD</div>
+<input type="password" value="{{ pwCurValue }}" onChange="{{ onPwCur }}" placeholder="Current password" style="margin-top:12px;width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;background:var(--surface);outline:none;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink)" />
+<input type="password" value="{{ pwNewValue }}" onChange="{{ onPwNew }}" placeholder="New password (at least 6 characters)" style="margin-top:10px;width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;background:var(--surface);outline:none;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink)" />
+<sc-if value="{{ hasPwMsg }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:10px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;font:400 11px/1.5 'Public Sans',sans-serif;color:var(--ink-2)">{{ pwMsg }}</div>
+</sc-if>
+<button onClick="{{ doChangePw }}" style="margin-top:12px;width:100%;padding:12px;border-radius:11px;background:var(--surface);border:1px solid var(--line-2);cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--ink)">{{ pwBtnLabel }}</button>
+</div>
+<div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--line)">
+<button onClick="{{ doLogout }}" style="width:100%;padding:12px;border-radius:11px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--bad)">Log out</button>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
 <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
 <div style="height:100%;display:flex;flex-direction:column">
 <div style="padding:14px 20px 12px;background:var(--bg);border-bottom:1px solid var(--line)">
@@ -595,6 +655,14 @@ Sign in with Google
 </span>
 <button onClick="{{ doLogout }}" style="flex:none;padding:9px 13px;border-radius:10px;background:var(--surface-3);border:1px solid var(--line-2);cursor:pointer;font:600 10px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink);box-shadow:var(--inset-shadow)">LOG OUT</button>
 </div>
+<button onClick="{{ openAccount }}" style="margin-top:8px;width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
+<span style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 14px/1 'Public Sans',sans-serif;color:var(--ink)">☺</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 13px/1.2 'Public Sans',sans-serif;color:var(--ink)">Profile &amp; password</span>
+<span style="display:block;margin-top:3px;font:400 10px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Your name, email and password.</span>
+</span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
+</button>
 </sc-if>
 
 <sc-if value="{{ joinedAsCounter }}" hint-placeholder-val="{{ false }}">
@@ -1412,6 +1480,7 @@ const AUTH = {
   refresh(rt){ return fetch(this.base()+"/token?grant_type=refresh_token",{method:"POST",headers:this.h(),body:JSON.stringify({refresh_token:rt})}).then(this._res); },
   user(token){ return fetch(this.base()+"/user",{headers:Object.assign({Authorization:"Bearer "+token}, this.h())}).then(this._res); },
   logout(token){ return fetch(this.base()+"/logout",{method:"POST",headers:Object.assign({Authorization:"Bearer "+token}, this.h())}).catch(()=>{}); },
+  updateUser(token, body){ return fetch(this.base()+"/user",{method:"PUT",headers:Object.assign({Authorization:"Bearer "+token}, this.h()),body:JSON.stringify(body)}).then(this._res); },
   googleUrl(redirect, hint){ let u = this.base()+"/authorize?provider=google&redirect_to="+encodeURIComponent(redirect)+"&prompt=select_account"; if(hint) u += "&login_hint="+encodeURIComponent(hint); return u; }
 };
 /* one device, one stable store. reload and app-restart reload the same data. */
@@ -1441,6 +1510,7 @@ class Component extends DCLogic {
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
       imported:null, importName:"",
       menuOpen:false, confirm:null, resetAt:0, started:false,
+      pwCur:"", pwNew:"", pwBusy:false, pwMsg:"", accountMsg:"",
       authed:false, authEmail:"", authView:"admin", authMode:"in", authEmailInput:"", authPwInput:"", authBusy:false, authErr:"", googleConfirm:null,
       theme: (()=>{ try{ return localStorage.getItem("stocktake.theme")==="light" ? "light" : "dark"; }catch(e){ return "dark"; } })()
     };
@@ -1545,6 +1615,24 @@ class Component extends DCLogic {
      account cloud row keyed a:<uid> — the same pattern as the owncode pointer.
      Union-merged by entry id so two devices that each finished a stocktake keep
      all of them. */
+  /* A signed-in user's profile (their real name) lives in a per-account cloud
+     row keyed p:<uid>, so their name follows them onto any device they log in
+     on. Email is the auth login itself, not stored here. */
+  profileKey(uid){ return "p:"+uid; }
+  fetchProfile(uid){
+    if(!uid || !SB.on()) return Promise.resolve(null);
+    return SB.get(this.profileKey(uid)).then(d=>d||null, ()=>null);
+  }
+  saveProfile(uid, name){
+    if(!uid || !SB.on()) return;
+    SB.put(this.profileKey(uid), {name:(name||"").trim(), ts:Date.now()}).catch(err=>console.error("[profile] save failed:", err));
+  }
+  loadProfile(uid){
+    if(!uid) return;
+    /* The saved profile is the account's canonical name (Account-screen edits
+       write it), so it wins over the email-derived placeholder set at sign-in. */
+    this.fetchProfile(uid).then(p=>{ if(p && p.name && p.name !== (this.state.me||"")){ this.setState({ me: p.name }, ()=>this.save({})); } });
+  }
   archiveKey(uid){ return "a:"+uid; }
   mergeArchive(a, b){
     a=a||[]; b=b||[];
@@ -1612,6 +1700,7 @@ class Component extends DCLogic {
       try{ localStorage.setItem(AUTHKEY, JSON.stringify(ns)); if(ns.email) localStorage.setItem(LASTG, ns.email); }catch(e){}
       this.setState({authEmail:ns.email});
       this.resumeOwn(ns.uid);
+      this.loadProfile(ns.uid);
     }, ()=>{
       if(sess.refresh_token){
         AUTH.refresh(sess.refresh_token).then(t=>{
@@ -1639,12 +1728,12 @@ class Component extends DCLogic {
             : "Could not sign in. Check your details and try again."});
         return;
       }
-      this.landAuth(r, email);
+      this.landAuth(r, email, s.authMode==="up");
     }, err=>{
       this.setState({authBusy:false, authErr: (typeof err==="string" ? err : "Something went wrong. Try again.")});
     });
   }
-  landAuth(r, email){
+  landAuth(r, email, newSignup){
     const em = (r.user && r.user.email) || email;
     const uid = (r.user && r.user.id) || "";
     const sess = {access_token:r.access_token, refresh_token:r.refresh_token||"", email:em, uid:uid};
@@ -1657,17 +1746,19 @@ class Component extends DCLogic {
         authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
         me: nm, admin: s.admin || nm, owner: uid,
         screen: ((s.started && s.locNames.length) ? "home" : "setup"), menuOpen:false
-      }, ()=>{ this.save({}); this.resumeOwn(uid); });
+      }, ()=>{ this.save({}); this.resumeOwn(uid); this.loadProfile(uid); });
     } else {
-      // New account (or a different one) on this device: start blank.
-      const nm = em.split("@")[0];
+      // New account (or a different one) on this device: start blank. A brand-new
+      // signup goes to the profile step first (name required); an existing account
+      // signing in on a new device skips it and pulls its saved profile name.
+      const nm = newSignup ? "" : em.split("@")[0];
       this.setState({
         authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
-        me: nm, admin: nm, owner: uid,
+        me: nm, admin: "", owner: uid,
         title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
         archive:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
-        screen:"setup", setupStep:1, menuOpen:false
-      }, ()=>{ this.save({}); this.resumeOwn(uid); });
+        screen: newSignup ? "profile" : "setup", setupStep:1, menuOpen:false
+      }, ()=>{ this.save({}); if(!newSignup){ this.resumeOwn(uid); this.loadProfile(uid); } });
     }
   }
   signOut(){
@@ -2652,6 +2743,7 @@ class Component extends DCLogic {
       finishCsvLabel: "Close & export CSV",
       isHome: s.screen==="home", isCount: s.screen==="count", isDone: s.screen==="done",
       isTotals: s.screen==="totals", isMaster: s.screen==="master",
+      isProfile: s.screen==="profile", isAccount: s.screen==="account",
       sessionUnits: this.fmt(totalUnits),
       sessionLines: Object.keys(s.counts).filter(k=>this.byId(k.split("|")[1])).length,
       submittedLabel: Object.keys(s.submitted||{}).length + " / " + LOCS.length,
@@ -2717,6 +2809,46 @@ class Component extends DCLogic {
       acctEmail: s.authEmail || (s.me||"signed in"),
       acctInitial: (s.authEmail||s.me||"?").trim().charAt(0).toUpperCase(),
       doLogout: ()=>this.signOut(),
+      /* ---- profile & account ---- */
+      authEmailReadonly: s.authEmail || "",
+      accountMsg: s.accountMsg || "",
+      hasAccountMsg: !!(s.accountMsg||"").length,
+      openAccount: ()=>this.setState({menuOpen:false, screen:"account", pwCur:"", pwNew:"", pwMsg:"", accountMsg:""}),
+      accountBack: ()=>this.setState({screen: ((s.started && s.locNames.length) ? "home" : "setup"), accountMsg:"", pwMsg:""}),
+      profileContinue: ()=>{
+        const nm=(this.state.me||"").trim();
+        if(nm.length<1){ this.setState({accountMsg:"Enter your name to continue."}); return; }
+        this.saveProfile(this.state.owner, nm);
+        this.setState({admin: nm, accountMsg:"", screen:"setup", setupStep:1}, ()=>this.save({}));
+      },
+      saveProfileNow: ()=>{
+        const nm=(this.state.me||"").trim();
+        if(nm.length<1){ this.setState({accountMsg:"Name can't be empty."}); return; }
+        this.saveProfile(this.state.owner, nm);
+        this.setState({accountMsg:"Profile saved."}, ()=>this.save({}));
+      },
+      pwCurValue: s.pwCur||"", pwNewValue: s.pwNew||"",
+      onPwCur: (e)=>this.setState({pwCur:e.target.value, pwMsg:""}),
+      onPwNew: (e)=>this.setState({pwNew:e.target.value, pwMsg:""}),
+      pwMsg: s.pwMsg||"", hasPwMsg: !!(s.pwMsg||"").length,
+      pwBtnLabel: s.pwBusy ? "Updating…" : "Update password",
+      doChangePw: ()=>{
+        if(this.state.pwBusy) return;
+        const st=this.state; const cur=st.pwCur||"", nw=st.pwNew||"", email=st.authEmail||"";
+        if(nw.length<6){ this.setState({pwMsg:"New password must be at least 6 characters."}); return; }
+        if(!email){ this.setState({pwMsg:"Sign in again to change your password."}); return; }
+        this.setState({pwBusy:true, pwMsg:""});
+        AUTH.signin(email, cur).then(r=>{
+          const uid=(r.user&&r.user.id)||st.owner||"";
+          const sess={access_token:r.access_token, refresh_token:r.refresh_token||"", email:email, uid:uid};
+          try{ localStorage.setItem(AUTHKEY, JSON.stringify(sess)); }catch(e){}
+          return AUTH.updateUser(r.access_token, {password:nw});
+        }).then(()=>{
+          this.setState({pwBusy:false, pwCur:"", pwNew:"", pwMsg:"Password updated."});
+        }, err=>{
+          this.setState({pwBusy:false, pwMsg: (typeof err==="string" && /invalid|credential|password/i.test(err)) ? "Current password is incorrect." : "Couldn't update password. Check your current password and try again."});
+        });
+      },
       leaveJoin: ()=>this.leaveJoin(),
       menuOpen: s.menuOpen,
       openMenu: ()=>this.setState({menuOpen:true}),
