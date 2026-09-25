@@ -237,18 +237,72 @@ Sign in with Google
 </div>
 <div style="flex:1;min-height:0;overflow:auto;padding:18px 20px 40px">
 <div style="width:100%;max-width:420px;margin:0 auto">
-<div style="padding:13px 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:13px;font:400 12px/1.6 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">
-<span style="display:block;font:700 13px/1.2 'Public Sans',sans-serif;color:var(--ink);margin-bottom:5px">Coming soon</span>
-Create a company or join one with a code, so your whole team shares the same stocktakes and past stocktakes — not just this device. This is the next update.
+
+<sc-if value="{{ notInOrg }}" hint-placeholder-val="{{ true }}">
+<div style="padding:13px 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:13px;font:400 12px/1.6 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">Join or create a company so your whole team shares the same stocktakes and past stocktakes — not just this device. Everyone in it can see and run every stocktake.</div>
+<div style="margin-top:14px;padding:15px;background:var(--surface);border:1px solid var(--primary);border-radius:14px;box-shadow:var(--card-shadow)">
+<div style="font:700 14px/1.2 'Public Sans',sans-serif;color:var(--ink)">Create an organisation</div>
+<div style="margin-top:3px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">You become its admin and get a code to share with your team.</div>
+<input value="{{ orgNameValue }}" onChange="{{ onOrgName }}" placeholder="Organisation name" style="margin-top:11px;width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);outline:none;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink)" />
+<button onClick="{{ createOrgBtn }}" style="margin-top:9px;width:100%;padding:13px;border-radius:11px;background:var(--primary);border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:var(--on-primary)">Create</button>
 </div>
-<div style="margin-top:14px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;opacity:.55">
-<div style="font:700 13px/1.2 'Public Sans',sans-serif;color:var(--ink)">Create an organisation</div>
-<div style="margin-top:3px;font:400 10.5px/1.35 'Public Sans',sans-serif;color:var(--ink-3)">You become its admin and get a code to share.</div>
+<div style="margin-top:12px;padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--card-shadow)">
+<div style="font:700 14px/1.2 'Public Sans',sans-serif;color:var(--ink)">Join an organisation</div>
+<div style="margin-top:3px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">Enter the code an admin shared with you.</div>
+<input value="{{ orgJoinValue }}" onChange="{{ onOrgJoin }}" placeholder="Organisation code" style="margin-top:11px;width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);outline:none;font:600 15px/1 'Public Sans',sans-serif;letter-spacing:.18em;color:var(--ink)" />
+<button onClick="{{ joinOrgBtn }}" style="margin-top:9px;width:100%;padding:13px;border-radius:11px;background:var(--surface);border:1px solid var(--line-2);cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:var(--ink)">{{ joinBtnLabel }}</button>
 </div>
-<div style="margin-top:10px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;opacity:.55">
-<div style="font:700 13px/1.2 'Public Sans',sans-serif;color:var(--ink)">Join an organisation</div>
-<div style="margin-top:3px;font:400 10.5px/1.35 'Public Sans',sans-serif;color:var(--ink-3)">Enter the code an admin shared with you.</div>
+</sc-if>
+
+<sc-if value="{{ inOrg }}" hint-placeholder-val="{{ false }}">
+<div style="font:700 22px/1.1 'Public Sans',sans-serif;letter-spacing:-.01em;color:var(--ink)">{{ orgName }}</div>
+<div style="margin-top:3px;font:400 11px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ orgMemberLabel }} · shared stocktakes</div>
+<div style="margin-top:13px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow)">
+<div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">INVITE CODE</div>
+<div style="margin-top:7px;font:700 24px/1 'Public Sans',sans-serif;letter-spacing:.24em;color:var(--ink);text-align:center">{{ orgCode }}</div>
+<div style="margin-top:8px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3);text-align:center">Share this so teammates can join and see the org's stocktakes.</div>
 </div>
+
+<div style="margin-top:16px;font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink-3)">LIVE STOCKTAKES</div>
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+<sc-if value="{{ orgActiveEmpty }}" hint-placeholder-val="{{ true }}">
+<div style="padding:14px;background:var(--surface);border:1px dashed var(--line-2);border-radius:12px;font:400 11px/1.5 'Public Sans',sans-serif;color:var(--ink-3)">Nothing live right now. Start a stocktake from the home screen and it shows here for the whole team.</div>
+</sc-if>
+<sc-for list="{{ orgActiveList }}" as="a" hint-placeholder-count="0">
+<button onClick="{{ a.open }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
+<span style="width:34px;height:34px;flex:none;border-radius:9px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:700 11px/1 'Public Sans',sans-serif;color:var(--ink)">{{ a.initial }}</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13px/1.2 'Public Sans',sans-serif;color:var(--ink)">{{ a.title }}</span><span style="display:block;margin-top:2px;font:400 10px/1.2 'Public Sans',sans-serif;color:var(--ink-3)">{{ a.by }}</span></span>
+<span style="flex:none;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--ok);color:var(--ok)">OPEN</span>
+</button>
+</sc-for>
+</div>
+
+<button onClick="{{ goPastFromOrg }}" style="margin-top:14px;width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
+<span style="width:34px;height:34px;flex:none;border-radius:9px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 15px/1 'Public Sans',sans-serif;color:var(--ink)">▤</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13px/1.2 'Public Sans',sans-serif;color:var(--ink)">Past stocktakes</span><span style="display:block;margin-top:2px;font:400 10px/1.2 'Public Sans',sans-serif;color:var(--ink-3)">{{ orgPastLabel }} · shared</span></span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
+</button>
+
+<div style="margin-top:16px;font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink-3)">MEMBERS · {{ orgMemberCount }}</div>
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ orgMembers }}" as="m" hint-placeholder-count="0">
+<div style="display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:12px">
+<span style="width:32px;height:32px;flex:none;border-radius:50%;background:var(--surface-3);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font:700 11px/1 'Public Sans',sans-serif;color:var(--ink)">{{ m.initial }}</span>
+<span style="flex:1;min-width:0;font:600 12.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">{{ m.name }}</span>
+<span style="flex:none;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2)">{{ m.sub }}</span>
+</div>
+</sc-for>
+</div>
+
+<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">
+<button onClick="{{ askLeaveOrg }}" style="width:100%;padding:12px;border-radius:11px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--bad)">Leave organisation</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasOrgMsg }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:12px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;font:400 11px/1.5 'Public Sans',sans-serif;color:var(--ink-2)">{{ orgMsg }}</div>
+</sc-if>
+
 </div>
 </div>
 </div>
@@ -1600,6 +1654,7 @@ class Component extends DCLogic {
       imported:null, importName:"",
       menuOpen:false, confirm:null, resetAt:0, started:false,
       pwCur:"", pwNew:"", pwBusy:false, pwMsg:"", accountMsg:"",
+      org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgBusy:false, orgMsg:"",
       authed:false, authEmail:"", authView:"admin", authMode:"in", authEmailInput:"", authPwInput:"", authBusy:false, authErr:"", googleConfirm:null,
       theme: (()=>{ try{ return localStorage.getItem("stocktake.theme")==="light" ? "light" : "dark"; }catch(e){ return "dark"; } })()
     };
@@ -1641,6 +1696,7 @@ class Component extends DCLogic {
         me: saved.me||"", code: saved.code||this.makeCode(), owner: saved.owner||((authed&&sess&&sess.uid)||""), dup: saved.dup||{}, dupCleared: saved.dupCleared||{},
         drive: saved.drive||this.state.drive, pushed: saved.pushed||{},
         admin: saved.admin||saved.me||"", archive: saved.archive||[], joined: joined, started: startedVal,
+        org: saved.org||null, orgId: saved.orgId||"",
         removedIds: saved.removedIds||[], resetAt: saved.resetAt||0,
         authed: authed, authEmail: (sess&&sess.email)||"",
         screen: gate ? "auth" : (joined ? "home" : "hub"), ready:true
@@ -1726,7 +1782,7 @@ class Component extends DCLogic {
     this.fetchProfile(uid).then(p=>{
       if(p && p.name){
         if(p.name !== (this.state.me||"")) this.setState({me:p.name}, ()=>this.save({}));
-        this.resumeOwn(uid);
+        this.loadOrgThenResume(uid);
       } else {
         this.setState({screen:"profile", menuOpen:false});
       }
@@ -1738,7 +1794,10 @@ class Component extends DCLogic {
   goHubNav(){
     this.setState({screen:"hub", menuOpen:false}, ()=>{ const st=this.state; if(st.owner && !st.joined) this.resumeOwn(st.owner); });
   }
-  archiveKey(uid){ return "a:"+uid; }
+  /* When the user belongs to an organisation, past stocktakes are shared across
+     the whole org (keyed oa:<orgId>); otherwise they're the account's own
+     (a:<uid>). This one switch org-scopes every archive read and write below. */
+  archiveKey(uid){ return this.state.orgId ? ("oa:"+this.state.orgId) : ("a:"+uid); }
   mergeArchive(a, b){
     a=a||[]; b=b||[];
     const idOf=(e)=> (e && e.id) || ("legacy\u0001"+((e&&e.when)||"")+"\u0001"+((e&&e.title)||"")+"\u0001"+((e&&e.by)||""));
@@ -1767,6 +1826,134 @@ class Component extends DCLogic {
       if(JSON.stringify(merged) !== JSON.stringify(this.state.archive||[])) this.setState({archive:merged}, ()=>this.save({}));
       if(JSON.stringify(merged) !== JSON.stringify(cloud||[])) this.pushArchive(uid, merged);
     });
+  }
+
+  /* ---------- organisations ----------
+     Everyone in an org has full access to all its stocktakes and past
+     stocktakes. Rows in the shared table: o:<id> (record + members),
+     oc:<CODE> (invite-code -> org), m:<uid> (a user's org), ou:<id> (the org's
+     in-progress stocktakes), oa:<id> (the org's shared past stocktakes). Access
+     is enforced in the app; database-level rules are a later hardening step. */
+  orgKey(id){ return "o:"+id; }
+  orgCodeKey(code){ return "oc:"+String(code||"").toUpperCase(); }
+  memberKey(uid){ return "m:"+uid; }
+  orgActiveKey(id){ return "ou:"+id; }
+  makeOrgCode(){ const A="ACDEFGHJKLMNPQRTUVWXY3479"; let o=""; for(let i=0;i<6;i++) o+=A[Math.floor(Math.random()*A.length)]; return o; }
+  fetchOrgArchive(orgId){ if(!orgId||!SB.on()) return Promise.resolve([]); return SB.get("oa:"+orgId).then(d=>(d&&d.archive)||[], ()=>[]); }
+  fetchPersonalArchive(uid){ if(!uid||!SB.on()) return Promise.resolve([]); return SB.get("a:"+uid).then(d=>(d&&d.archive)||[], ()=>[]); }
+
+  /* On login: find the user's org (if any), adopt its shared archive, then
+     resume their in-progress stocktake — in that order so the archive is
+     org-scoped before anything syncs it. */
+  loadOrgThenResume(uid){
+    if(!uid){ this.resumeOwn(uid); return; }
+    if(!SB.on()){ this.resumeOwn(uid); return; }
+    SB.get(this.memberKey(uid)).then(mrec=>{
+      const orgId = (mrec && mrec.orgId) || "";
+      if(!orgId){ if(this.state.orgId) this.setState({org:null, orgId:""}, ()=>this.save({})); this.resumeOwn(uid); return; }
+      SB.get(this.orgKey(orgId)).then(org=>{
+        this.fetchOrgArchive(orgId).then(arch=>{
+          this.setState({ org:(org&&org.id)?org:this.state.org, orgId:orgId, archive:arch }, ()=>{ this.save({}); this.resumeOwn(uid); });
+        });
+      }, ()=>this.resumeOwn(uid));
+    }, ()=>this.resumeOwn(uid));
+  }
+
+  createOrg(){
+    const s=this.state; const name=(s.orgNameInput||"").trim();
+    if(name.length<2){ this.setState({orgMsg:"Enter an organisation name."}); return; }
+    if(!s.owner){ this.setState({orgMsg:"Sign in to create an organisation."}); return; }
+    const id="org"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    const code=this.makeOrgCode(); const now=Date.now();
+    const org={ id:id, name:name, code:code, adminUid:s.owner, ts:now,
+      members:[{uid:s.owner, name:(s.me||"").trim(), ts:now, role:"admin"}] };
+    this.cloudPut(this.orgKey(id), org);
+    this.cloudPut(this.orgCodeKey(code), {orgId:id, ts:now});
+    this.cloudPut(this.memberKey(s.owner), {orgId:id, ts:now});
+    this.cloudPut(this.orgActiveKey(id), {active:[], ts:now});
+    /* Carry the creator's own past stocktakes into the new org so their history
+       isn't hidden. */
+    const seed=(s.archive||[]).slice();
+    this.setState({ org:org, orgId:id, orgActive:[], orgNameInput:"", orgMsg:"", archive:seed },
+      ()=>{ this.save({}); this.pushArchive(s.owner, seed); });
+  }
+
+  joinOrg(){
+    const s=this.state; const code=(s.orgJoinCode||"").trim().toUpperCase();
+    if(code.length<4){ this.setState({orgMsg:"Enter the organisation code."}); return; }
+    if(!s.owner){ this.setState({orgMsg:"Sign in to join an organisation."}); return; }
+    this.setState({orgBusy:true, orgMsg:""});
+    SB.get(this.orgCodeKey(code)).then(rec=>{
+      const orgId = rec && rec.orgId;
+      if(!orgId){ this.setState({orgBusy:false, orgMsg:"No organisation found for that code."}); return; }
+      SB.get(this.orgKey(orgId)).then(org=>{
+        if(!org || !org.id){ this.setState({orgBusy:false, orgMsg:"That organisation no longer exists."}); return; }
+        const members=(org.members||[]).slice();
+        if(!members.some(m=>m.uid===s.owner)) members.push({uid:s.owner, name:(s.me||"").trim(), ts:Date.now(), role:"member"});
+        const norg=Object.assign({}, org, {members:members});
+        this.cloudPut(this.orgKey(orgId), norg);
+        this.cloudPut(this.memberKey(s.owner), {orgId:orgId, ts:Date.now()});
+        this.fetchOrgArchive(orgId).then(arch=>{
+          this.setState({ org:norg, orgId:orgId, orgActive:[], orgJoinCode:"", orgBusy:false, orgMsg:"", archive:arch },
+            ()=>{ this.save({}); this.refreshOrg(); });
+        });
+      }, ()=>this.setState({orgBusy:false, orgMsg:"Couldn't load that organisation."}));
+    }, ()=>this.setState({orgBusy:false, orgMsg:"Couldn't check that code — try again."}));
+  }
+
+  leaveOrg(){
+    const s=this.state; const org=s.org; const uid=s.owner;
+    if(!org){ this.setState({confirm:null}); return; }
+    const members=(org.members||[]).filter(m=>m.uid!==uid);
+    this.cloudPut(this.orgKey(org.id), Object.assign({}, org, {members:members}));
+    if(uid) this.cloudPut(this.memberKey(uid), {orgId:null, ts:Date.now()});
+    /* Back to the account's own past stocktakes (don't drag org history along). */
+    this.fetchPersonalArchive(uid).then(arch=>{
+      this.setState({ org:null, orgId:"", orgActive:[], confirm:null, orgMsg:"" , archive:arch, screen:"org" }, ()=>this.save({}));
+    });
+  }
+
+  openOrg(){ this.setState({screen:"org", orgMsg:""}, ()=>this.refreshOrg()); }
+  refreshOrg(){
+    const id=this.state.orgId; if(!id || !SB.on()) return;
+    SB.get(this.orgKey(id)).then(org=>{ if(org && org.id) this.setState({org:org}, ()=>this.save({})); }, ()=>{});
+    SB.get(this.orgActiveKey(id)).then(d=>{ this.setState({orgActive:((d&&d.active)||[])}); }, ()=>{});
+    this.fetchOrgArchive(id).then(arch=>{ if(JSON.stringify(arch)!==JSON.stringify(this.state.archive||[])) this.setState({archive:arch}, ()=>this.save({})); });
+  }
+
+  /* An org's in-progress stocktakes live in ou:<id>. Registered when a member
+     starts counting, removed when it's closed or cancelled, so every member can
+     see and open what's live across the org. */
+  orgRegisterActive(){
+    const s=this.state; if(!s.orgId || !s.started || !s.code || !SB.on()) return;
+    const key=this.orgActiveKey(s.orgId);
+    const entry={code:s.code, title:s.title||"", by:s.me||"", ts:Date.now()};
+    SB.get(key).then(d=>{
+      const list=((d&&d.active)||[]).filter(x=>x.code!==s.code); list.push(entry);
+      SB.put(key, {active:list, ts:Date.now()}).catch(()=>{});
+    }, ()=>{ SB.put(key, {active:[entry], ts:Date.now()}).catch(()=>{}); });
+  }
+  orgUnregisterActive(orgId, code){
+    if(!orgId || !code || !SB.on()) return;
+    const key=this.orgActiveKey(orgId);
+    SB.get(key).then(d=>{ const list=((d&&d.active)||[]).filter(x=>x.code!==code); SB.put(key, {active:list, ts:Date.now()}).catch(()=>{}); }, ()=>{});
+  }
+  /* Open one of the org's live stocktakes as this member's current one — full
+     access, so they can count on it alongside whoever else is in it. */
+  openOrgStk(code){
+    if(!code){ return; }
+    this.fetchDoc(code).then(doc=>{
+      if(!doc || !(doc.locNames||[]).length){ this.setState({orgMsg:"That stocktake is empty or was removed."}); return; }
+      if(!this.cache) this.cache={};
+      this.cache[code]=doc;
+      this.setState({
+        code:code, started:true, joined:false, viewAs:"admin",
+        title:doc.title||"", locNames:doc.locNames||[], master:doc.master||[],
+        counts:doc.counts||{}, submitted:doc.submitted||{}, subAt:doc.subAt||{}, dup:doc.dup||{}, dupCleared:doc.dupCleared||{}, resetAt:doc.resetAt||0,
+        hidden:doc.hidden||{}, hideEmpty:doc.hideEmpty||{}, admin:doc.admin||this.state.me,
+        menuOpen:false, orgMsg:"", screen:"home"
+      }, ()=>{ this.save({}); if(this.state.owner) this.setOwnCode(this.state.owner, code); });
+    }, ()=>this.setState({orgMsg:"Couldn't open that stocktake."}));
   }
 
   /* On login, reopen this account's active unfinalised/unsubmitted stocktake
@@ -1913,7 +2100,7 @@ class Component extends DCLogic {
     const body = Object.assign({
       title:s.title, locNames:s.locNames, master:s.master, counts:s.counts, submitted:s.submitted, subAt:s.subAt,
       me:s.me, code:s.code, dup:s.dup, dupCleared:s.dupCleared, drive:s.drive, pushed:s.pushed, metaAt:this._metaAt,
-      hidden:s.hidden, hideEmpty:s.hideEmpty,
+      hidden:s.hidden, hideEmpty:s.hideEmpty, org:s.org, orgId:s.orgId,
       admin:s.admin, owner:s.owner, archive:s.archive, joined:s.joined, started:s.started, removedIds:s.removedIds, resetAt:s.resetAt
     }, patch);
     try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
@@ -2824,6 +3011,7 @@ class Component extends DCLogic {
         const prevDoc = this.cloudGet(oldCode) || {};
         this._seenFinalAt = Date.now();
         this.cloudPut(oldCode, Object.assign({}, prevDoc, {finalAt: this._seenFinalAt, rev: Date.now()}));
+        this.orgUnregisterActive(s.orgId, oldCode);
         if(owner) this.clearOwnCode(owner);
         /* A fresh stocktake gets a fresh join code, so the next count never syncs
            against the finished one's cloud doc. */
@@ -2859,10 +3047,32 @@ class Component extends DCLogic {
       pastCountLabel: ((s.archive||[]).length)+((s.archive||[]).length===1?" finished stocktake":" finished stocktakes"),
       hubPast: ()=>{ if((this.state.archive||[]).length) this.setState({screen:"past"}); },
       hubProfile: ()=>this.setState({screen:"account", pwCur:"", pwNew:"", pwMsg:"", accountMsg:""}),
-      hubOrg: ()=>this.setState({screen:"org"}),
+      hubOrg: ()=>this.openOrg(),
       hubSignOut: ()=>this.signOut(),
       goHub: ()=>this.goHubNav(),
       orgBack: ()=>this.goHubNav(),
+      /* ---- organisation ---- */
+      inOrg: !!s.orgId,
+      notInOrg: !s.orgId,
+      orgName: (s.org && s.org.name) || "",
+      orgCode: (s.org && s.org.code) || "",
+      orgMemberCount: ((s.org && s.org.members) || []).length,
+      orgMemberLabel: (((s.org && s.org.members) || []).length)+((((s.org && s.org.members) || []).length)===1?" member":" members"),
+      orgMembers: (((s.org && s.org.members) || []).map(m=>({ name:(m.name||"—"), role:(m.role==="admin"?"Admin":"Member"), initial:abbrOf(m.name||"?"), sub:(m.uid===s.owner?"You":(m.role==="admin"?"Admin":"Member")) }))),
+      orgActiveList: ((s.orgActive||[]).map(a=>({ title:((a.title&&a.title.trim())?a.title.trim():("Stocktake "+a.code)), by:(a.by?("by "+a.by):""), initial:abbrOf((a.title&&a.title.trim())||a.code), current:(a.code===s.code), open:()=>this.openOrgStk(a.code) }))),
+      orgActiveEmpty: !((s.orgActive||[]).length),
+      orgPastLabel: ((s.archive||[]).length)+((((s.archive||[]).length)===1)?" past stocktake":" past stocktakes"),
+      goPastFromOrg: ()=>this.setState({screen:"past"}),
+      orgNameValue: s.orgNameInput||"",
+      orgJoinValue: s.orgJoinCode||"",
+      onOrgName: (e)=>this.setState({orgNameInput:e.target.value, orgMsg:""}),
+      onOrgJoin: (e)=>this.setState({orgJoinCode:e.target.value, orgMsg:""}),
+      createOrgBtn: ()=>this.createOrg(),
+      joinOrgBtn: ()=>this.joinOrg(),
+      joinBtnLabel: s.orgBusy ? "Joining…" : "Join",
+      orgMsg: s.orgMsg||"",
+      hasOrgMsg: !!(s.orgMsg||"").length,
+      askLeaveOrg: ()=>this.setState({confirm:{kind:"leaveOrg", title:"Leave "+((s.org&&s.org.name)||"this organisation")+"?", note:"You'll go back to your own stocktakes and past stocktakes. You can re-join any time with the code.", label:"Leave organisation", cancel:"Stay"}}),
       sessionUnits: this.fmt(totalUnits),
       sessionLines: Object.keys(s.counts).filter(k=>this.byId(k.split("|")[1])).length,
       submittedLabel: Object.keys(s.submitted||{}).length + " / " + LOCS.length,
@@ -3095,6 +3305,8 @@ class Component extends DCLogic {
         const c = this.state.confirm; if(!c) return;
         if(c.kind==="logout"){
           this.setState({confirm:null}, ()=>this.signOut());
+        } else if(c.kind==="leaveOrg"){
+          this.leaveOrg();
         } else if(c.kind==="cancel"){
           /* Cancel = discard the stocktake: clear every count, finalise the cloud
              doc so counters lose access, drop the account pointer, and go back to
@@ -3106,6 +3318,7 @@ class Component extends DCLogic {
           const prevDoc = this.cloudGet(oldCode) || {};
           this._seenFinalAt = Date.now();
           this.cloudPut(oldCode, Object.assign({}, prevDoc, {finalAt: this._seenFinalAt, rev: Date.now()}));
+          this.orgUnregisterActive(st.orgId, oldCode);
           if(owner) this.clearOwnCode(owner);
           this.setState({
             counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, title:"",
@@ -3232,7 +3445,7 @@ class Component extends DCLogic {
         const drive = s.drive.connected
           ? Object.assign({}, s.drive, {fileName:name, createdAt: s.drive.createdAt||Date.now(), lastSync: Date.now()})
           : s.drive;
-        this.setState({screen:"home", drive:drive, admin: s.admin||s.me.trim(), justSaved: s.drive.connected, started:true}, ()=>this.save({}));
+        this.setState({screen:"home", drive:drive, admin: s.admin||s.me.trim(), justSaved: s.drive.connected, started:true}, ()=>{ this.save({}); this.orgRegisterActive(); });
       },
       hasLocs: s.locNames.length>0,
       noLocs: s.locNames.length===0,
