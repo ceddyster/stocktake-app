@@ -682,7 +682,7 @@ Sign in with Google
 </div>
 </sc-if>
 <sc-for list="{{ pastList }}" as="p" hint-placeholder-count="0">
-<div style="background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow);overflow:hidden">
+<div style="flex:none;background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow);overflow:hidden">
 <button onClick="{{ p.open }}" style="display:block;width:100%;text-align:left;padding:14px 14px 10px;background:transparent;border:none;cursor:{{ p.cursor }};font-family:'Public Sans',sans-serif" style-hover="background:var(--surface-2)">
 <div style="display:flex;align-items:baseline;gap:10px">
 <span style="flex:1;min-width:0;font:600 13.5px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ p.title }}</span>
