@@ -175,6 +175,85 @@ Sign in with Google
 </div>
 </sc-if>
 
+<sc-if value="{{ isHub }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;overflow:auto;display:flex;flex-direction:column;padding:26px 22px 40px;background:var(--bg)">
+<div style="width:100%;max-width:440px;margin:0 auto">
+<div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.18em;color:var(--ink-3)">STOCKTAKE</div>
+<div style="margin-top:9px;font:700 26px/1.06 'Public Sans',sans-serif;letter-spacing:-.02em;color:var(--ink)">{{ hubGreeting }}</div>
+<p style="margin:8px 0 0;font:400 12px/1.5 'Public Sans',sans-serif;color:var(--ink-3)">What would you like to do?</p>
+<sc-if value="{{ hasActive }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ goContinue }}" style="margin-top:18px;width:100%;display:flex;align-items:center;gap:13px;padding:16px 15px;background:var(--primary);border:none;border-radius:15px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)">
+<span style="width:38px;height:38px;flex:none;border-radius:11px;background:var(--on-primary);display:flex;align-items:center;justify-content:center;font:700 16px/1 'Public Sans',sans-serif;color:var(--primary)">▸</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:700 14px/1.2 'Public Sans',sans-serif;color:var(--on-primary)">Continue current stocktake</span>
+<span style="display:block;margin-top:3px;font:400 11px/1.35 'Public Sans',sans-serif;color:var(--on-primary)">{{ activeMeta }}</span>
+</span>
+<span style="flex:none;font:400 16px/1 'Public Sans',sans-serif;color:var(--on-primary)">›</span>
+</button>
+</sc-if>
+<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
+<button onClick="{{ hubNew }}" style="width:100%;display:flex;align-items:center;gap:13px;padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
+<span style="width:36px;height:36px;flex:none;border-radius:10px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 18px/1 'Public Sans',sans-serif;color:var(--ink)">＋</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">Create new stocktake</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Start a fresh count from setup.</span></span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
+</button>
+<sc-if value="{{ pastAvailable }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ hubPast }}" style="width:100%;display:flex;align-items:center;gap:13px;padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
+<span style="width:36px;height:36px;flex:none;border-radius:10px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 15px/1 'Public Sans',sans-serif;color:var(--ink)">▤</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">Past stocktakes</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ pastCountLabel }}</span></span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
+</button>
+</sc-if>
+<sc-if value="{{ pastNone }}" hint-placeholder-val="{{ true }}">
+<div style="width:100%;display:flex;align-items:center;gap:13px;padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:14px;opacity:.5">
+<span style="width:36px;height:36px;flex:none;border-radius:10px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">▤</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--ink-3)">Past stocktakes</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-4)">None yet — finish a stocktake to see it here.</span></span>
+</div>
+</sc-if>
+<button onClick="{{ hubProfile }}" style="width:100%;display:flex;align-items:center;gap:13px;padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
+<span style="width:36px;height:36px;flex:none;border-radius:10px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 16px/1 'Public Sans',sans-serif;color:var(--ink)">☺</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">Profile</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Change your name or password.</span></span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
+</button>
+<button onClick="{{ hubOrg }}" style="width:100%;display:flex;align-items:center;gap:13px;padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
+<span style="width:36px;height:36px;flex:none;border-radius:10px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 15px/1 'Public Sans',sans-serif;color:var(--ink)">◇</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">Organisation</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Create or join a company to share stocktakes.</span></span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
+</button>
+<button onClick="{{ hubSignOut }}" style="margin-top:4px;width:100%;display:flex;align-items:center;gap:13px;padding:15px;background:var(--surface);border:1px solid var(--bad);border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)">
+<span style="width:36px;height:36px;flex:none;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;font:600 15px/1 'Public Sans',sans-serif;color:var(--bad)">⎋</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--bad)">Sign out</span></span>
+</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isOrg }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:16px 20px 14px;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px">
+<button onClick="{{ orgBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<div style="flex:1;min-width:0"><div style="font:700 20px/1.1 'Public Sans',sans-serif;letter-spacing:-.01em;color:var(--ink)">Organisation</div></div>
+</div>
+<div style="flex:1;min-height:0;overflow:auto;padding:18px 20px 40px">
+<div style="width:100%;max-width:420px;margin:0 auto">
+<div style="padding:13px 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:13px;font:400 12px/1.6 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">
+<span style="display:block;font:700 13px/1.2 'Public Sans',sans-serif;color:var(--ink);margin-bottom:5px">Coming soon</span>
+Create a company or join one with a code, so your whole team shares the same stocktakes and past stocktakes — not just this device. This is the next update.
+</div>
+<div style="margin-top:14px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;opacity:.55">
+<div style="font:700 13px/1.2 'Public Sans',sans-serif;color:var(--ink)">Create an organisation</div>
+<div style="margin-top:3px;font:400 10.5px/1.35 'Public Sans',sans-serif;color:var(--ink-3)">You become its admin and get a code to share.</div>
+</div>
+<div style="margin-top:10px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;opacity:.55">
+<div style="font:700 13px/1.2 'Public Sans',sans-serif;color:var(--ink)">Join an organisation</div>
+<div style="margin-top:3px;font:400 10.5px/1.35 'Public Sans',sans-serif;color:var(--ink-3)">Enter the code an admin shared with you.</div>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
 <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
 <div style="height:100%;display:flex;flex-direction:column">
 <div style="padding:14px 20px 12px;background:var(--bg);border-bottom:1px solid var(--line)">
@@ -534,7 +613,7 @@ Sign in with Google
 <div style="height:100%;display:flex;flex-direction:column">
 <div style="padding:12px 16px 14px;background:var(--bg);border-bottom:1px solid var(--line)">
 <div style="display:flex;align-items:center;gap:10px">
-<button onClick="{{ goHome }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<button onClick="{{ goHub }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
 <div style="flex:1;min-width:0">
 <div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink)">Past stocktakes</div>
 <div style="margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ pastRowMeta }}</div>
@@ -607,6 +686,16 @@ Sign in with Google
 
 <div style="margin-top:16px;font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink-3)">MANAGE</div>
 <div style="margin-top:9px;display:flex;flex-direction:column;gap:7px">
+<sc-if value="{{ authed }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ goHub }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--line-2)">
+<span style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;font:600 15px/1 'Public Sans',sans-serif;color:var(--ink-2)">⌂</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 13px/1.2 'Public Sans',sans-serif;color:var(--ink)">Home screen</span>
+<span style="display:block;margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3)">New stocktake, past, profile, organisation.</span>
+</span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">›</span>
+</button>
+</sc-if>
 <sc-if value="{{ amAdmin }}" hint-placeholder-val="{{ true }}">
 <button onClick="{{ goSetupMenu }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--line-2)">
 <span style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--ink-2)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg></span>
@@ -1554,10 +1643,10 @@ class Component extends DCLogic {
         admin: saved.admin||saved.me||"", archive: saved.archive||[], joined: joined, started: startedVal,
         removedIds: saved.removedIds||[], resetAt: saved.resetAt||0,
         authed: authed, authEmail: (sess&&sess.email)||"",
-        screen: gate ? "auth" : ((saved.me && startedVal) ? "home" : "setup"), ready:true
+        screen: gate ? "auth" : (joined ? "home" : "hub"), ready:true
       }, ()=>this.save({}));
     } else {
-      this.setState({ready:true, code:this.makeCode(), owner:(authed&&sess&&sess.uid)||"", authed:authed, authEmail:(sess&&sess.email)||"", screen: gate ? "auth" : "setup"}, ()=>{ if(authed) this.save({}); });
+      this.setState({ready:true, code:this.makeCode(), owner:(authed&&sess&&sess.uid)||"", authed:authed, authEmail:(sess&&sess.email)||"", screen: gate ? "auth" : "hub"}, ()=>{ if(authed) this.save({}); });
     }
     if(authed) this.hydrateUser(sess);
   }
@@ -1643,6 +1732,12 @@ class Component extends DCLogic {
       }
     }, ()=>this.resumeOwn(uid));
   }
+  /* The launcher / home screen an organiser lands on after login. Going here
+     refreshes their in-progress stocktake (so "Continue" is accurate) but never
+     drops a counter, who has no launcher. */
+  goHubNav(){
+    this.setState({screen:"hub", menuOpen:false}, ()=>{ const st=this.state; if(st.owner && !st.joined) this.resumeOwn(st.owner); });
+  }
   archiveKey(uid){ return "a:"+uid; }
   mergeArchive(a, b){
     a=a||[]; b=b||[];
@@ -1697,7 +1792,7 @@ class Component extends DCLogic {
           code:code, owner:uid, joined:false, viewAs:"admin", started:true,
           title:doc.title||"", locNames:doc.locNames||[], master:doc.master||[],
           counts:doc.counts||{}, submitted:doc.submitted||{}, subAt:doc.subAt||{}, dup:doc.dup||{}, dupCleared:doc.dupCleared||{}, resetAt:doc.resetAt||0,
-          admin:doc.admin||nm, me:nm||this.state.me, screen:"home", ready:true, setupStep:1
+          admin:doc.admin||nm, me:nm||this.state.me, screen:"hub", ready:true, setupStep:1
         }, ()=>this.save({}));
       }, ()=>{});
     });
@@ -1754,7 +1849,7 @@ class Component extends DCLogic {
       this.setState({
         authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
         me: nm, admin: s.admin || nm, owner: uid,
-        screen: ((s.started && s.locNames.length) ? "home" : "setup"), menuOpen:false
+        screen: "hub", menuOpen:false
       }, ()=>{ this.save({}); this.ensureProfile(uid); });
     } else {
       // New account (or a different one) on this device: start blank. A brand-new
@@ -1766,7 +1861,7 @@ class Component extends DCLogic {
         me: nm, admin: "", owner: uid,
         title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
         archive:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
-        screen: newSignup ? "profile" : "setup", setupStep:1, menuOpen:false
+        screen: newSignup ? "profile" : "hub", setupStep:1, menuOpen:false
       }, ()=>{ this.save({}); if(!newSignup){ this.ensureProfile(uid); } });
     }
   }
@@ -2752,7 +2847,22 @@ class Component extends DCLogic {
       finishCsvLabel: "Close & export CSV",
       isHome: s.screen==="home", isCount: s.screen==="count", isDone: s.screen==="done",
       isTotals: s.screen==="totals", isMaster: s.screen==="master",
-      isProfile: s.screen==="profile", isAccount: s.screen==="account",
+      isProfile: s.screen==="profile", isAccount: s.screen==="account", isHub: s.screen==="hub", isOrg: s.screen==="org",
+      /* ---- launcher / home screen ---- */
+      hubGreeting: "Hi, "+(((s.me||"").trim().split(/\s+/)[0])||"there"),
+      hasActive: !!(s.started && (s.locNames||[]).length && !s.joined),
+      activeMeta: (s.title && s.title.trim() ? s.title.trim()+" · " : "")+((s.locNames||[]).length)+((s.locNames||[]).length===1?" location":" locations"),
+      goContinue: ()=>this.setState({screen:"home"}),
+      hubNew: ()=>this.setState({ counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, title:"", resetAt:Date.now(), code:this.makeCode(), started:false, menuOpen:false, screen:"setup", setupStep:1 }, ()=>this.save({})),
+      pastAvailable: (s.archive||[]).length>0,
+      pastNone: !((s.archive||[]).length>0),
+      pastCountLabel: ((s.archive||[]).length)+((s.archive||[]).length===1?" finished stocktake":" finished stocktakes"),
+      hubPast: ()=>{ if((this.state.archive||[]).length) this.setState({screen:"past"}); },
+      hubProfile: ()=>this.setState({screen:"account", pwCur:"", pwNew:"", pwMsg:"", accountMsg:""}),
+      hubOrg: ()=>this.setState({screen:"org"}),
+      hubSignOut: ()=>this.signOut(),
+      goHub: ()=>this.goHubNav(),
+      orgBack: ()=>this.goHubNav(),
       sessionUnits: this.fmt(totalUnits),
       sessionLines: Object.keys(s.counts).filter(k=>this.byId(k.split("|")[1])).length,
       submittedLabel: Object.keys(s.submitted||{}).length + " / " + LOCS.length,
@@ -2772,7 +2882,7 @@ class Component extends DCLogic {
          send the back button to sign-in/join instead of leaving it dead. */
       setupBack: s.started
         ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
-        : (()=>this.setState({confirm:{kind:"logout", title:"Log out?", note:"You'll be signed out on this device. Your saved locations and product list stay for next time.", label:"Log out", cancel:"Stay signed in"}})),
+        : (()=>this.goHubNav()),
       isAuth: s.screen==="auth",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
@@ -2823,7 +2933,7 @@ class Component extends DCLogic {
       accountMsg: s.accountMsg || "",
       hasAccountMsg: !!(s.accountMsg||"").length,
       openAccount: ()=>this.setState({menuOpen:false, screen:"account", pwCur:"", pwNew:"", pwMsg:"", accountMsg:""}),
-      accountBack: ()=>this.setState({screen: ((s.started && s.locNames.length) ? "home" : "setup"), accountMsg:"", pwMsg:""}),
+      accountBack: ()=>this.setState({accountMsg:"", pwMsg:"", screen:"hub", menuOpen:false}, ()=>{ if(s.owner && !s.joined) this.resumeOwn(s.owner); }),
       profileContinue: ()=>{
         const nm=(this.state.me||"").trim();
         if(nm.length<1){ this.setState({accountMsg:"Enter your name to continue."}); return; }
@@ -2832,8 +2942,7 @@ class Component extends DCLogic {
         /* A new signup lands on setup; an existing user who was sent here to
            fill in a missing profile goes back to their stocktake (home) or setup,
            and we resume their active stocktake now that the profile exists. */
-        const dest=(st.started && st.locNames.length) ? "home" : "setup";
-        this.setState({admin: st.admin || nm, accountMsg:"", screen:dest, setupStep:1}, ()=>{ this.save({}); if(owner) this.resumeOwn(owner); });
+        this.setState({admin: st.admin || nm, accountMsg:"", screen:"hub", setupStep:1}, ()=>{ this.save({}); if(owner) this.resumeOwn(owner); });
       },
       saveProfileNow: ()=>{
         const nm=(this.state.me||"").trim();
