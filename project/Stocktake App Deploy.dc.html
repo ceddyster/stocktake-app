@@ -118,7 +118,7 @@ Sign in with Google
 <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
 <div style="height:100%;overflow:auto;display:flex;flex-direction:column;justify-content:center;padding:28px 24px 40px;background:var(--bg)">
 <div style="width:100%;max-width:400px;margin:0 auto">
-<div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.18em;color:var(--ink-3)">STEP 2 OF 2</div>
+<div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.18em;color:var(--ink-3)">YOUR PROFILE</div>
 <div style="margin-top:11px;font:700 26px/1.08 'Public Sans',sans-serif;letter-spacing:-.02em;color:var(--ink)">Create your profile</div>
 <p style="margin:10px 0 0;font:400 12px/1.55 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">Your name goes on every count you enter and on the stocktakes you run. Both fields are required.</p>
 <div style="margin-top:22px">
@@ -1627,11 +1627,21 @@ class Component extends DCLogic {
     if(!uid || !SB.on()) return;
     SB.put(this.profileKey(uid), {name:(name||"").trim(), ts:Date.now()}).catch(err=>console.error("[profile] save failed:", err));
   }
-  loadProfile(uid){
-    if(!uid) return;
-    /* The saved profile is the account's canonical name (Account-screen edits
-       write it), so it wins over the email-derived placeholder set at sign-in. */
-    this.fetchProfile(uid).then(p=>{ if(p && p.name && p.name !== (this.state.me||"")){ this.setState({ me: p.name }, ()=>this.save({})); } });
+  /* On sign-in / load: adopt the account's saved profile name (its canonical
+     name, so it wins over the email-derived placeholder), then resume as normal.
+     If the account has NO profile yet — it was created before profiles existed —
+     send them to the Create-your-profile screen first, and resume only once
+     they've saved it (see profileContinue). Counters have no profile. */
+  ensureProfile(uid){
+    if(!uid || this.state.joined) return;
+    this.fetchProfile(uid).then(p=>{
+      if(p && p.name){
+        if(p.name !== (this.state.me||"")) this.setState({me:p.name}, ()=>this.save({}));
+        this.resumeOwn(uid);
+      } else {
+        this.setState({screen:"profile", menuOpen:false});
+      }
+    }, ()=>this.resumeOwn(uid));
   }
   archiveKey(uid){ return "a:"+uid; }
   mergeArchive(a, b){
@@ -1699,15 +1709,14 @@ class Component extends DCLogic {
       const ns = Object.assign({}, sess, {email:(u&&u.email)||sess.email||"", uid:(u&&u.id)||sess.uid||""});
       try{ localStorage.setItem(AUTHKEY, JSON.stringify(ns)); if(ns.email) localStorage.setItem(LASTG, ns.email); }catch(e){}
       this.setState({authEmail:ns.email});
-      this.resumeOwn(ns.uid);
-      this.loadProfile(ns.uid);
+      this.ensureProfile(ns.uid);
     }, ()=>{
       if(sess.refresh_token){
         AUTH.refresh(sess.refresh_token).then(t=>{
           const ns = {access_token:t.access_token, refresh_token:t.refresh_token, email:(t.user&&t.user.email)||sess.email||"", uid:(t.user&&t.user.id)||sess.uid||""};
           try{ localStorage.setItem(AUTHKEY, JSON.stringify(ns)); }catch(e){}
           this.setState({authEmail:ns.email});
-          this.resumeOwn(ns.uid);
+          this.ensureProfile(ns.uid);
         }, ()=>this.signOut());
       } else { this.signOut(); }
     });
@@ -1746,7 +1755,7 @@ class Component extends DCLogic {
         authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
         me: nm, admin: s.admin || nm, owner: uid,
         screen: ((s.started && s.locNames.length) ? "home" : "setup"), menuOpen:false
-      }, ()=>{ this.save({}); this.resumeOwn(uid); this.loadProfile(uid); });
+      }, ()=>{ this.save({}); this.ensureProfile(uid); });
     } else {
       // New account (or a different one) on this device: start blank. A brand-new
       // signup goes to the profile step first (name required); an existing account
@@ -1758,7 +1767,7 @@ class Component extends DCLogic {
         title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
         archive:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
         screen: newSignup ? "profile" : "setup", setupStep:1, menuOpen:false
-      }, ()=>{ this.save({}); if(!newSignup){ this.resumeOwn(uid); this.loadProfile(uid); } });
+      }, ()=>{ this.save({}); if(!newSignup){ this.ensureProfile(uid); } });
     }
   }
   signOut(){
@@ -2818,8 +2827,13 @@ class Component extends DCLogic {
       profileContinue: ()=>{
         const nm=(this.state.me||"").trim();
         if(nm.length<1){ this.setState({accountMsg:"Enter your name to continue."}); return; }
-        this.saveProfile(this.state.owner, nm);
-        this.setState({admin: nm, accountMsg:"", screen:"setup", setupStep:1}, ()=>this.save({}));
+        const st=this.state, owner=st.owner;
+        this.saveProfile(owner, nm);
+        /* A new signup lands on setup; an existing user who was sent here to
+           fill in a missing profile goes back to their stocktake (home) or setup,
+           and we resume their active stocktake now that the profile exists. */
+        const dest=(st.started && st.locNames.length) ? "home" : "setup";
+        this.setState({admin: st.admin || nm, accountMsg:"", screen:dest, setupStep:1}, ()=>{ this.save({}); if(owner) this.resumeOwn(owner); });
       },
       saveProfileNow: ()=>{
         const nm=(this.state.me||"").trim();
