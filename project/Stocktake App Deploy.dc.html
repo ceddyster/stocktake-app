@@ -1680,6 +1680,12 @@ class Component extends DCLogic {
        newer one — the same protection counts/products/submits already have. */
     this._metaAt = (saved && saved.metaAt) || {};
     this.timer = setInterval(()=>this.pull(), 1200);
+    /* Keep the Past-stocktakes list live across devices: pull() only runs while a
+       stocktake is open, so on the hub / Past screen it never re-fetches. This
+       lighter loop re-syncs the shared archive (and its delete tombstones) so a
+       delete or a newly-closed stocktake on one device shows on the others
+       without a manual refresh. */
+    this._archTimer = setInterval(()=>this.maybeSyncArchive(), 3000);
     const joined = !!(saved && saved.joined);
     const gate = !authed && !joined;
     // A doc belongs to the account that owns it. If a different account is
@@ -2208,7 +2214,15 @@ class Component extends DCLogic {
     this.publish();
   }
 
-  componentWillUnmount(){ if(this.timer) clearInterval(this.timer); }
+  componentWillUnmount(){ if(this.timer) clearInterval(this.timer); if(this._archTimer) clearInterval(this._archTimer); }
+  /* Periodic shared-archive sync (see the interval in componentDidMount). Only
+     the organiser owns an archive, so counters (joined) are skipped; syncArchive
+     itself only writes/setState when something actually changed. */
+  maybeSyncArchive(){
+    const s = this.state;
+    if(!SB.on() || !s.ready || !s.owner || s.joined || this._recoverPending) return;
+    this.syncArchive(s.owner);
+  }
 
   applyThemeBg(){ try{ document.body.style.background = this.state.theme==="light" ? "#EDE3D2" : "#12193A"; }catch(e){} }
   setTheme(mode){
