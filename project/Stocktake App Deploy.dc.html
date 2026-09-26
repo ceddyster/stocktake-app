@@ -272,6 +272,9 @@ Sign in with Google
 <div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">INVITE CODE</div>
 <div style="margin-top:7px;font:700 24px/1 'Public Sans',sans-serif;letter-spacing:.24em;color:var(--ink);text-align:center">{{ orgCode }}</div>
 <div style="margin-top:8px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3);text-align:center">Share this so teammates can join and see the org's stocktakes.</div>
+<sc-if value="{{ amOrgAdmin }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ askRegenCode }}" style="margin-top:11px;width:100%;padding:9px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line-2);cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink-2)">REGENERATE CODE</button>
+</sc-if>
 </div>
 
 <div style="margin-top:16px;font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink-3)">LIVE STOCKTAKES</div>
@@ -297,13 +300,35 @@ Sign in with Google
 <div style="margin-top:16px;font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink-3)">MEMBERS · {{ orgMemberCount }}</div>
 <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
 <sc-for list="{{ orgMembers }}" as="m" hint-placeholder-count="0">
-<div style="display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:12px">
+<div style="padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:12px">
+<div style="display:flex;align-items:center;gap:11px">
 <span style="width:32px;height:32px;flex:none;border-radius:50%;background:var(--surface-3);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font:700 11px/1 'Public Sans',sans-serif;color:var(--ink)">{{ m.initial }}</span>
 <span style="flex:1;min-width:0;font:600 12.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">{{ m.name }}</span>
 <span style="flex:none;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2)">{{ m.sub }}</span>
 </div>
+<sc-if value="{{ m.showActions }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:9px;display:flex;gap:7px">
+<sc-if value="{{ m.canPromote }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ m.promote }}" style="flex:1;padding:8px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line-2);cursor:pointer;font:600 10px/1 'Public Sans',sans-serif;color:var(--ink)">Make admin</button>
+</sc-if>
+<sc-if value="{{ m.canRemove }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ m.remove }}" style="flex:1;padding:8px;border-radius:8px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 10px/1 'Public Sans',sans-serif;color:var(--bad)">Remove</button>
+</sc-if>
+</div>
+</sc-if>
+</div>
 </sc-for>
 </div>
+
+<sc-if value="{{ amOrgAdmin }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:18px;font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink-3)">MANAGE</div>
+<div style="margin-top:8px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow)">
+<label style="display:block;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">RENAME ORGANISATION</label>
+<input value="{{ orgRenameValue }}" onChange="{{ onOrgRename }}" placeholder="New organisation name" style="margin-top:8px;width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);outline:none;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink)" />
+<button onClick="{{ saveOrgName }}" style="margin-top:9px;width:100%;padding:11px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line-2);cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--ink)">Save name</button>
+</div>
+<button onClick="{{ askDeleteOrg }}" style="margin-top:10px;width:100%;padding:12px;border-radius:11px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--bad)">Delete organisation</button>
+</sc-if>
 
 <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">
 <button onClick="{{ askLeaveOrg }}" style="width:100%;padding:12px;border-radius:11px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--bad)">Leave organisation</button>
@@ -1723,6 +1748,7 @@ class Component extends DCLogic {
       menuOpen:false, confirm:null, resetAt:0, started:false,
       pwCur:"", pwNew:"", pwBusy:false, pwMsg:"", accountMsg:"",
       org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgBusy:false, orgMsg:"",
+      orgRename:"", pendingOrgUid:"", pendingOrgName:"",
       authed:false, authEmail:"", authView:"admin", authMode:"in", authEmailInput:"", authPwInput:"", authBusy:false, authErr:"", googleConfirm:null,
       theme: (()=>{ try{ return localStorage.getItem("stocktake.theme")==="light" ? "light" : "dark"; }catch(e){ return "dark"; } })()
     };
@@ -1967,6 +1993,15 @@ class Component extends DCLogic {
       const orgId = (mrec && mrec.orgId) || "";
       if(!orgId){ if(this.state.orgId) this.setState({org:null, orgId:""}, ()=>this.save({})); this.resumeOwn(uid); return; }
       SB.get(this.orgKey(orgId)).then(org=>{
+        /* The org was disbanded, or this account was removed from it while signed
+           out: drop the stale membership pointer and resume as a personal (no-org)
+           account instead of adopting a dead org. */
+        const removed = org && org.id && Array.isArray(org.members) && !org.members.some(m=>m.uid===uid);
+        if((org && org.deleted) || removed){
+          SB.put(this.memberKey(uid), {orgId:null, ts:Date.now()}).catch(()=>{});
+          this.setState({org:null, orgId:""}, ()=>{ this.save({}); this.resumeOwn(uid); });
+          return;
+        }
         /* seed the org's live-stocktake list so the home screen can show it right away */
         SB.get(this.orgActiveKey(orgId)).then(d=>{ this.setState({orgActive:((d&&d.active)||[])}); }, ()=>{});
         this.fetchOrgArchive(orgId).then(arch=>{
@@ -2009,7 +2044,7 @@ class Component extends DCLogic {
       const orgId = rec && rec.orgId;
       if(!orgId){ this.setState({orgBusy:false, orgMsg:"No organisation found for that code."}); return; }
       SB.get(this.orgKey(orgId)).then(org=>{
-        if(!org || !org.id){ this.setState({orgBusy:false, orgMsg:"That organisation no longer exists."}); return; }
+        if(!org || !org.id || org.deleted){ this.setState({orgBusy:false, orgMsg:"That organisation no longer exists."}); return; }
         const members=(org.members||[]).slice();
         if(!members.some(m=>m.uid===s.owner)) members.push({uid:s.owner, name:(s.me||"").trim(), ts:Date.now(), role:"member"});
         const norg=Object.assign({}, org, {members:members});
@@ -2035,13 +2070,81 @@ class Component extends DCLogic {
     });
   }
 
+  /* ---- organisation admin (admin-only management) ----
+     The org record (o:<id>) is a shared row every member can read, and only the
+     app gates the controls to admins. Because a member's m:<uid> row is locked to
+     that member by RLS, an admin can't clear someone else's membership directly —
+     instead the admin edits the shared members list (or marks the org deleted),
+     and each affected member's app self-heals on its next refresh (orgSelfRemove). */
+  amAdminOf(org, uid){
+    if(!org || !uid) return false;
+    if(org.adminUid===uid) return true;
+    return (org.members||[]).some(m=>m.uid===uid && m.role==="admin");
+  }
+  renameOrg(){
+    const s=this.state, org=s.org; if(!org) return;
+    if(!this.amAdminOf(org, s.owner)){ this.setState({orgMsg:"Only an admin can rename the organisation."}); return; }
+    const name=(s.orgRename||"").trim();
+    if(name.length<2){ this.setState({orgMsg:"Enter an organisation name."}); return; }
+    const norg=Object.assign({}, org, {name:name, ts:Date.now()});
+    this.cloudPut(this.orgKey(org.id), norg);
+    this.setState({org:norg, orgRename:"", orgMsg:"Organisation renamed."}, ()=>this.save({}));
+  }
+  regenOrgCode(){
+    const s=this.state, org=s.org; if(!org || !this.amAdminOf(org, s.owner)){ this.setState({confirm:null}); return; }
+    const oldCode=org.code, code=this.makeOrgCode(), now=Date.now();
+    const norg=Object.assign({}, org, {code:code, ts:now});
+    this.cloudPut(this.orgKey(org.id), norg);
+    this.cloudPut(this.orgCodeKey(code), {orgId:org.id, ts:now});
+    if(oldCode) this.cloudPut(this.orgCodeKey(oldCode), {orgId:null, ts:now}); // old code no longer joins
+    this.setState({org:norg, confirm:null, orgMsg:"New invite code generated."}, ()=>this.save({}));
+  }
+  removeOrgMember(uid){
+    const s=this.state, org=s.org; if(!org || !uid || !this.amAdminOf(org, s.owner)){ this.setState({confirm:null}); return; }
+    const members=(org.members||[]).filter(m=>m.uid!==uid);
+    const norg=Object.assign({}, org, {members:members, ts:Date.now()});
+    this.cloudPut(this.orgKey(org.id), norg);
+    this.setState({org:norg, confirm:null, pendingOrgUid:"", pendingOrgName:"", orgMsg:"Member removed."}, ()=>this.save({}));
+  }
+  makeOrgAdmin(uid){
+    const s=this.state, org=s.org; if(!org || !uid || !this.amAdminOf(org, s.owner)){ this.setState({confirm:null}); return; }
+    const members=(org.members||[]).map(m=> m.uid===uid ? Object.assign({}, m, {role:"admin"}) : m);
+    const norg=Object.assign({}, org, {members:members, ts:Date.now()});
+    this.cloudPut(this.orgKey(org.id), norg);
+    this.setState({org:norg, confirm:null, pendingOrgUid:"", pendingOrgName:"", orgMsg:"Admin added."}, ()=>this.save({}));
+  }
+  deleteOrg(){
+    const s=this.state, org=s.org; if(!org || !this.amAdminOf(org, s.owner)){ this.setState({confirm:null}); return; }
+    const now=Date.now();
+    this.cloudPut(this.orgKey(org.id), {id:org.id, name:org.name, deleted:true, ts:now}); // tombstone; members self-heal
+    if(org.code) this.cloudPut(this.orgCodeKey(org.code), {orgId:null, ts:now});
+    this.setState({confirm:null}, ()=>this.orgSelfRemove("Organisation deleted."));
+  }
+  /* Revert this device to a personal (no-org) state — used when the admin deletes
+     the org, when this member is removed, or on delete. Clears our own membership
+     pointer (allowed under RLS) and restores the personal archive. */
+  orgSelfRemove(msg){
+    const uid=this.state.owner;
+    if(uid && SB.on()) SB.put(this.memberKey(uid), {orgId:null, ts:Date.now()}).catch(()=>{});
+    const done=(arch)=>this.setState({ org:null, orgId:"", orgActive:[], orgRename:"", confirm:null, archive:(arch||[]), orgMsg: msg||"" }, ()=>this.save({}));
+    this.fetchPersonalArchive(uid).then(done, ()=>done(this.state.archive));
+  }
+
   openOrg(){ this.setState({screen:"org", orgMsg:""}, ()=>this.refreshOrg()); }
   /* Pull the org's record, live stocktakes and shared archive. Only writes to
      state (or the cloud) when something actually changed, so it's safe to call on
      a timer while the Organisation page is open (see maybeRefreshOrg). */
   refreshOrg(){
     const id=this.state.orgId; if(!id || !SB.on()) return;
-    SB.get(this.orgKey(id)).then(org=>{ if(org && org.id && JSON.stringify(org)!==JSON.stringify(this.state.org)) this.setState({org:org}, ()=>this.save({})); }, ()=>{});
+    SB.get(this.orgKey(id)).then(org=>{
+      const uid=this.state.owner;
+      /* The admin disbanded the org, or removed me from it: revert to a personal
+         (no-org) state. Only act on a definite signal (deleted flag, or a valid
+         members list that excludes me) — never on a transient empty read. */
+      if(org && org.deleted){ this.orgSelfRemove("This organisation was disbanded by its admin."); return; }
+      if(org && org.id && Array.isArray(org.members) && uid && !org.members.some(m=>m.uid===uid)){ this.orgSelfRemove("You were removed from this organisation."); return; }
+      if(org && org.id && JSON.stringify(org)!==JSON.stringify(this.state.org)) this.setState({org:org}, ()=>this.save({}));
+    }, ()=>{});
     /* Make sure this member's own in-progress stocktake is registered — covers
        one started before the org existed, so it isn't missing from the live list. */
     this.orgRegisterActive();
@@ -2256,7 +2359,7 @@ class Component extends DCLogic {
         title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
         archive:[], archDeleted:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
         cParts:[], sParts:[],
-        org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgMsg:"",
+        org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgMsg:"", orgRename:"", pendingOrgUid:"", pendingOrgName:"",
         screen: newSignup ? "profile" : "hub", setupStep:1, menuOpen:false
       }, ()=>{ this.save({}); if(!newSignup){ this.ensureProfile(uid); } });
     }
@@ -2274,7 +2377,7 @@ class Component extends DCLogic {
       authed:false, authEmail:"", menuOpen:false, viewAs:"admin", authView:"admin", authMode:"in",
       authErr:"", authPwInput:"", authEmailInput:"",
       owner:"", me:"", admin:"", joined:false, started:false,
-      org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgMsg:"",
+      org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgMsg:"", orgRename:"", pendingOrgUid:"", pendingOrgName:"",
       archive:[], archDeleted:[],
       title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{},
       hidden:{}, hideEmpty:{}, pushed:{}, removedIds:[], resetAt:0, code:this.makeCode(),
@@ -3392,11 +3495,20 @@ class Component extends DCLogic {
       /* ---- organisation ---- */
       inOrg: !!s.orgId,
       notInOrg: !s.orgId,
+      amOrgAdmin: this.amAdminOf(s.org, s.owner),
       orgName: (s.org && s.org.name) || "",
       orgCode: (s.org && s.org.code) || "",
       orgMemberCount: ((s.org && s.org.members) || []).length,
       orgMemberLabel: (((s.org && s.org.members) || []).length)+((((s.org && s.org.members) || []).length)===1?" member":" members"),
-      orgMembers: (((s.org && s.org.members) || []).map(m=>({ name:(m.name||"—"), role:(m.role==="admin"?"Admin":"Member"), initial:abbrOf(m.name||"?"), sub:(m.uid===s.owner?"You":(m.role==="admin"?"Admin":"Member")) }))),
+      orgMembers: (()=>{ const admin=this.amAdminOf(s.org, s.owner); return (((s.org && s.org.members) || []).map(m=>{
+        const canPromote = admin && m.uid!==s.owner && m.role!=="admin";
+        const canRemove = admin && m.uid!==s.owner;
+        return { name:(m.name||"—"), role:(m.role==="admin"?"Admin":"Member"), initial:abbrOf(m.name||"?"),
+          sub:(m.uid===s.owner?"You":(m.role==="admin"?"Admin":"Member")),
+          canPromote:canPromote, canRemove:canRemove, showActions:(canPromote||canRemove),
+          promote:()=>this.setState({pendingOrgUid:m.uid, pendingOrgName:(m.name||"this member"), confirm:{kind:"makeAdmin", title:"Make "+(m.name||"this member")+" an admin?", note:"They'll be able to manage the organisation — rename it, manage members, regenerate the code and delete it.", label:"Make admin", cancel:"Cancel"}}),
+          remove:()=>this.setState({pendingOrgUid:m.uid, pendingOrgName:(m.name||"this member"), confirm:{kind:"removeMember", title:"Remove "+(m.name||"this member")+"?", note:"They'll lose access to this organisation's stocktakes on their device. They can re-join with the invite code.", label:"Remove", cancel:"Keep"}}) };
+      })); })(),
       orgActiveList: ((s.orgActive||[]).map(a=>({ title:((a.title&&a.title.trim())?a.title.trim():("Stocktake "+a.code)), by:(a.by?("by "+a.by):""), initial:abbrOf((a.title&&a.title.trim())||a.code), current:(a.code===s.code), open:()=>this.openOrgStk(a.code) }))),
       orgActiveEmpty: !((s.orgActive||[]).length),
       orgPastLabel: ((s.archive||[]).length)+((((s.archive||[]).length)===1)?" past stocktake":" past stocktakes"),
@@ -3411,6 +3523,12 @@ class Component extends DCLogic {
       orgMsg: s.orgMsg||"",
       hasOrgMsg: !!(s.orgMsg||"").length,
       askLeaveOrg: ()=>this.setState({confirm:{kind:"leaveOrg", title:"Leave "+((s.org&&s.org.name)||"this organisation")+"?", note:"You'll go back to your own stocktakes and past stocktakes. You can re-join any time with the code.", label:"Leave organisation", cancel:"Stay"}}),
+      /* ---- organisation admin controls (only shown when amOrgAdmin) ---- */
+      orgRenameValue: s.orgRename||"",
+      onOrgRename: (e)=>this.setState({orgRename:e.target.value, orgMsg:""}),
+      saveOrgName: ()=>this.renameOrg(),
+      askRegenCode: ()=>this.setState({confirm:{kind:"regenCode", title:"Generate a new invite code?", note:"The current code stops working, so anyone who hasn't joined yet will need the new one. People already in the organisation stay in.", label:"Generate new code", cancel:"Keep current"}}),
+      askDeleteOrg: ()=>this.setState({confirm:{kind:"deleteOrg", title:"Delete "+((s.org&&s.org.name)||"this organisation")+"?", note:"This disbands the organisation for everyone. All members go back to their own stocktakes and past stocktakes. This can't be undone.", label:"Delete organisation", cancel:"Keep it"}}),
       sessionUnits: this.fmt(totalUnits),
       sessionLines: Object.keys(s.counts).filter(k=>this.byId(k.split("|")[1])).length,
       submittedLabel: Object.keys(s.submitted||{}).length + " / " + LOCS.length,
@@ -3646,6 +3764,14 @@ class Component extends DCLogic {
           this.setState({confirm:null}, ()=>this.signOut());
         } else if(c.kind==="leaveOrg"){
           this.leaveOrg();
+        } else if(c.kind==="regenCode"){
+          this.regenOrgCode();
+        } else if(c.kind==="removeMember"){
+          this.removeOrgMember(this.state.pendingOrgUid);
+        } else if(c.kind==="makeAdmin"){
+          this.makeOrgAdmin(this.state.pendingOrgUid);
+        } else if(c.kind==="deleteOrg"){
+          this.deleteOrg();
         } else if(c.kind==="recoverOwn"){
           this.resumeRecover();
         } else if(c.kind==="deletePast"){
