@@ -1735,7 +1735,7 @@ class Component extends DCLogic {
        lighter loop re-syncs the shared archive (and its delete tombstones) so a
        delete or a newly-closed stocktake on one device shows on the others
        without a manual refresh. */
-    this._archTimer = setInterval(()=>{ this.maybeSyncArchive(); this.maybeRefreshToken(); }, 3000);
+    this._archTimer = setInterval(()=>{ this.maybeSyncArchive(); this.maybeRefreshToken(); this.maybeRefreshOrg(); }, 3000);
     const joined = !!(saved && saved.joined);
     const gate = !authed && !joined;
     // A doc belongs to the account that owns it. If a different account is
@@ -2011,9 +2011,12 @@ class Component extends DCLogic {
   }
 
   openOrg(){ this.setState({screen:"org", orgMsg:""}, ()=>this.refreshOrg()); }
+  /* Pull the org's record, live stocktakes and shared archive. Only writes to
+     state (or the cloud) when something actually changed, so it's safe to call on
+     a timer while the Organisation page is open (see maybeRefreshOrg). */
   refreshOrg(){
     const id=this.state.orgId; if(!id || !SB.on()) return;
-    SB.get(this.orgKey(id)).then(org=>{ if(org && org.id) this.setState({org:org}, ()=>this.save({})); }, ()=>{});
+    SB.get(this.orgKey(id)).then(org=>{ if(org && org.id && JSON.stringify(org)!==JSON.stringify(this.state.org)) this.setState({org:org}, ()=>this.save({})); }, ()=>{});
     /* Make sure this member's own in-progress stocktake is registered — covers
        one started before the org existed, so it isn't missing from the live list. */
     this.orgRegisterActive();
@@ -2023,21 +2026,33 @@ class Component extends DCLogic {
       if(s.orgId===id && s.started && !s.joined && s.code && (s.locNames||[]).length && !list.some(x=>x.code===s.code)){
         list.push({code:s.code, title:s.title||"", by:s.me||"", ts:Date.now()});
       }
-      this.setState({orgActive:list});
+      if(JSON.stringify(list)!==JSON.stringify(this.state.orgActive||[])) this.setState({orgActive:list});
     }, ()=>{});
     this.fetchOrgArchive(id).then(arch=>{ if(JSON.stringify(arch)!==JSON.stringify(this.state.archive||[])) this.setState({archive:arch}, ()=>this.save({})); });
+  }
+  /* Keep the Organisation page live while it's open, the same way counts and past
+     stocktakes stay current (see the interval in componentDidMount). */
+  maybeRefreshOrg(){
+    const s=this.state;
+    if(!SB.on() || !s.ready || s.screen!=="org" || !s.orgId || s.joined) return;
+    this.refreshOrg();
   }
 
   /* An org's in-progress stocktakes live in ou:<id>. Registered when a member
      starts counting (or opens the org while already counting), removed when it's
      closed or cancelled, so every member can see and open what's live across the
-     org. Counters (joined) don't own a stocktake, so they never register one. */
+     org. Counters (joined) don't own a stocktake, so they never register one.
+     Skips the cloud write when this stocktake is already listed unchanged, so it
+     can run on the org-page refresh timer without churning the row. */
   orgRegisterActive(){
     const s=this.state; if(!s.orgId || !s.started || s.joined || !s.code || !(s.locNames||[]).length || !SB.on()) return;
     const key=this.orgActiveKey(s.orgId);
     const entry={code:s.code, title:s.title||"", by:s.me||"", ts:Date.now()};
     SB.get(key).then(d=>{
-      const list=((d&&d.active)||[]).filter(x=>x.code!==s.code); list.push(entry);
+      const cur=((d&&d.active)||[]);
+      const same=cur.find(x=>x.code===s.code);
+      if(same && same.title===entry.title && same.by===entry.by) return; // already listed unchanged
+      const list=cur.filter(x=>x.code!==s.code); list.push(entry);
       SB.put(key, {active:list, ts:Date.now()}).catch(()=>{});
     }, ()=>{ SB.put(key, {active:[entry], ts:Date.now()}).catch(()=>{}); });
   }
