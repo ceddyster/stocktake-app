@@ -922,7 +922,9 @@ Sign in with Google
 </sc-if>
 <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
 <button onClick="{{ runConfirm }}" style="width:100%;min-height:46px;padding:14px;border-radius:12px;background:var(--primary);border:none;cursor:pointer;font:600 13.5px/1 'Public Sans',sans-serif;color:var(--on-primary)" style-hover="background:var(--primary)">{{ confirmLabel }}</button>
+<sc-if value="{{ confirmHasCancel }}" hint-placeholder-val="{{ true }}">
 <button onClick="{{ confirmSecondary }}" style="width:100%;min-height:44px;padding:12px;border-radius:12px;background:transparent;border:none;cursor:pointer;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ confirmCancel }}</button>
+</sc-if>
 </div>
 </div>
 </sc-if>
@@ -2129,6 +2131,17 @@ class Component extends DCLogic {
     const done=(arch)=>this.setState({ org:null, orgId:"", orgActive:[], orgRename:"", confirm:null, archive:(arch||[]), orgMsg: msg||"" }, ()=>this.save({}));
     this.fetchPersonalArchive(uid).then(done, ()=>done(this.state.archive));
   }
+  /* Like orgSelfRemove, but surfaces a popup so the member actually sees why
+     their org access ended. The admin can remove someone (or disband the org)
+     while that member is mid-count, so a quiet revert isn't enough — this reverts
+     to a personal (no-org) state AND opens a single-button notice dialog. */
+  orgRemovedNotice(title, note){
+    const uid=this.state.owner;
+    if(uid && SB.on()) SB.put(this.memberKey(uid), {orgId:null, ts:Date.now()}).catch(()=>{});
+    const dlg={kind:"orgKicked", title:title, note:note, label:"OK", cancel:""};
+    const done=(arch)=>this.setState({ org:null, orgId:"", orgActive:[], orgRename:"", archive:(arch||[]), orgMsg:"", confirm:dlg }, ()=>this.save({}));
+    this.fetchPersonalArchive(uid).then(done, ()=>done(this.state.archive));
+  }
 
   openOrg(){ this.setState({screen:"org", orgMsg:""}, ()=>this.refreshOrg()); }
   /* Pull the org's record, live stocktakes and shared archive. Only writes to
@@ -2141,8 +2154,8 @@ class Component extends DCLogic {
       /* The admin disbanded the org, or removed me from it: revert to a personal
          (no-org) state. Only act on a definite signal (deleted flag, or a valid
          members list that excludes me) — never on a transient empty read. */
-      if(org && org.deleted){ this.orgSelfRemove("This organisation was disbanded by its admin."); return; }
-      if(org && org.id && Array.isArray(org.members) && uid && !org.members.some(m=>m.uid===uid)){ this.orgSelfRemove("You were removed from this organisation."); return; }
+      if(org && org.deleted){ this.orgRemovedNotice("Organisation disbanded", "The organisation "+((org.name)||"you were in")+" was disbanded by its admin. You've been moved back to your own stocktakes."); return; }
+      if(org && org.id && Array.isArray(org.members) && uid && !org.members.some(m=>m.uid===uid)){ this.orgRemovedNotice("Removed from organisation", "An admin removed you from "+((org.name)||"the organisation")+". You've been moved back to your own stocktakes — you can re-join any time with the invite code."); return; }
       if(org && org.id && JSON.stringify(org)!==JSON.stringify(this.state.org)) this.setState({org:org}, ()=>this.save({}));
     }, ()=>{});
     /* Make sure this member's own in-progress stocktake is registered — covers
@@ -2163,8 +2176,21 @@ class Component extends DCLogic {
   maybeRefreshOrg(){
     const s=this.state;
     if(!SB.on() || !s.ready || !s.orgId || s.joined) return;
-    if(s.screen!=="org" && s.screen!=="hub") return; // live on the org page and the home screen
-    this.refreshOrg();
+    if(s.screen==="org" || s.screen==="hub"){ this.refreshOrg(); return; } // full refresh on the org page and home screen
+    this.checkOrgMembership(); // on every other screen (e.g. mid-count) still watch for being removed / disbanded
+  }
+  /* Lightweight watch used away from the Organisation page (e.g. while a member
+     is counting): just detect being removed or the org being disbanded and pop a
+     notice, without the extra archive/live-list reads the full refreshOrg does.
+     Only acts on a definite signal, never on a transient empty read. */
+  checkOrgMembership(){
+    const id=this.state.orgId; if(!id || !SB.on()) return;
+    if(this.state.confirm && this.state.confirm.kind==="orgKicked") return; // notice already up
+    SB.get(this.orgKey(id)).then(org=>{
+      const uid=this.state.owner;
+      if(org && org.deleted){ this.orgRemovedNotice("Organisation disbanded", "The organisation "+((org.name)||"you were in")+" was disbanded by its admin. You've been moved back to your own stocktakes."); return; }
+      if(org && org.id && Array.isArray(org.members) && uid && !org.members.some(m=>m.uid===uid)){ this.orgRemovedNotice("Removed from organisation", "An admin removed you from "+((org.name)||"the organisation")+". You've been moved back to your own stocktakes — you can re-join any time with the invite code."); return; }
+    }, ()=>{});
   }
 
   /* An org's in-progress stocktakes live in ou:<id>. Registered when a member
@@ -3750,6 +3776,7 @@ class Component extends DCLogic {
       confirmNote: s.confirm && s.confirm.note,
       confirmLabel: s.confirm && s.confirm.label,
       confirmCancel: (s.confirm && s.confirm.cancel) || "Not now",
+      confirmHasCancel: !(s.confirm && s.confirm.cancel===""),
       closeConfirm: ()=>{ const c=this.state.confirm; if(c && c.kind==="recoverOwn"){ this.resumeRecover(); } else { this.setState({confirm:null}); } },
       confirmSecondary: ()=>{ const c=this.state.confirm; if(c && c.kind==="recoverOwn"){ this.discardRecover(); } else { this.setState({confirm:null}); } },
       confirmCanWipe: !!(s.confirm && s.confirm.kind==="new"),
@@ -3760,7 +3787,11 @@ class Component extends DCLogic {
       toggleWipe: ()=>this.setState({wipeExtra:!s.wipeExtra}),
       runConfirm: ()=>{
         const c = this.state.confirm; if(!c) return;
-        if(c.kind==="logout"){
+        if(c.kind==="orgKicked"){
+          /* Notice only — the revert to a personal state already happened when
+             this popup was shown (orgRemovedNotice). Tapping OK just dismisses. */
+          this.setState({confirm:null});
+        } else if(c.kind==="logout"){
           this.setState({confirm:null}, ()=>this.signOut());
         } else if(c.kind==="leaveOrg"){
           this.leaveOrg();
