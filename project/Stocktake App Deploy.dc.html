@@ -375,11 +375,13 @@ Sign in with Google
 <button onClick="{{ homeBack }}" style="flex:none;width:34px;height:34px;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
 </sc-if>
 <span style="flex:1;min-width:0;font:700 24px/1.1 'Public Sans',sans-serif;letter-spacing:-.02em;color:var(--ink)">{{ appTitle }}</span>
+<sc-if value="{{ showMenu }}" hint-placeholder-val="{{ true }}">
 <button onClick="{{ openMenu }}" style="flex:none;width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink)">
 <span style="width:16px;height:2px;border-radius:2px;background:var(--pop)"></span>
 <span style="width:16px;height:2px;border-radius:2px;background:var(--pop)"></span>
 <span style="width:16px;height:2px;border-radius:2px;background:var(--pop)"></span>
 </button>
+</sc-if>
 </div>
 </div>
 </div>
@@ -2504,10 +2506,17 @@ class Component extends DCLogic {
   enterReview(idx){
     const a = (this.state.archive||[])[idx];
     if(!a || !a.snap) return;
-    this._live = {
-      counts:this.state.counts, submitted:this.state.submitted, master:this.state.master,
-      locNames:this.state.locNames, title:this.state.title, dup:this.state.dup, drive:this.state.drive
-    };
+    /* Back up the LIVE stocktake only when we're not already reviewing. Opening a
+       second past stocktake while one is already on screen must not overwrite this
+       backup with the first snapshot's data — otherwise exitReview would restore a
+       past snapshot's `submitted` onto the live stocktake, making its (never-closed)
+       locations show a phantom "Reopen to edit". */
+    if(this.state.review==null){
+      this._live = {
+        counts:this.state.counts, submitted:this.state.submitted, master:this.state.master,
+        locNames:this.state.locNames, title:this.state.title, dup:this.state.dup, drive:this.state.drive
+      };
+    }
     const k = a.snap;
     this.setState({
       review:idx, reviewTitle:a.title||k.title||"Past stocktake", reviewWhen:a.when||"",
@@ -3507,6 +3516,11 @@ class Component extends DCLogic {
          the launcher. Hidden while reviewing a past stocktake (that has its own
          back in the read-only banner). */
       showHomeBack: !reviewing,
+      /* Hide the hamburger menu while reviewing a past stocktake: its actions
+         (Past, New, Clear, Account…) navigate away without going through
+         exitReview, which would strand the review's snapshot in the live state.
+         The read-only banner's back button is the only way out of a review. */
+      showMenu: !reviewing,
       homeBack: ()=>{ if(this.state.stkFrom==="org"){ this.openOrg(); } else { this.goHubNav(); } },
       hubNew: ()=>this.setState({ counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, title:"", resetAt:Date.now(), code:this.makeCode(), started:false, menuOpen:false, screen:"setup", setupStep:1 }, ()=>this.save({})),
       pastAvailable: (s.archive||[]).length>0,
