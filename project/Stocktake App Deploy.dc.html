@@ -2197,7 +2197,9 @@ class Component extends DCLogic {
         authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
         me: nm, admin: "", owner: uid,
         title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
-        archive:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
+        archive:[], archDeleted:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
+        cParts:[], sParts:[],
+        org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgMsg:"",
         screen: newSignup ? "profile" : "hub", setupStep:1, menuOpen:false
       }, ()=>{ this.save({}); if(!newSignup){ this.ensureProfile(uid); } });
     }
@@ -2206,7 +2208,21 @@ class Component extends DCLogic {
     const sess = this._sess();
     if(sess && sess.access_token) AUTH.logout(sess.access_token);
     try{ localStorage.removeItem(AUTHKEY); }catch(e){}
-    this.setState({authed:false, authEmail:"", menuOpen:false, viewAs:"admin", authView:"admin", authMode:"in", authErr:"", authPwInput:"", authEmailInput:"", screen:"auth"});
+    /* Wipe the previous account's data so nothing leaks into the next sign-in on
+       this device — otherwise the org, archive or stocktake from the account that
+       just logged out would still show for whoever logs in next. */
+    try{ localStorage.removeItem(STORE); }catch(e){}
+    this._recoverPending = false;
+    this.setState({
+      authed:false, authEmail:"", menuOpen:false, viewAs:"admin", authView:"admin", authMode:"in",
+      authErr:"", authPwInput:"", authEmailInput:"",
+      owner:"", me:"", admin:"", joined:false, started:false,
+      org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgMsg:"",
+      archive:[], archDeleted:[],
+      title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{},
+      hidden:{}, hideEmpty:{}, pushed:{}, removedIds:[], resetAt:0, code:this.makeCode(),
+      cParts:[], sParts:[], sheet:null, loc:null, screen:"auth"
+    });
   }
 
   leaveJoin(){
@@ -3402,7 +3418,7 @@ class Component extends DCLogic {
         /* A new signup lands on setup; an existing user who was sent here to
            fill in a missing profile goes back to their stocktake (home) or setup,
            and we resume their active stocktake now that the profile exists. */
-        this.setState({admin: st.admin || nm, accountMsg:"", screen:"hub", setupStep:1}, ()=>{ this.save({}); if(owner) this.resumeOwn(owner); });
+        this.setState({admin: st.admin || nm, accountMsg:"", screen:"hub", setupStep:1}, ()=>{ this.save({}); if(owner) this.loadOrgThenResume(owner); });
       },
       saveProfileNow: ()=>{
         const nm=(this.state.me||"").trim();
