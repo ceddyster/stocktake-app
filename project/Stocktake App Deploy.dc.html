@@ -346,6 +346,9 @@ Sign in with Google
 </span>
 </div>
 <div style="margin-top:5px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+<sc-if value="{{ showHomeBack }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ homeBack }}" style="flex:none;width:34px;height:34px;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+</sc-if>
 <span style="flex:1;min-width:0;font:700 24px/1.1 'Public Sans',sans-serif;letter-spacing:-.02em;color:var(--ink)">{{ appTitle }}</span>
 <button onClick="{{ openMenu }}" style="flex:none;width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink)">
 <span style="width:16px;height:2px;border-radius:2px;background:var(--pop)"></span>
@@ -1710,7 +1713,7 @@ class Component extends DCLogic {
       online:true, syncing:false, pushed:{}, saveState:"saved",
       screen:"setup", setupStep:1, newLoc:"", locPick:{}, clearMineOpen:false, clearPick:{}, adminClearOpen:false, adminClearMode:"loc", adminClearPick:{},
       loc:null, counts:{}, query:"", sheet:null, field:"c",
-      hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null, cParts:[], sParts:[],
+      hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null, cParts:[], sParts:[], stkFrom:"hub",
       submitted:{}, subAt:{}, totalsMode:"cat", expanded:{}, groupMode:"sub", sortMode:"none", sortOpen:false,
       buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, dupCleared:{}, subOpen:false,
       overwriteWarn:null, overwriteBy:"", overwriteOk:{}, review:null, reviewTitle:"", reviewWhen:"",
@@ -2088,7 +2091,7 @@ class Component extends DCLogic {
         title:doc.title||"", locNames:doc.locNames||[], master:doc.master||[],
         counts:doc.counts||{}, submitted:doc.submitted||{}, subAt:doc.subAt||{}, dup:doc.dup||{}, dupCleared:doc.dupCleared||{}, resetAt:doc.resetAt||0,
         hidden:doc.hidden||{}, hideEmpty:doc.hideEmpty||{}, admin:doc.admin||this.state.me,
-        menuOpen:false, orgMsg:"", screen:"home"
+        menuOpen:false, orgMsg:"", screen:"home", stkFrom:"org"
       }, ()=>{ this.save({}); if(this.state.owner) this.setOwnCode(this.state.owner, code); });
     }, ()=>this.setState({orgMsg:"Couldn't open that stocktake."}));
   }
@@ -2266,7 +2269,7 @@ class Component extends DCLogic {
       archive:[], archDeleted:[],
       title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{},
       hidden:{}, hideEmpty:{}, pushed:{}, removedIds:[], resetAt:0, code:this.makeCode(),
-      cParts:[], sParts:[], sheet:null, loc:null, screen:"auth"
+      cParts:[], sParts:[], stkFrom:"hub", sheet:null, loc:null, screen:"auth"
     });
   }
 
@@ -3359,7 +3362,13 @@ class Component extends DCLogic {
         ? "There is 1 open stocktake in "
         : "There are "+((s.orgActive||[]).length)+" open stocktakes in ")+((s.org&&s.org.name)||"your organisation"),
       goOrgOpen: ()=>this.openOrg(),
-      goContinue: ()=>this.setState({screen:"home"}),
+      goContinue: ()=>this.setState({screen:"home", stkFrom:"hub"}),
+      /* Back from the active-stocktake home screen: return to wherever it was
+         opened from — the Organisation page if it was opened from there, otherwise
+         the launcher. Hidden while reviewing a past stocktake (that has its own
+         back in the read-only banner). */
+      showHomeBack: !reviewing,
+      homeBack: ()=>{ if(this.state.stkFrom==="org"){ this.openOrg(); } else { this.goHubNav(); } },
       hubNew: ()=>this.setState({ counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, title:"", resetAt:Date.now(), code:this.makeCode(), started:false, menuOpen:false, screen:"setup", setupStep:1 }, ()=>this.save({})),
       pastAvailable: (s.archive||[]).length>0,
       pastNone: !((s.archive||[]).length>0),
@@ -3769,7 +3778,7 @@ class Component extends DCLogic {
         const drive = s.drive.connected
           ? Object.assign({}, s.drive, {fileName:name, createdAt: s.drive.createdAt||Date.now(), lastSync: Date.now()})
           : s.drive;
-        this.setState({screen:"home", drive:drive, admin: s.admin||s.me.trim(), justSaved: s.drive.connected, started:true}, ()=>{ this.save({}); this.orgRegisterActive(); });
+        this.setState({screen:"home", drive:drive, admin: s.admin||s.me.trim(), justSaved: s.drive.connected, started:true, stkFrom:"hub"}, ()=>{ this.save({}); this.orgRegisterActive(); });
       },
       hasLocs: s.locNames.length>0,
       noLocs: s.locNames.length===0,
