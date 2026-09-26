@@ -681,7 +681,7 @@ Sign in with Google
 <div style="height:100%;display:flex;flex-direction:column">
 <div style="padding:12px 16px 14px;background:var(--bg);border-bottom:1px solid var(--line)">
 <div style="display:flex;align-items:center;gap:10px">
-<button onClick="{{ goHub }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<button onClick="{{ pastBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
 <div style="flex:1;min-width:0">
 <div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink)">Past stocktakes</div>
 <div style="margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ pastRowMeta }}</div>
@@ -1713,7 +1713,7 @@ class Component extends DCLogic {
       online:true, syncing:false, pushed:{}, saveState:"saved",
       screen:"setup", setupStep:1, newLoc:"", locPick:{}, clearMineOpen:false, clearPick:{}, adminClearOpen:false, adminClearMode:"loc", adminClearPick:{},
       loc:null, counts:{}, query:"", sheet:null, field:"c",
-      hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null, cParts:[], sParts:[], stkFrom:"hub",
+      hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null, cParts:[], sParts:[], stkFrom:"hub", navFrom:"",
       submitted:{}, subAt:{}, totalsMode:"cat", expanded:{}, groupMode:"sub", sortMode:"none", sortOpen:false,
       buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, dupCleared:{}, subOpen:false,
       overwriteWarn:null, overwriteBy:"", overwriteOk:{}, review:null, reviewTitle:"", reviewWhen:"",
@@ -1875,6 +1875,15 @@ class Component extends DCLogic {
      drops a counter, who has no launcher. */
   goHubNav(){
     this.setState({screen:"hub", menuOpen:false}, ()=>{ const st=this.state; if(st.owner && !st.joined) this.resumeOwn(st.owner); });
+  }
+  /* Return from a screen that can be opened from several places (Past, Account) to
+     wherever it was opened from, recorded in navFrom when navigating in. */
+  returnTo(from){
+    if(from==="org"){ this.openOrg(); return; }
+    if(from==="drive"){ this.setState({screen:"drive", menuOpen:false}); return; }
+    if(from==="setup"){ this.setState({screen:"setup", menuOpen:false}); return; }
+    if(from==="home"){ const st=this.state; this.setState({screen:(st.locNames.length && (st.me||"").trim())?"home":"setup", menuOpen:false, sheet:null, submitOpen:false, mQuery:""}); return; }
+    this.goHubNav();
   }
   /* When the user belongs to an organisation, past stocktakes are shared across
      the whole org (keyed oa:<orgId>); otherwise they're the account's own
@@ -2269,7 +2278,7 @@ class Component extends DCLogic {
       archive:[], archDeleted:[],
       title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{},
       hidden:{}, hideEmpty:{}, pushed:{}, removedIds:[], resetAt:0, code:this.makeCode(),
-      cParts:[], sParts:[], stkFrom:"hub", sheet:null, loc:null, screen:"auth"
+      cParts:[], sParts:[], stkFrom:"hub", navFrom:"", sheet:null, loc:null, screen:"auth"
     });
   }
 
@@ -3263,7 +3272,8 @@ class Component extends DCLogic {
       lockTitle: "Admin only",
       closeLock: ()=>this.setState({lockNote:""}),
       isPast: s.screen==="past",
-      openPast: ()=>this.setState({screen:"past"}),
+      openPast: ()=>this.setState({screen:"past", navFrom:"drive"}),
+      pastBack: ()=>this.returnTo(this.state.navFrom),
       themeClass: s.theme==="light" ? "light" : "",
       themeIsLight: s.theme==="light",
       themeIsDark: s.theme!=="light",
@@ -3373,8 +3383,8 @@ class Component extends DCLogic {
       pastAvailable: (s.archive||[]).length>0,
       pastNone: !((s.archive||[]).length>0),
       pastCountLabel: ((s.archive||[]).length)+((s.archive||[]).length===1?" finished stocktake":" finished stocktakes"),
-      hubPast: ()=>{ if((this.state.archive||[]).length) this.setState({screen:"past"}); },
-      hubProfile: ()=>this.setState({screen:"account", pwCur:"", pwNew:"", pwMsg:"", accountMsg:""}),
+      hubPast: ()=>{ if((this.state.archive||[]).length) this.setState({screen:"past", navFrom:"hub"}); },
+      hubProfile: ()=>this.setState({screen:"account", pwCur:"", pwNew:"", pwMsg:"", accountMsg:"", navFrom:"hub"}),
       hubOrg: ()=>this.openOrg(),
       hubSignOut: ()=>this.signOut(),
       goHub: ()=>this.goHubNav(),
@@ -3390,7 +3400,7 @@ class Component extends DCLogic {
       orgActiveList: ((s.orgActive||[]).map(a=>({ title:((a.title&&a.title.trim())?a.title.trim():("Stocktake "+a.code)), by:(a.by?("by "+a.by):""), initial:abbrOf((a.title&&a.title.trim())||a.code), current:(a.code===s.code), open:()=>this.openOrgStk(a.code) }))),
       orgActiveEmpty: !((s.orgActive||[]).length),
       orgPastLabel: ((s.archive||[]).length)+((((s.archive||[]).length)===1)?" past stocktake":" past stocktakes"),
-      goPastFromOrg: ()=>this.setState({screen:"past"}),
+      goPastFromOrg: ()=>this.setState({screen:"past", navFrom:"org"}),
       orgNameValue: s.orgNameInput||"",
       orgJoinValue: s.orgJoinCode||"",
       onOrgName: (e)=>this.setState({orgNameInput:e.target.value, orgMsg:""}),
@@ -3470,8 +3480,8 @@ class Component extends DCLogic {
       authEmailReadonly: s.authEmail || "",
       accountMsg: s.accountMsg || "",
       hasAccountMsg: !!(s.accountMsg||"").length,
-      openAccount: ()=>this.setState({menuOpen:false, screen:"account", pwCur:"", pwNew:"", pwMsg:"", accountMsg:""}),
-      accountBack: ()=>this.setState({accountMsg:"", pwMsg:"", screen:"hub", menuOpen:false}, ()=>{ if(s.owner && !s.joined) this.resumeOwn(s.owner); }),
+      openAccount: ()=>this.setState({menuOpen:false, screen:"account", pwCur:"", pwNew:"", pwMsg:"", accountMsg:"", navFrom:"home"}),
+      accountBack: ()=>this.setState({accountMsg:"", pwMsg:"", menuOpen:false}, ()=>this.returnTo(this.state.navFrom)),
       profileContinue: ()=>{
         const nm=(this.state.me||"").trim();
         if(nm.length<1){ this.setState({accountMsg:"Enter your name to continue."}); return; }
@@ -3517,7 +3527,7 @@ class Component extends DCLogic {
       goSetupMenu: ()=>this.setState({menuOpen:false, screen:"setup"}),
       goMaster: ()=>this.setState({menuOpen:false, screen:"master"}),
       goTeam: ()=>this.setState({menuOpen:false, screen:"team"}),
-      goPast: ()=>this.setState({menuOpen:false, screen:"past"}),
+      goPast: ()=>this.setState({menuOpen:false, screen:"past", navFrom:"home"}),
       askClear: amAdmin ? ()=>this.setState({menuOpen:false, confirm:{kind:"clear", title:"Clear this stocktake?", note:"Every count is wiped — on this phone and for everyone on the code — so you can start the count again from scratch. Your locations and product list stay exactly as they are.", label:"Yes, clear all counts"}}) : ()=>this.setState({menuOpen:false, clearMineOpen:true, clearPick:{}}),
       clearBtnTitle: amAdmin ? "Clear counts & start again" : "Clear my counts by location",
       clearBtnSub: amAdmin ? "Wipes every count. Keeps locations & products." : "Pick which locations to clear your counts in.",
