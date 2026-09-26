@@ -181,7 +181,7 @@ Sign in with Google
 <div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.18em;color:var(--ink-3)">STOCKTAKE</div>
 <div style="margin-top:9px;font:700 26px/1.06 'Public Sans',sans-serif;letter-spacing:-.02em;color:var(--ink)">{{ hubGreeting }}</div>
 <p style="margin:8px 0 0;font:400 12px/1.5 'Public Sans',sans-serif;color:var(--ink-3)">What would you like to do?</p>
-<sc-if value="{{ hasActive }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ showContinue }}" hint-placeholder-val="{{ false }}">
 <button onClick="{{ goContinue }}" style="margin-top:18px;width:100%;display:flex;align-items:center;gap:13px;padding:16px 15px;background:var(--primary);border:none;border-radius:15px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)">
 <span style="width:38px;height:38px;flex:none;border-radius:11px;background:var(--on-primary);display:flex;align-items:center;justify-content:center;font:700 16px/1 'Public Sans',sans-serif;color:var(--primary)">▸</span>
 <span style="flex:1;min-width:0">
@@ -189,6 +189,16 @@ Sign in with Google
 <span style="display:block;margin-top:3px;font:400 11px/1.35 'Public Sans',sans-serif;color:var(--on-primary)">{{ activeMeta }}</span>
 </span>
 <span style="flex:none;font:400 16px/1 'Public Sans',sans-serif;color:var(--on-primary)">›</span>
+</button>
+</sc-if>
+<sc-if value="{{ showOrgOpen }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ goOrgOpen }}" style="margin-top:18px;width:100%;display:flex;align-items:center;gap:13px;padding:16px 15px;background:var(--surface);border:1px solid var(--primary);border-radius:15px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)">
+<span style="width:38px;height:38px;flex:none;border-radius:11px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:700 15px/1 'Public Sans',sans-serif;color:var(--ink)">◇</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:700 14px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ orgOpenLabel }}</span>
+<span style="display:block;margin-top:3px;font:400 11px/1.35 'Public Sans',sans-serif;color:var(--ink-3)">Tap to view and continue in Organisation.</span>
+</span>
+<span style="flex:none;font:400 16px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
 </button>
 </sc-if>
 <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
@@ -1944,6 +1954,8 @@ class Component extends DCLogic {
       const orgId = (mrec && mrec.orgId) || "";
       if(!orgId){ if(this.state.orgId) this.setState({org:null, orgId:""}, ()=>this.save({})); this.resumeOwn(uid); return; }
       SB.get(this.orgKey(orgId)).then(org=>{
+        /* seed the org's live-stocktake list so the home screen can show it right away */
+        SB.get(this.orgActiveKey(orgId)).then(d=>{ this.setState({orgActive:((d&&d.active)||[])}); }, ()=>{});
         this.fetchOrgArchive(orgId).then(arch=>{
           this.setState({ org:(org&&org.id)?org:this.state.org, orgId:orgId, archive:arch }, ()=>{ this.save({}); this.resumeOwn(uid); });
         });
@@ -2034,7 +2046,8 @@ class Component extends DCLogic {
      stocktakes stay current (see the interval in componentDidMount). */
   maybeRefreshOrg(){
     const s=this.state;
-    if(!SB.on() || !s.ready || s.screen!=="org" || !s.orgId || s.joined) return;
+    if(!SB.on() || !s.ready || !s.orgId || s.joined) return;
+    if(s.screen!=="org" && s.screen!=="hub") return; // live on the org page and the home screen
     this.refreshOrg();
   }
 
@@ -3336,7 +3349,15 @@ class Component extends DCLogic {
       /* ---- launcher / home screen ---- */
       hubGreeting: "Hi, "+(((s.me||"").trim().split(/\s+/)[0])||"there"),
       hasActive: !!(s.started && (s.locNames||[]).length && !s.joined),
+      /* Personal "Continue" only when NOT in an org; in an org the open stocktakes
+         live under Organisation, so the home screen points there instead. */
+      showContinue: !!(s.started && (s.locNames||[]).length && !s.joined) && !s.orgId,
       activeMeta: (s.title && s.title.trim() ? s.title.trim()+" · " : "")+((s.locNames||[]).length)+((s.locNames||[]).length===1?" location":" locations"),
+      showOrgOpen: !!s.orgId && ((s.orgActive||[]).length>0),
+      orgOpenLabel: (((s.orgActive||[]).length)===1
+        ? "There is 1 open stocktake in "
+        : "There are "+((s.orgActive||[]).length)+" open stocktakes in ")+((s.org&&s.org.name)||"your organisation"),
+      goOrgOpen: ()=>this.openOrg(),
       goContinue: ()=>this.setState({screen:"home"}),
       hubNew: ()=>this.setState({ counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, title:"", resetAt:Date.now(), code:this.makeCode(), started:false, menuOpen:false, screen:"setup", setupStep:1 }, ()=>this.save({})),
       pastAvailable: (s.archive||[]).length>0,
