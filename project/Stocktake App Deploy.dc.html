@@ -1624,16 +1624,35 @@ const SB = {
   url: (typeof window!=="undefined" && window.STOCKTAKE_SB && window.STOCKTAKE_SB.url) || "https://ijzuvrwcfipvsxbxginz.supabase.co",
   key: (typeof window!=="undefined" && window.STOCKTAKE_SB && window.STOCKTAKE_SB.key) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqenV2cndjZmlwdnN4YnhnaW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MzU2OTgsImV4cCI6MjEwMzMxMTY5OH0.eOlxDqeEFthSulxOLnMUHYiSDOI9hd55KjCuLr8SdXo",
   on(){ return !!(this.url && this.key); },
-  head(){ return {apikey:this.key, Authorization:"Bearer "+this.key, "Content-Type":"application/json"}; },
+  /* Rows private to one signed-in account: their profile, personal past-stocktakes,
+     active-stocktake pointer and membership. Requests for these carry the user's
+     auth token so the database (RLS) can enforce owner-only access. Every other row
+     (stocktakes, org data) stays on the anon key, so anonymous counters keep working
+     and an expired token can never break the counting/sync path. */
+  personal(code){ return /^(p:|a:|u:|m:)/.test(code||""); },
+  token(){
+    try{
+      const s = JSON.parse(localStorage.getItem("stocktake.auth.v1")||"null");
+      if(!s || !s.access_token) return null;
+      const p = JSON.parse(atob(s.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));
+      if(p && p.exp && (p.exp*1000) > Date.now()+5000) return s.access_token; // still valid
+      return null;
+    }catch(e){ return null; }
+  },
+  head(code){
+    let bearer = this.key;
+    if(this.personal(code)){ const t = this.token(); if(t) bearer = t; }
+    return {apikey:this.key, Authorization:"Bearer "+bearer, "Content-Type":"application/json"};
+  },
   get(code){
     return fetch(this.url+"/rest/v1/stocktakes?code=eq."+encodeURIComponent(code)+"&select=doc",
-      {headers:this.head()})
+      {headers:this.head(code)})
       .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
       .then(rows=>(rows && rows[0] && rows[0].doc) || null);
   },
   put(code, doc){
     return fetch(this.url+"/rest/v1/stocktakes",
-      {method:"POST", headers:Object.assign({Prefer:"resolution=merge-duplicates"}, this.head()),
+      {method:"POST", headers:Object.assign({Prefer:"resolution=merge-duplicates"}, this.head(code)),
        body:JSON.stringify({code:code, doc:doc})})
       .then(r=>{ if(!r.ok) throw new Error(r.status); return true; });
   }
@@ -1716,7 +1735,7 @@ class Component extends DCLogic {
        lighter loop re-syncs the shared archive (and its delete tombstones) so a
        delete or a newly-closed stocktake on one device shows on the others
        without a manual refresh. */
-    this._archTimer = setInterval(()=>this.maybeSyncArchive(), 3000);
+    this._archTimer = setInterval(()=>{ this.maybeSyncArchive(); this.maybeRefreshToken(); }, 3000);
     const joined = !!(saved && saved.joined);
     const gate = !authed && !joined;
     // A doc belongs to the account that owns it. If a different account is
@@ -2253,6 +2272,25 @@ class Component extends DCLogic {
     const s = this.state;
     if(!SB.on() || !s.ready || !s.owner || s.joined || this._recoverPending) return;
     this.syncArchive(s.owner);
+  }
+  /* Keep the signed-in user's access token fresh so owner-only (RLS-protected)
+     rows — profile, personal archive, active-stocktake pointer — stay reachable
+     during long sessions. Refreshes only when the token is within 10 minutes of
+     expiring; the counting/sync path uses the anon key and is unaffected either way. */
+  maybeRefreshToken(){
+    if(this._refreshing) return;
+    let s=null; try{ s=JSON.parse(localStorage.getItem(AUTHKEY)||"null"); }catch(e){}
+    if(!s || !s.access_token || !s.refresh_token) return;
+    let exp=0; try{ exp=(JSON.parse(atob(s.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))).exp||0)*1000; }catch(e){ return; }
+    if(exp && (exp - Date.now()) > 10*60*1000) return;
+    this._refreshing = true;
+    AUTH.refresh(s.refresh_token).then(t=>{
+      this._refreshing = false;
+      if(t && t.access_token){
+        const ns = {access_token:t.access_token, refresh_token:(t.refresh_token||s.refresh_token), email:((t.user&&t.user.email)||s.email||""), uid:((t.user&&t.user.id)||s.uid||"")};
+        try{ localStorage.setItem(AUTHKEY, JSON.stringify(ns)); }catch(e){}
+      }
+    }, ()=>{ this._refreshing = false; });
   }
 
   applyThemeBg(){ try{ document.body.style.background = this.state.theme==="light" ? "#EDE3D2" : "#12193A"; }catch(e){} }
