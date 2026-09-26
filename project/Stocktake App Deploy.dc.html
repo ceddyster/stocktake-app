@@ -1959,14 +1959,19 @@ class Component extends DCLogic {
     const code=this.makeOrgCode(); const now=Date.now();
     const org={ id:id, name:name, code:code, adminUid:s.owner, ts:now,
       members:[{uid:s.owner, name:(s.me||"").trim(), ts:now, role:"admin"}] };
+    /* If the creator already has a stocktake on the go, register it as the org's
+       first live stocktake so it isn't stranded when the org is created after
+       counting has started. */
+    const mineActive = (s.started && !s.joined && s.code && (s.locNames||[]).length)
+      ? [{code:s.code, title:s.title||"", by:s.me||"", ts:now}] : [];
     this.cloudPut(this.orgKey(id), org);
     this.cloudPut(this.orgCodeKey(code), {orgId:id, ts:now});
     this.cloudPut(this.memberKey(s.owner), {orgId:id, ts:now});
-    this.cloudPut(this.orgActiveKey(id), {active:[], ts:now});
+    this.cloudPut(this.orgActiveKey(id), {active:mineActive, ts:now});
     /* Carry the creator's own past stocktakes into the new org so their history
        isn't hidden. */
     const seed=(s.archive||[]).slice();
-    this.setState({ org:org, orgId:id, orgActive:[], orgNameInput:"", orgMsg:"", archive:seed },
+    this.setState({ org:org, orgId:id, orgActive:mineActive, orgNameInput:"", orgMsg:"", archive:seed },
       ()=>{ this.save({}); this.pushArchive(s.owner, seed); });
   }
 
@@ -2009,15 +2014,26 @@ class Component extends DCLogic {
   refreshOrg(){
     const id=this.state.orgId; if(!id || !SB.on()) return;
     SB.get(this.orgKey(id)).then(org=>{ if(org && org.id) this.setState({org:org}, ()=>this.save({})); }, ()=>{});
-    SB.get(this.orgActiveKey(id)).then(d=>{ this.setState({orgActive:((d&&d.active)||[])}); }, ()=>{});
+    /* Make sure this member's own in-progress stocktake is registered — covers
+       one started before the org existed, so it isn't missing from the live list. */
+    this.orgRegisterActive();
+    SB.get(this.orgActiveKey(id)).then(d=>{
+      let list=((d&&d.active)||[]).slice();
+      const s=this.state;
+      if(s.orgId===id && s.started && !s.joined && s.code && (s.locNames||[]).length && !list.some(x=>x.code===s.code)){
+        list.push({code:s.code, title:s.title||"", by:s.me||"", ts:Date.now()});
+      }
+      this.setState({orgActive:list});
+    }, ()=>{});
     this.fetchOrgArchive(id).then(arch=>{ if(JSON.stringify(arch)!==JSON.stringify(this.state.archive||[])) this.setState({archive:arch}, ()=>this.save({})); });
   }
 
   /* An org's in-progress stocktakes live in ou:<id>. Registered when a member
-     starts counting, removed when it's closed or cancelled, so every member can
-     see and open what's live across the org. */
+     starts counting (or opens the org while already counting), removed when it's
+     closed or cancelled, so every member can see and open what's live across the
+     org. Counters (joined) don't own a stocktake, so they never register one. */
   orgRegisterActive(){
-    const s=this.state; if(!s.orgId || !s.started || !s.code || !SB.on()) return;
+    const s=this.state; if(!s.orgId || !s.started || s.joined || !s.code || !(s.locNames||[]).length || !SB.on()) return;
     const key=this.orgActiveKey(s.orgId);
     const entry={code:s.code, title:s.title||"", by:s.me||"", ts:Date.now()};
     SB.get(key).then(d=>{
