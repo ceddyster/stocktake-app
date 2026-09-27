@@ -791,10 +791,26 @@ Sign in with Google
 <div style="padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--card-shadow)">
 <div style="display:flex;align-items:baseline;gap:10px">
 <span style="flex:1;min-width:0;font:600 13px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ ri.name }}</span>
-<span style="flex:none;font:700 15px/1 'Public Sans',sans-serif;color:var(--ink)">{{ ri.total }}</span>
+<span style="flex:none;font:700 16px/1 'Public Sans',sans-serif;color:var(--ink)">{{ ri.total }}</span>
 </div>
-<div style="margin-top:3px;font:400 9.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink-3)">{{ ri.cat }}</div>
-<div style="margin-top:8px;font:400 10.5px/1.5 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">{{ ri.where }}</div>
+<div style="margin-top:3px;display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+<span style="font:400 9.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink-3)">{{ ri.cat }}</span>
+<span style="flex:none;font:400 8.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink-3)">{{ ri.spanLabel }}</span>
+</div>
+<sc-if value="{{ ri.counted }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:1px;border-top:1px solid var(--surface-3)">
+<sc-for list="{{ ri.locs }}" as="pl" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--surface-3)">
+<span style="width:22px;height:22px;flex:none;border-radius:6px;background:{{ pl.tint }};display:flex;align-items:center;justify-content:center;font:600 8.5px/1 'Public Sans',sans-serif;color:{{ pl.tintInk }}">{{ pl.abbr }}</span>
+<span style="flex:1;min-width:0;font:500 11.5px/1.2 'Public Sans',sans-serif;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pl.name }}</span>
+<span style="flex:none;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink)">{{ pl.units }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ ri.notCounted }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:8px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">Not counted in this stocktake</div>
+</sc-if>
 </div>
 </sc-for>
 <sc-if value="{{ reviewResultsEmpty }}" hint-placeholder-val="{{ false }}">
@@ -4864,14 +4880,18 @@ class Component extends DCLogic {
         vals.reviewSearching = !!rq;
         vals.reviewBrowse = !rq;
         if(rq){
+          const locMeta = {}; this.locsFrom(snap.locNames).forEach(l=>{ locMeta[l.name]=l; });
           const results = (snap.master||[])
             .filter(it=>((it.name||"")+" "+(it.sub||"")+" "+(it.cat||"")+" "+(it.code||"")).toLowerCase().indexOf(rq)>=0)
             .map(it=>{
-              const per = (snap.locNames||[]).map(n=>{ const e=(snap.counts||{})[this.ck(n,it.id)]; return {name:n, u:e?this.units(it,e):0}; }).filter(x=>x.u>0);
-              const total = per.reduce((a,x)=>a+x.u,0);
+              const rows = (snap.locNames||[]).map(n=>{ const e=(snap.counts||{})[this.ck(n,it.id)]; return {name:n, u:e?this.units(it,e):0}; }).filter(x=>x.u>0);
+              const total = rows.reduce((a,x)=>a+x.u,0);
+              const locs = rows.map(x=>{ const lm=locMeta[x.name]||{}; return {
+                name:x.name, units:this.fmt(x.u),
+                abbr:lm.abbr||"", tint:lm.tint||"var(--surface-3)", tintInk:lm.tintInk||"var(--ink-2)" }; });
               return { name:it.name, cat:it.cat||"—", total:this.fmt(total),
-                where: per.length ? per.map(x=>x.name+" ("+this.fmt(x.u)+")").join("  ·  ") : "not counted in this stocktake",
-                counted: total>0 };
+                locs:locs, counted:locs.length>0, notCounted:locs.length===0,
+                spanLabel: locs.length ? (locs.length+(locs.length===1?" location":" locations")) : "" };
             });
           vals.reviewResults = results;
           vals.reviewResultsEmpty = results.length===0;
