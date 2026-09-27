@@ -1522,7 +1522,10 @@ Sign in with Google
 </div>
 <div style="margin-top:10px;display:flex;align-items:center;gap:10px;padding:14px 15px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--card-shadow)">
 <span style="font:400 16px/1 'Public Sans',sans-serif;color:var(--ink-3)">⌕</span>
-<input value="{{ mQuery }}" onChange="{{ onMQuery }}" placeholder="Search all products" style="flex:1;border:none;outline:none;background:transparent;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink)" />
+<input value="{{ mQuery }}" onChange="{{ onMQuery }}" placeholder="Search all products" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink)" />
+<sc-if value="{{ mQueryHas }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ clearMQuery }}" aria-label="Clear search" style="flex:none;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:none;border-radius:999px;background:var(--surface-3);cursor:pointer;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink-2);box-shadow:var(--inset-shadow)">✕</button>
+</sc-if>
 </div>
 <div style="margin-top:8px;display:flex;gap:6px">
 <button onClick="{{ openAdd }}" style="flex:1;padding:9px;border-radius:9px;cursor:pointer;background:var(--primary);border:none;font:600 10.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--on-primary)">+ ADD ITEM</button>
@@ -4215,6 +4218,8 @@ class Component extends DCLogic {
       list.forEach(i=>{ if(!buckets[i.cat]){buckets[i.cat]=[]; cats.push(i.cat);} buckets[i.cat].push(i); });
       vals.mQuery = s.mQuery;
       vals.onMQuery = (e)=>this.setState({mQuery:e.target.value});
+      vals.mQueryHas = !!(s.mQuery||"").length;
+      vals.clearMQuery = ()=>this.setState({mQuery:""});
       vals.masterGroups = cats.map(c=>({
         cat:c, count: buckets[c].length+(buckets[c].length===1?" product":" products"),
         items: buckets[c].map(i=>({
