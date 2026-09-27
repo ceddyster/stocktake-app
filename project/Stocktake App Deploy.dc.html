@@ -747,7 +747,16 @@ Sign in with Google
 
 <sc-if value="{{ reviewOverview }}" hint-placeholder-val="{{ true }}">
 <div style="flex:1;overflow:auto;padding:16px 16px 44px">
-<div style="padding:16px;background:var(--surface-2);border-radius:16px;color:var(--ink);box-shadow:var(--inset-shadow)">
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--card-shadow)">
+<span style="font:400 16px/1 'Public Sans',sans-serif;color:var(--ink-3)">⌕</span>
+<input value="{{ reviewQuery }}" onChange="{{ onReviewQuery }}" placeholder="Search products in this stocktake" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink)" />
+<sc-if value="{{ reviewQueryHas }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ clearReviewQuery }}" aria-label="Clear search" style="flex:none;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:none;border-radius:999px;background:var(--surface-3);cursor:pointer;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink-2);box-shadow:var(--inset-shadow)">✕</button>
+</sc-if>
+</div>
+
+<sc-if value="{{ reviewBrowse }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:14px;padding:16px;background:var(--surface-2);border-radius:16px;color:var(--ink);box-shadow:var(--inset-shadow)">
 <div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">GRAND TOTAL</div>
 <div style="margin-top:8px;display:flex;align-items:flex-end;gap:7px"><span style="font:700 32px/1 'Public Sans',sans-serif;letter-spacing:-.02em">{{ reviewGrandUnits }}</span><span style="font:400 11px/1 'Public Sans',sans-serif;color:var(--ink-3);padding-bottom:4px">units across all locations</span></div>
 </div>
@@ -773,6 +782,28 @@ Sign in with Google
 <button onClick="{{ reviewExportCsv }}" style="flex:none;padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:var(--ink);box-shadow:var(--card-shadow)">CSV</button>
 </div>
 <p style="margin:10px 2px 0;font:400 10.5px/1.5 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">Re-downloads this finished stocktake. Your current count on this phone isn’t touched.</p>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ reviewSearching }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ reviewResults }}" as="ri" hint-placeholder-count="0">
+<div style="padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--card-shadow)">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="flex:1;min-width:0;font:600 13px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ ri.name }}</span>
+<span style="flex:none;font:700 15px/1 'Public Sans',sans-serif;color:var(--ink)">{{ ri.total }}</span>
+</div>
+<div style="margin-top:3px;font:400 9.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink-3)">{{ ri.cat }}</div>
+<div style="margin-top:8px;font:400 10.5px/1.5 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">{{ ri.where }}</div>
+</div>
+</sc-for>
+<sc-if value="{{ reviewResultsEmpty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:36px 24px;text-align:center">
+<div style="font:600 13px/1.3 'Public Sans',sans-serif;color:var(--ink)">No matching products</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">Nothing in this stocktake matches that search.</p>
+</div>
+</sc-if>
+</div>
 </sc-if>
 </div>
 </sc-if>
@@ -1803,7 +1834,7 @@ class Component extends DCLogic {
       hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null, cParts:[], sParts:[], stkFrom:"hub", navFrom:"",
       submitted:{}, subAt:{}, totalsMode:"cat", expanded:{}, groupMode:"sub", sortMode:"none", sortOpen:false,
       buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, dupCleared:{}, subOpen:false,
-      overwriteWarn:null, overwriteBy:"", overwriteOk:{}, reviewSnap:null, reviewLoc:null,
+      overwriteWarn:null, overwriteBy:"", overwriteOk:{}, reviewSnap:null, reviewLoc:null, reviewQuery:"",
       mQuery:"", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
       imported:null, importName:"",
@@ -2570,9 +2601,9 @@ class Component extends DCLogic {
     const a = (this.state.archive||[])[idx];
     if(!a || !a.snap) return;
     const snap = Object.assign({ title:a.title, when:a.when, by:a.by }, a.snap);
-    this.setState({ reviewSnap:snap, reviewLoc:null, screen:"review", menuOpen:false });
+    this.setState({ reviewSnap:snap, reviewLoc:null, reviewQuery:"", screen:"review", menuOpen:false });
   }
-  closeReview(){ this.setState({ reviewSnap:null, reviewLoc:null, screen:"past" }); }
+  closeReview(){ this.setState({ reviewSnap:null, reviewLoc:null, reviewQuery:"", screen:"past" }); }
 
   cloudAll(){ try{ return JSON.parse(localStorage.getItem(CLOUD)||"{}"); }catch(e){ return {}; } }
 
@@ -4822,6 +4853,29 @@ class Component extends DCLogic {
         vals.reviewHeadTitle = snap.title || "Past stocktake";
         vals.reviewHeadSub = snap.when ? ("finished "+snap.when) : "read-only view";
         vals.reviewGrandUnits = this.fmt(grand);
+        /* Search across the whole snapshot: type a product name and get its
+           grand total plus where it was counted, without drilling into each
+           location. Empty query shows the normal locations list. */
+        const rq = (s.reviewQuery||"").trim().toLowerCase();
+        vals.reviewQuery = s.reviewQuery||"";
+        vals.onReviewQuery = (e)=>this.setState({reviewQuery:e.target.value});
+        vals.reviewQueryHas = !!(s.reviewQuery||"").length;
+        vals.clearReviewQuery = ()=>this.setState({reviewQuery:""});
+        vals.reviewSearching = !!rq;
+        vals.reviewBrowse = !rq;
+        if(rq){
+          const results = (snap.master||[])
+            .filter(it=>((it.name||"")+" "+(it.sub||"")+" "+(it.cat||"")+" "+(it.code||"")).toLowerCase().indexOf(rq)>=0)
+            .map(it=>{
+              const per = (snap.locNames||[]).map(n=>{ const e=(snap.counts||{})[this.ck(n,it.id)]; return {name:n, u:e?this.units(it,e):0}; }).filter(x=>x.u>0);
+              const total = per.reduce((a,x)=>a+x.u,0);
+              return { name:it.name, cat:it.cat||"—", total:this.fmt(total),
+                where: per.length ? per.map(x=>x.name+" ("+this.fmt(x.u)+")").join("  ·  ") : "not counted in this stocktake",
+                counted: total>0 };
+            });
+          vals.reviewResults = results;
+          vals.reviewResultsEmpty = results.length===0;
+        }
         vals.reviewLocations = this.locsFrom(snap.locNames).map(l=>{
           const u = this.unitsFrom(snap, l.name);
           return { name:l.name, abbr:l.abbr, tint:l.tint, tintInk:l.tintInk,
