@@ -440,7 +440,7 @@ Sign in with Google
 </span>
 </button>
 <sc-if value="{{ loc.canReopen }}" hint-placeholder-val="{{ false }}">
-<button onClick="{{ loc.reopen }}" style="align-self:flex-start;margin:6px 0 2px 46px;min-height:36px;padding:0 12px;background:var(--surface);border:1px solid var(--primary);border-radius:9px;cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink)" style-hover="background:var(--surface)">REOPEN TO EDIT</button>
+<button onClick="{{ loc.reopen }}" style="align-self:flex-start;margin:6px 0 2px 46px;min-height:36px;padding:0 12px;background:var(--surface);border:1px solid var(--primary);border-radius:9px;cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink)" style-hover="background:var(--surface)">REOPEN</button>
 </sc-if>
 </div>
 </sc-for>
@@ -4193,10 +4193,13 @@ class Component extends DCLogic {
               : (done ? done+" of "+N+" products" : N+" products · not started"),
           pct: pct+"%", pctLabel: sub!==undefined ? "✓" : (done ? pct+"%" : "—"),
           canReopen: sub!==undefined && amAdmin,
+          /* Reopen the location in place — mark it un-submitted but stay on the
+             home screen so several closed locations can be reopened in a row.
+             Tap the location afterwards to actually edit its count. */
           reopen: ()=>{
-            const nx = Object.assign({}, s.submitted||{}); delete nx[l.name];
-            const at = Object.assign({}, s.subAt||{}); at[l.name] = Date.now();
-            this.setState({submitted:nx, subAt:at, screen:"count", loc:l.name, query:""}, ()=>this.save({}));
+            const nx = Object.assign({}, this.state.submitted||{}); delete nx[l.name];
+            const at = Object.assign({}, this.state.subAt||{}); at[l.name] = Date.now();
+            this.setState({submitted:nx, subAt:at}, ()=>this.save({}));
           },
           open: (sub!==undefined && !amAdmin)
             ? lock(l.name+" is submitted. Only "+adminName+" can reopen it.")
