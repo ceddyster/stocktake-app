@@ -2862,9 +2862,12 @@ class Component extends DCLogic {
     }
   }
 
-  locs(){
-    return this.state.locNames.map((n,i)=>Object.assign({name:n, abbr:abbrOf(n)}, TINTS[i%TINTS.length]));
+  /* Build the tinted location list from an arbitrary locNames array so the same
+     shaping works for the live stocktake and for a read-only past snapshot. */
+  locsFrom(locNames){
+    return (locNames||[]).map((n,i)=>Object.assign({name:n, abbr:abbrOf(n)}, TINTS[i%TINTS.length]));
   }
+  locs(){ return this.locsFrom(this.state.locNames); }
 
   seed(){}
   persist(master){ this.save({master:master}); }
@@ -2897,15 +2900,20 @@ class Component extends DCLogic {
     const c = this.state.counts, pre = name+"|";
     return Object.keys(c).filter(k=>k.indexOf(pre)===0 && this.byId(k.split("|")[1])).length;
   }
-  unitsIn(name){
-    const c = this.state.counts, pre = name+"|";
+  /* unitsFrom/byIdIn compute against an explicit {counts,master} source (live
+     state or a past snapshot); the live wrappers keep every existing caller
+     unchanged. */
+  unitsFrom(src, name){
+    const c = src.counts||{}, pre = name+"|";
     return Object.keys(c).filter(k=>k.indexOf(pre)===0)
-      .reduce((a,k)=>a+this.units(this.byId(k.split("|")[1]), c[k]), 0);
+      .reduce((a,k)=>a+this.units(this.byIdIn(src.master, k.split("|")[1]), c[k]), 0);
   }
-  byId(id){ return this.state.master.find(x=>x.id===id); }
+  unitsIn(name){ return this.unitsFrom(this.state, name); }
+  byIdIn(master, id){ return (master||[]).find(x=>x.id===id); }
+  byId(id){ return this.byIdIn(this.state.master, id); }
 
-  exportName(ext){
-    const s = this.state;
+  exportName(ext, src){
+    const s = src || this.state;
     const slug = (s.title||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
     const d = new Date();
     const stamp = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -2917,9 +2925,9 @@ class Component extends DCLogic {
     a.download = name;
     a.click();
   }
-  downloadXlsx(){
-    const s = this.state;
-    const locNames = this.locs().map(l=>l.name);
+  downloadXlsx(src){
+    const s = src || this.state;
+    const locNames = this.locsFrom(s.locNames).map(l=>l.name);
     const counted = (s.master||[]);
     if(!counted.length) return false;
 
@@ -3025,7 +3033,7 @@ class Component extends DCLogic {
     files["_rels/.rels"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
     files["xl/workbook.xml"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+wbSheets.join("")+'</sheets></workbook>';
     files["xl/_rels/workbook.xml.rels"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+wbRels.join("")+'<Relationship Id="rId'+stylesRid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
-    this.saveBlob(this.zipStore(files), this.exportName("xlsx"));
+    this.saveBlob(this.zipStore(files), this.exportName("xlsx", s));
     return true;
   }
   zipStore(files){
@@ -3050,9 +3058,9 @@ class Component extends DCLogic {
     return new Blob(parts.concat(cBufs, [end]), {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
   }
 
-  downloadCsv(){
-    const s = this.state;
-    const LOCS = this.locs();
+  downloadCsv(src){
+    const s = src || this.state;
+    const LOCS = this.locsFrom(s.locNames);
     const locNames = LOCS.map(l=>l.name);
     const rows = (s.master||[]);
     if(!rows.length) return false;
@@ -3064,7 +3072,7 @@ class Component extends DCLogic {
       const grand = per.reduce((a,b)=>a+b,0);
       lines.push([i.code, i.name, i.sub, i.cat, i.carton, this.fmt(grand)].concat(per).map(esc).join(","));
     });
-    this.saveBlob(new Blob([lines.join("\n")], {type:"text/csv"}), this.exportName("csv"));
+    this.saveBlob(new Blob([lines.join("\n")], {type:"text/csv"}), this.exportName("csv", s));
     return true;
   }
 
