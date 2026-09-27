@@ -34,16 +34,6 @@ a{color:inherit;text-decoration:none}a:hover{color:inherit}
 </helmet>
 <div class="app {{ themeClass }}" style="position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;padding-bottom:env(safe-area-inset-bottom)">
 
-<sc-if value="{{ reviewing }}" hint-placeholder-val="{{ false }}">
-<div style="flex:none;display:flex;align-items:center;gap:10px;padding:max(env(safe-area-inset-top),10px) 14px 10px;background:var(--banner);color:var(--ink)">
-<button onClick="{{ exitReview }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;color:var(--ink);font:400 15px/1 'Public Sans',sans-serif">‹</button>
-<div style="flex:1;min-width:0">
-<div style="font:600 13px/1.15 'Public Sans',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ reviewTitle }}</div>
-<div style="margin-top:2px;font:400 9.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ reviewWhen }}</div>
-</div>
-<span style="flex:none;padding:5px 9px;border-radius:999px;background:var(--line);font:600 8.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink)">READ ONLY</span>
-</div>
-</sc-if>
 <div style="flex:1;min-height:0;padding-top:max(env(safe-area-inset-top),16px);position:relative;overflow:hidden;background:var(--bg)">
 
 <sc-if value="{{ isAuth }}" hint-placeholder-val="{{ false }}">
@@ -375,13 +365,11 @@ Sign in with Google
 <button onClick="{{ homeBack }}" style="flex:none;width:34px;height:34px;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
 </sc-if>
 <span style="flex:1;min-width:0;font:700 24px/1.1 'Public Sans',sans-serif;letter-spacing:-.02em;color:var(--ink)">{{ appTitle }}</span>
-<sc-if value="{{ showMenu }}" hint-placeholder-val="{{ true }}">
 <button onClick="{{ openMenu }}" style="flex:none;width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink)">
 <span style="width:16px;height:2px;border-radius:2px;background:var(--pop)"></span>
 <span style="width:16px;height:2px;border-radius:2px;background:var(--pop)"></span>
 <span style="width:16px;height:2px;border-radius:2px;background:var(--pop)"></span>
 </button>
-</sc-if>
 </div>
 </div>
 </div>
@@ -741,6 +729,73 @@ Sign in with Google
 <div style="padding:13px 14px;background:var(--surface);border:1px dashed var(--line-2);border-radius:12px;font:400 11px/1.55 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">Finished stocktakes are read-only — tap one to view it.</div>
 </sc-if>
 </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isReview }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 12px;background:var(--bg);border-bottom:1px solid var(--line)">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ reviewBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ reviewHeadTitle }}</div>
+<div style="margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ reviewHeadSub }}</div>
+</div>
+<span style="flex:none;padding:5px 9px;border-radius:999px;background:var(--line);font:600 8.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink)">READ ONLY</span>
+</div>
+</div>
+
+<sc-if value="{{ reviewOverview }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;overflow:auto;padding:16px 16px 44px">
+<div style="padding:16px;background:var(--surface-2);border-radius:16px;color:var(--ink);box-shadow:var(--inset-shadow)">
+<div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">GRAND TOTAL</div>
+<div style="margin-top:8px;display:flex;align-items:flex-end;gap:7px"><span style="font:700 32px/1 'Public Sans',sans-serif;letter-spacing:-.02em">{{ reviewGrandUnits }}</span><span style="font:400 11px/1 'Public Sans',sans-serif;color:var(--ink-3);padding-bottom:4px">units across all locations</span></div>
+</div>
+<div style="margin:18px 0 10px;font:500 10px/1 'Public Sans',sans-serif;letter-spacing:.14em;color:var(--ink-3)">LOCATIONS</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ reviewLocations }}" as="loc" hint-placeholder-count="3">
+<button onClick="{{ loc.open }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--line-2)">
+<span style="width:34px;height:34px;flex:none;border-radius:10px;background:{{ loc.tint }};display:flex;align-items:center;justify-content:center;font:600 11px/1 'Public Sans',sans-serif;color:{{ loc.tintInk }}">{{ loc.abbr }}</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font:600 14px/1.2 'Public Sans',sans-serif;color:var(--ink)">{{ loc.name }}</span>
+<span style="display:block;margin-top:4px;font:400 11px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ loc.unitsLabel }}</span>
+</span>
+<sc-if value="{{ loc.closed }}" hint-placeholder-val="{{ false }}">
+<span style="flex:none;padding:4px 8px;border-radius:999px;background:var(--surface-3);font:600 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-2);box-shadow:var(--inset-shadow)">CLOSED</span>
+</sc-if>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">›</span>
+</button>
+</sc-for>
+</div>
+<sc-if value="{{ reviewHasExport }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:16px;display:flex;gap:8px">
+<button onClick="{{ reviewExportXlsx }}" style="flex:1;padding:14px;border-radius:12px;background:var(--primary);border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:var(--on-primary)" style-hover="background:var(--line)">Excel (.xlsx)</button>
+<button onClick="{{ reviewExportCsv }}" style="flex:none;padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:var(--ink);box-shadow:var(--card-shadow)">CSV</button>
+</div>
+<p style="margin:10px 2px 0;font:400 10.5px/1.5 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">Re-downloads this finished stocktake. Your current count on this phone isn’t touched.</p>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ reviewDetail }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;overflow:auto;padding-bottom:44px">
+<sc-for list="{{ reviewItems }}" as="ri" hint-placeholder-count="0">
+<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--surface-3)">
+<span style="flex:1;min-width:0">
+<span style="display:block;font:400 12px/1.3 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ ri.name }}</span>
+<span style="display:block;margin-top:3px;font:400 9.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ ri.split }}</span>
+</span>
+<span style="flex:none;font:600 13px/1 'Public Sans',sans-serif;color:var(--ink)">{{ ri.units }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ reviewItemsEmpty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:36px 24px;text-align:center">
+<div style="font:600 13px/1.3 'Public Sans',sans-serif;color:var(--ink)">Nothing counted here</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">No products were counted in this location for this stocktake.</p>
+</div>
+</sc-if>
+</div>
+</sc-if>
 </div>
 </sc-if>
 
@@ -1745,7 +1800,7 @@ class Component extends DCLogic {
       hidden:{}, hideEmpty:{}, manageOpen:false, collapsed:{}, only:{}, addBase:null, cParts:[], sParts:[], stkFrom:"hub", navFrom:"",
       submitted:{}, subAt:{}, totalsMode:"cat", expanded:{}, groupMode:"sub", sortMode:"none", sortOpen:false,
       buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, dupCleared:{}, subOpen:false,
-      overwriteWarn:null, overwriteBy:"", overwriteOk:{}, review:null, reviewTitle:"", reviewWhen:"",
+      overwriteWarn:null, overwriteBy:"", overwriteOk:{}, reviewSnap:null, reviewLoc:null,
       mQuery:"", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
       imported:null, importName:"",
@@ -2249,7 +2304,7 @@ class Component extends DCLogic {
      local copy this session so we never discard a genuine in-progress stocktake. */
   resumeOwn(uid){
     if(!uid){ this._recoverPending = false; return; }
-    if(this.state.review!=null){ this._recoverPending = false; return; }
+    if(this.state.reviewSnap!=null){ this._recoverPending = false; return; }
     this.syncArchive(uid);
     if(!SB.on()){ this._recoverPending = false; return; }
     const localOwn = ()=>{ const st=this.state; return !!(st.owner===uid && !st.joined && st.started && (st.locNames||[]).length && st.code); };
@@ -2448,7 +2503,7 @@ class Component extends DCLogic {
   }
 
   save(patch){
-    if(this.state.review!=null) return;
+    if(this.state.reviewSnap!=null) return;
     const s = this.state;
     this.stampMeta();
     const body = Object.assign({
@@ -2503,35 +2558,18 @@ class Component extends DCLogic {
     this.setState({theme:mode, menuOpen:false}, ()=>this.applyThemeBg());
   }
 
-  enterReview(idx){
+  /* Open a past stocktake in the dedicated read-only viewer. The snapshot lives
+     in its own state field (reviewSnap) and is NEVER copied onto the live
+     stocktake's counts/submitted/master/etc., so viewing a past count can't
+     leak "closed" locations onto the open one. The viewer screen wires no
+     mutating handlers, so there is nothing to disable. */
+  openReview(idx){
     const a = (this.state.archive||[])[idx];
     if(!a || !a.snap) return;
-    /* Back up the LIVE stocktake only when we're not already reviewing. Opening a
-       second past stocktake while one is already on screen must not overwrite this
-       backup with the first snapshot's data — otherwise exitReview would restore a
-       past snapshot's `submitted` onto the live stocktake, making its (never-closed)
-       locations show a phantom "Reopen to edit". */
-    if(this.state.review==null){
-      this._live = {
-        counts:this.state.counts, submitted:this.state.submitted, master:this.state.master,
-        locNames:this.state.locNames, title:this.state.title, dup:this.state.dup, drive:this.state.drive
-      };
-    }
-    const k = a.snap;
-    this.setState({
-      review:idx, reviewTitle:a.title||k.title||"Past stocktake", reviewWhen:a.when||"",
-      counts:k.counts||{}, submitted:k.submitted||{}, master:k.master||[], locNames:k.locNames||[],
-      title:k.title||a.title||"", dup:k.dup||{}, drive:k.drive||this.state.drive,
-      screen:"home", menuOpen:false, finishOpen:false, sheet:null, loc:null, doneLoc:null, query:"", mQuery:""
-    });
+    const snap = Object.assign({ title:a.title, when:a.when, by:a.by }, a.snap);
+    this.setState({ reviewSnap:snap, reviewLoc:null, screen:"review", menuOpen:false });
   }
-  exitReview(){
-    const b = this._live || {}; this._live = null;
-    this.setState(Object.assign({}, b, {
-      review:null, reviewTitle:"", reviewWhen:"", screen:"past",
-      menuOpen:false, finishOpen:false, sheet:null, loc:null, doneLoc:null
-    }), ()=>this.save({}));
-  }
+  closeReview(){ this.setState({ reviewSnap:null, reviewLoc:null, screen:"past" }); }
 
   cloudAll(){ try{ return JSON.parse(localStorage.getItem(CLOUD)||"{}"); }catch(e){ return {}; } }
 
@@ -2734,7 +2772,7 @@ class Component extends DCLogic {
 
   pull(){
     const s = this.state;
-    if(s.review!=null) return;
+    if(s.reviewSnap!=null) return;
     if(!s.ready || !s.code || !s.locNames.length || this.pulling) return;
     this.pulling = true;
     this.fetchDoc(s.code).then(doc=>{
@@ -3078,7 +3116,7 @@ class Component extends DCLogic {
 
   press(k){
     return ()=>{
-      if(this.state.review!=null) return;
+      if(this.state.reviewSnap!=null) return;
       const s = this.state;
       if(!s.sheet || !s.loc) return;
       const it = this.byId(s.sheet);
@@ -3401,7 +3439,6 @@ class Component extends DCLogic {
     const adminName = s.admin || s.me || "the organiser";
     const amAdmin = s.authed && !s.joined && s.viewAs === "admin";
     const lock = (msg)=>()=>this.setState({lockNote:msg});
-    const reviewing = s.review!=null;
     const vals = {
       W: 402, H: 874,
       amAdmin: amAdmin, notAdmin: !amAdmin,
@@ -3429,10 +3466,7 @@ class Component extends DCLogic {
       lightSegInk: s.theme==="light" ? "var(--on-primary)" : "var(--ink-3)",
       darkSegBg: s.theme!=="light" ? "var(--primary)" : "transparent",
       darkSegInk: s.theme!=="light" ? "var(--on-primary)" : "var(--ink-3)",
-      reviewing: reviewing,
-      reviewTitle: s.reviewTitle || "Past stocktake",
-      reviewWhen: s.reviewWhen ? ("finished "+s.reviewWhen) : "read-only view",
-      exitReview: ()=>this.exitReview(),
+      isReview: s.screen==="review",
       pastCount: (s.archive||[]).length,
       pastRowMeta: (s.archive||[]).length ? (s.archive||[]).length+" finished in "+(s.drive.folder||"My Drive") : "",
       pastEmpty: !(s.archive||[]).length,
@@ -3446,7 +3480,7 @@ class Component extends DCLogic {
           cursor: can ? "pointer" : "default",
           hint: can ? "READ ONLY" : "SUMMARY ONLY — NO SAVED COUNTS",
           hintInk: "var(--ink-3)",
-          open: can ? ()=>this.enterReview(a.__i) : null,
+          open: can ? ()=>this.openReview(a.__i) : null,
           del: ()=>this.setState({ pendingDelete:eid, confirm:{
             kind:"deletePast",
             title:"Delete this stocktake?",
@@ -3521,14 +3555,8 @@ class Component extends DCLogic {
       goContinue: ()=>this.setState({screen:"home", stkFrom:"hub"}),
       /* Back from the active-stocktake home screen: return to wherever it was
          opened from — the Organisation page if it was opened from there, otherwise
-         the launcher. Hidden while reviewing a past stocktake (that has its own
-         back in the read-only banner). */
-      showHomeBack: !reviewing,
-      /* Hide the hamburger menu while reviewing a past stocktake: its actions
-         (Past, New, Clear, Account…) navigate away without going through
-         exitReview, which would strand the review's snapshot in the live state.
-         The read-only banner's back button is the only way out of a review. */
-      showMenu: !reviewing,
+         the launcher. */
+      showHomeBack: true,
       homeBack: ()=>{ if(this.state.stkFrom==="org"){ this.openOrg(); } else { this.goHubNav(); } },
       hubNew: ()=>this.setState({ counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{}, title:"", resetAt:Date.now(), code:this.makeCode(), started:false, menuOpen:false, screen:"setup", setupStep:1 }, ()=>this.save({})),
       pastAvailable: (s.archive||[]).length>0,
@@ -4164,7 +4192,7 @@ class Component extends DCLogic {
           meta: sub!==undefined ? ("Location closed · counted by "+(counters.length?counters.join(", "):"—"))
               : (done ? done+" of "+N+" products" : N+" products · not started"),
           pct: pct+"%", pctLabel: sub!==undefined ? "✓" : (done ? pct+"%" : "—"),
-          canReopen: sub!==undefined && amAdmin && !reviewing,
+          canReopen: sub!==undefined && amAdmin,
           reopen: ()=>{
             const nx = Object.assign({}, s.submitted||{}); delete nx[l.name];
             const at = Object.assign({}, s.subAt||{}); at[l.name] = Date.now();
@@ -4759,23 +4787,44 @@ class Component extends DCLogic {
       }));
       vals.closeSheet = ()=>this.setState({sheet:null, buf:null, cParts:[], sParts:[]});
     }
-    if(reviewing){
-      const noop=()=>{};
-      ["confirmSubmit","useTheirs","confirmOverwrite","reopen","askClear","askNew","askCancel","confirmDo",
-       "connectDrive","disconnectDrive","addShare","syncNow","toggleOnline","onFolder","onTitle","onMe",
-       "addLoc","takeLocs","startCounting","saveNew","deleteItem","buildAll","applyReplace","applyMerge",
-       "toggleRole"].forEach(k=>{ if(typeof vals[k]==="function") vals[k]=noop; });
-      if(vals.keys) vals.keys = vals.keys.map(x=>Object.assign({}, x, {press:noop}));
-      if(vals.setupLocs) vals.setupLocs = vals.setupLocs.map(x=>Object.assign({}, x, {save:noop, remove:noop}));
-      vals.canClose = true;
-      vals.openFinish = ()=>this.setState({finishOpen:true});
-      vals.confirmFinish = (fmt)=>{ if(fmt==="xlsx") this.downloadXlsx(); else this.downloadCsv(); this.setState({finishOpen:false}); };
-      vals.closeCsv = ()=>vals.confirmFinish("csv");
-      vals.closeXlsx = ()=>vals.confirmFinish("xlsx");
-      vals.finishTitle = "Export this stocktake";
-      vals.finishBlurb = "Choose a format. This just re-downloads the finished figures — your current stocktake on this phone is left untouched.";
-      vals.finishXlsxLabel = "Export Excel";
-      vals.finishCsvLabel = "Export CSV";
+    /* ---- read-only past-stocktake viewer ----
+       Everything here reads from the snapshot (s.reviewSnap) via the
+       source-parameterized helpers; live state is never read or written, so no
+       handlers need disabling. reviewLoc drills into one location. */
+    if(s.screen==="review" && s.reviewSnap){
+      const snap = s.reviewSnap;
+      const inDetail = s.reviewLoc!=null;
+      vals.reviewOverview = !inDetail;
+      vals.reviewDetail = inDetail;
+      vals.reviewBack = ()=>{ if(this.state.reviewLoc!=null) this.setState({reviewLoc:null}); else this.closeReview(); };
+      if(inDetail){
+        const loc = s.reviewLoc;
+        vals.reviewHeadTitle = loc;
+        vals.reviewHeadSub = this.fmt(this.unitsFrom(snap, loc))+" units · read-only";
+        const items = (snap.master||[]).map(it=>{
+          const e = (snap.counts||{})[this.ck(loc, it.id)] || {};
+          return { name:it.name, cat:it.cat||"—",
+            split:(this.fmt(e.c||0))+" ctn · "+(this.fmt(e.s||0))+" loose",
+            units:this.fmt(this.units(it, e)), any:!!(e.c||e.s) };
+        }).filter(r=>r.any);
+        vals.reviewItems = items;
+        vals.reviewItemsEmpty = items.length===0;
+      } else {
+        const grand = (snap.locNames||[]).reduce((a,n)=>a+this.unitsFrom(snap,n),0);
+        vals.reviewHeadTitle = snap.title || "Past stocktake";
+        vals.reviewHeadSub = snap.when ? ("finished "+snap.when) : "read-only view";
+        vals.reviewGrandUnits = this.fmt(grand);
+        vals.reviewLocations = this.locsFrom(snap.locNames).map(l=>{
+          const u = this.unitsFrom(snap, l.name);
+          return { name:l.name, abbr:l.abbr, tint:l.tint, tintInk:l.tintInk,
+            unitsLabel:this.fmt(u)+" units",
+            closed: (snap.submitted||{})[l.name]!==undefined,
+            open: ()=>this.setState({reviewLoc:l.name}) };
+        });
+        vals.reviewHasExport = (snap.master||[]).length>0;
+        vals.reviewExportXlsx = ()=>this.downloadXlsx(snap);
+        vals.reviewExportCsv = ()=>this.downloadCsv(snap);
+      }
     }
     return vals;
   }
