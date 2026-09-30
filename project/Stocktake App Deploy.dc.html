@@ -5395,7 +5395,16 @@ class Component extends DCLogic {
           vals.discHere = true;
           const entry = (s.archive||[]).find(a=>this.entryId(a)===fu.stocktakeId);
           const snap = entry && entry.snap ? entry.snap : null;
-          const byCode = {}; if(snap) (snap.master||[]).forEach(it=>{ if(it && it.code!=null && it.code!=="") byCode[String(it.code)]=it; });
+          /* Match a variance line to a stocktake product by item code first, then
+             fall back to an exact (normalised) name match — the variance system's
+             item numbers don't always equal the stocktake's product codes
+             (e.g. PEPSI REGULAR is 69497 in the report but 69467 here). */
+          const normNm = (s)=>String(s||"").trim().toUpperCase().replace(/\s+/g," ");
+          const byCode = {}, byName = {};
+          if(snap) (snap.master||[]).forEach(it=>{ if(!it) return;
+            if(it.code!=null && it.code!=="") byCode[String(it.code)]=it;
+            const nm=normNm(it.name); if(nm && !byName[nm]) byName[nm]=it; });
+          const findProd = (r)=> byCode[String(r.code)] || byName[normNm(r.name)] || null;
           const locMeta = {}; if(snap) this.locsFrom(snap.locNames).forEach(l=>{ locMeta[l.name]=l; });
           const rows = fu.rows||[];
           const finalised = rows.filter(r=>r.final).length;
@@ -5416,7 +5425,7 @@ class Component extends DCLogic {
           /* Pre-compute, for every variance row, which areas hold the product and
              how much — so it can be filtered by area and each amount confirmed. */
           const enriched = rows.map((r,i)=>{
-            const it = byCode[String(r.code)];
+            const it = findProd(r);
             const per = it ? allLocs.map(l=>{ const e=(snap.counts||{})[this.ck(l.name, it.id)]; const u=e?this.units(it,e):0;
                 return {name:l.name, u:u, abbr:l.abbr, tint:l.tint, tintInk:l.tintInk}; }).filter(x=>x.u>0) : [];
             return {r:r, i:i, it:it, per:per};
@@ -5467,11 +5476,17 @@ class Component extends DCLogic {
             const pers = activeLoc ? o.per.filter(p=>p.name===activeLoc) : o.per;
             const key = statusOf(r, o.per);
             const sm = stMeta[key];
-            const short = (r.vr||0)<0;
+            /* Live variance updates as areas are recounted: original variance plus
+               the change in units from each recount (recount value − counted here).
+               Confirming a count as-is leaves it unchanged. */
+            let delta = 0;
+            o.per.forEach(p=>{ const c=(r.checks||{})[p.name]; if(c && c.s==="recount") delta += ((c.v||0) - (p.u||0)); });
+            const liveVar = (r.vr||0) + delta;
+            const short = liveVar<0;
             return {
               name:r.name, code:r.code,
-              qtyLine: "System "+this.fmt(r.sys)+" · Counted "+this.fmt(r.cnt),
-              varUnits: (r.vr>0?"+":"")+this.fmt(r.vr),
+              qtyLine: "System "+this.fmt(r.sys)+" · Counted "+this.fmt(r.cnt)+" · Orig Var "+(r.vr>0?"+":"")+this.fmt(r.vr),
+              varUnits: (liveVar>0?"+":"")+this.fmt(liveVar),
               varInk: short?"var(--bad)":"var(--ink)",
               located: pers.length>0, notLocated: !it, zeroLocated: !!it && o.per.length===0,
               locs: pers.map(p=>pillOf(o,p)),
