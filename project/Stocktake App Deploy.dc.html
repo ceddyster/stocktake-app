@@ -966,6 +966,14 @@ Sign in with Google
 <button onClick="{{ clearDiscQuery }}" aria-label="Clear search" style="flex:none;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:none;border-radius:999px;background:var(--surface-3);cursor:pointer;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink-2);box-shadow:var(--inset-shadow)">✕</button>
 </sc-if>
 </div>
+<div style="margin-top:10px;display:flex;gap:6px;overflow-x:auto;padding-bottom:2px">
+<sc-for list="{{ discLocChips }}" as="lc" hint-placeholder-count="3">
+<button onClick="{{ lc.pick }}" style="flex:none;padding:7px 12px;border-radius:999px;background:{{ lc.bg }};border:1px solid {{ lc.border }};cursor:pointer;font:600 10px/1 'Public Sans',sans-serif;letter-spacing:.02em;color:{{ lc.ink }};white-space:nowrap">{{ lc.name }}</button>
+</sc-for>
+</div>
+<sc-if value="{{ discInLoc }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:9px;font:600 10px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-2)">{{ discLocProgress }}</div>
+</sc-if>
 <sc-if value="{{ discViewMissing }}" hint-placeholder-val="{{ false }}">
 <div style="margin-top:10px;padding:10px 12px;background:var(--surface);border:1px dashed var(--line-2);border-radius:10px;font:400 10px/1.5 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">The linked stocktake isn’t on this device, so the per-area breakdown can’t be shown. Variance figures are still here.</div>
 </sc-if>
@@ -984,11 +992,19 @@ Sign in with Google
 <sc-if value="{{ ri.located }}" hint-placeholder-val="{{ true }}">
 <div style="margin-top:10px;display:flex;flex-direction:column;gap:1px;border-top:1px solid var(--surface-3)">
 <sc-for list="{{ ri.locs }}" as="pl" hint-placeholder-count="2">
-<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--surface-3)">
+<button onClick="{{ pl.tap }}" style="width:100%;display:flex;align-items:center;gap:9px;padding:8px;margin:1px 0;background:{{ pl.rowBg }};border:none;border-radius:8px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif">
 <span style="width:22px;height:22px;flex:none;border-radius:6px;background:{{ pl.tint }};display:flex;align-items:center;justify-content:center;font:600 8.5px/1 'Public Sans',sans-serif;color:{{ pl.tintInk }}">{{ pl.abbr }}</span>
 <span style="flex:1;min-width:0;font:500 11.5px/1.2 'Public Sans',sans-serif;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pl.name }}</span>
-<span style="flex:none;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink)">{{ pl.units }}</span>
-</div>
+<sc-if value="{{ pl.good }}" hint-placeholder-val="{{ false }}">
+<span style="flex:none;font:700 11.5px/1 'Public Sans',sans-serif;color:var(--ok)">✓ {{ pl.units }}</span>
+</sc-if>
+<sc-if value="{{ pl.recount }}" hint-placeholder-val="{{ false }}">
+<span style="flex:none;font:700 11.5px/1 'Public Sans',sans-serif;color:var(--warn)">{{ pl.units }} → {{ pl.newVal }}</span>
+</sc-if>
+<sc-if value="{{ pl.unchecked }}" hint-placeholder-val="{{ true }}">
+<span style="flex:none;display:flex;align-items:center;gap:6px"><span style="font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink)">{{ pl.units }}</span><span style="font:400 13px/1 'Public Sans',sans-serif;color:var(--ink-4)">›</span></span>
+</sc-if>
+</button>
 </sc-for>
 </div>
 </sc-if>
@@ -1012,6 +1028,30 @@ Sign in with Google
 </sc-if>
 </div>
 </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ discSheetOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:36;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeDiscSheet }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:37;padding:20px 18px 52px;background:var(--bg);border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1);box-shadow:var(--sheet-shadow)">
+<div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink-3)">{{ discSheetLoc }}</div>
+<div style="margin-top:7px;font:700 17px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ discSheetName }}</div>
+<div style="margin-top:8px;font:400 12px/1.5 'Public Sans',sans-serif;color:var(--ink-2)">This stocktake counted <b>{{ discSheetAmount }}</b> here. Is that right, or do you need to recount?</div>
+<sc-if value="{{ discSheetHasCheck }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:10px;padding:8px 11px;background:var(--surface-2);border-radius:9px;font:600 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-2)">{{ discSheetStateLabel }}</div>
+</sc-if>
+<button onClick="{{ discConfirmGood }}" style="margin-top:16px;width:100%;min-height:48px;padding:14px;border-radius:12px;background:var(--ok);border:none;cursor:pointer;font:600 13.5px/1 'Public Sans',sans-serif;color:#fff">{{ discSheetConfirmLabel }}</button>
+<div style="margin-top:12px;font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink-3)">OR ENTER A RECOUNT</div>
+<div style="margin-top:8px;display:flex;gap:8px">
+<input value="{{ discRecountVal }}" onChange="{{ onDiscRecount }}" type="number" inputmode="decimal" style="flex:1;min-width:0;padding:13px;border:1px solid var(--line);border-radius:11px;background:var(--surface);outline:none;font:600 15px/1 'Public Sans',sans-serif;color:var(--ink)" />
+<button onClick="{{ discSaveRecount }}" style="flex:none;padding:0 18px;border-radius:11px;background:var(--primary);border:none;cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--on-primary)">Save recount</button>
+</div>
+<div style="margin-top:12px;display:flex;gap:8px">
+<sc-if value="{{ discSheetHasCheck }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ discClearCheck }}" style="flex:1;min-height:44px;padding:12px;border-radius:12px;background:transparent;border:1px solid var(--line);cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--ink-2)">Clear</button>
+</sc-if>
+<button onClick="{{ closeDiscSheet }}" style="flex:1;min-height:44px;padding:12px;border-radius:12px;background:transparent;border:none;cursor:pointer;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">Close</button>
+</div>
 </div>
 </sc-if>
 
@@ -2021,6 +2061,7 @@ class Component extends DCLogic {
       buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, dupCleared:{}, subOpen:false,
       overwriteWarn:null, overwriteBy:"", overwriteOk:{}, reviewSnap:null, reviewLoc:null, reviewQuery:"",
       followups:[], fuDeleted:[], discView:null, discQuery:"", discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"",
+      discLoc:"", discSheet:null, discRecount:"",
       mQuery:"", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
       imported:null, importName:"",
@@ -2294,7 +2335,7 @@ class Component extends DCLogic {
       title:entry.title||"Stocktake", when:entry.when||"", source:fileName||"variance.xlsx", rows:rows };
     const list = (this.state.followups||[]).concat([fu]);
     const uid = this.state.owner;
-    this.setState({followups:list, discView:id, discQuery:"",
+    this.setState({followups:list, discView:id, discQuery:"", discLoc:"", discSheet:null, discRecount:"",
       discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"", screen:"discView"},
       ()=>{ this.save({}); if(uid) this.pushFollowups(uid, list, this.state.fuDeleted); });
   }
@@ -2306,6 +2347,23 @@ class Component extends DCLogic {
     });
     const uid = this.state.owner;
     this.setState({followups:list}, ()=>{ this.save({}); if(uid) this.pushFollowups(uid, list, this.state.fuDeleted); });
+  }
+  /* Confirm or recount one product in one location within a follow-up. s is
+     "good" (the counted amount is correct), "recount" (v is the new physical
+     count), or null to clear. Stored per item under row.checks[loc]. */
+  setLocCheck(fid, idx, loc, st, v){
+    const list = (this.state.followups||[]).map(f=>{
+      if(f.id!==fid) return f;
+      const rows = (f.rows||[]).map((r,i)=>{
+        if(i!==idx) return r;
+        const checks = Object.assign({}, r.checks||{});
+        if(st===null) delete checks[loc]; else checks[loc] = {s:st, v:(v==null?0:v), at:Date.now()};
+        return Object.assign({}, r, {checks:checks});
+      });
+      return Object.assign({}, f, {rows:rows, updatedAt:Date.now()});
+    });
+    const uid = this.state.owner;
+    this.setState({followups:list, discSheet:null, discRecount:""}, ()=>{ this.save({}); if(uid) this.pushFollowups(uid, list, this.state.fuDeleted); });
   }
   deleteFollowup(id){
     if(!id){ this.setState({confirm:null, pendingDelete:null}); return; }
@@ -3954,7 +4012,7 @@ class Component extends DCLogic {
       pastCountLabel: ((s.archive||[]).length)+((s.archive||[]).length===1?" finished stocktake":" finished stocktakes"),
       hubPast: ()=>{ if((this.state.archive||[]).length) this.setState({screen:"past", navFrom:"hub"}); },
       hubProfile: ()=>this.setState({screen:"account", pwCur:"", pwNew:"", pwMsg:"", accountMsg:"", navFrom:"hub"}),
-      hubDisc: ()=>this.setState({screen:"disc", discView:null, discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"", discQuery:""}),
+      hubDisc: ()=>this.setState({screen:"disc", discView:null, discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"", discQuery:"", discLoc:"", discSheet:null, discRecount:""}),
       discCount: (s.followups||[]).length,
       discCountLabel: ((s.followups||[]).length)+((s.followups||[]).length===1?" follow-up":" follow-ups"),
       hubOrg: ()=>this.openOrg(),
@@ -5275,7 +5333,7 @@ class Component extends DCLogic {
           return { id:f.id, title:f.title||"Stocktake", when:f.when||"", source:f.source||"",
             progress: resolved+" of "+rows.length+" resolved",
             varLabel: money(totVar), varInk: totVar<0?"var(--bad)":"var(--ink)",
-            open: ()=>this.setState({screen:"discView", discView:f.id, discQuery:""}),
+            open: ()=>this.setState({screen:"discView", discView:f.id, discQuery:"", discLoc:"", discSheet:null, discRecount:""}),
             del: ()=>this.setState({ pendingDelete:f.id, confirm:{ kind:"deleteFollowup",
               title:"Delete this follow-up?", note:"“"+(f.title||"This follow-up")+"” and its notes will be removed for everyone. The past stocktake itself is not affected.",
               label:"Delete", cancel:"Keep it" } }) };
@@ -5348,16 +5406,56 @@ class Component extends DCLogic {
           vals.onDiscQuery = (e)=>this.setState({discQuery:e.target.value});
           vals.discQueryHas = !!(s.discQuery||"").length;
           vals.clearDiscQuery = ()=>this.setState({discQuery:""});
-          const idx = rows.map((r,i)=>({r:r,i:i}));
-          const filtered = q ? idx.filter(o=>((o.r.name||"")+" "+(o.r.code||"")).toLowerCase().indexOf(q)>=0) : idx;
-          filtered.sort((a,b)=>(a.r.ttl||0)-(b.r.ttl||0)); // biggest shortage ($) first
-          vals.discRows = filtered.map(o=>{
-            const r=o.r, i=o.i, it=byCode[String(r.code)];
-            let per = [];
-            if(it){
-              per = this.locsFrom(snap.locNames).map(l=>{ const e=(snap.counts||{})[this.ck(l.name, it.id)]; return {name:l.name, u:e?this.units(it,e):0, abbr:l.abbr, tint:l.tint, tintInk:l.tintInk}; }).filter(x=>x.u>0)
-                .map(x=>({name:x.name, units:this.fmt(x.u), abbr:x.abbr, tint:x.tint, tintInk:x.tintInk}));
-            }
+
+          const allLocs = snap ? this.locsFrom(snap.locNames) : [];
+          /* Pre-compute, for every variance row, which areas hold the product and
+             how much — so it can be filtered by area and each amount confirmed. */
+          const enriched = rows.map((r,i)=>{
+            const it = byCode[String(r.code)];
+            const per = it ? allLocs.map(l=>{ const e=(snap.counts||{})[this.ck(l.name, it.id)]; const u=e?this.units(it,e):0;
+                return {name:l.name, u:u, abbr:l.abbr, tint:l.tint, tintInk:l.tintInk}; }).filter(x=>x.u>0) : [];
+            return {r:r, i:i, it:it, per:per};
+          });
+          const activeLoc = s.discLoc||"";
+          const hasLoc = {}; enriched.forEach(o=>o.per.forEach(p=>{ hasLoc[p.name]=true; }));
+          const chip = (name, active, loc)=>({ name:name,
+            bg: active?"var(--primary)":"var(--surface)",
+            border: active?"var(--primary)":"var(--line)",
+            ink: active?"var(--on-primary)":"var(--ink-2)",
+            pick: ()=>this.setState({discLoc:loc}) });
+          vals.discLocChips = [chip("All areas", !activeLoc, "")]
+            .concat(allLocs.filter(l=>hasLoc[l.name]).map(l=>chip(l.name, activeLoc===l.name, l.name)));
+          vals.discInLoc = !!activeLoc;
+
+          const checkOf = (r, loc)=> (r.checks||{})[loc] || null;
+          let list = enriched;
+          if(q) list = list.filter(o=>((o.r.name||"")+" "+(o.r.code||"")).toLowerCase().indexOf(q)>=0);
+          if(activeLoc) list = list.filter(o=>o.per.some(p=>p.name===activeLoc));
+          if(activeLoc){
+            list = list.slice().sort((a,b)=>{
+              const ga=(checkOf(a.r,activeLoc)&&checkOf(a.r,activeLoc).s==="good")?1:0;
+              const gb=(checkOf(b.r,activeLoc)&&checkOf(b.r,activeLoc).s==="good")?1:0;
+              if(ga!==gb) return ga-gb;               // confirmed-good sink to the bottom
+              return (a.r.ttl||0)-(b.r.ttl||0);        // then biggest shortage first
+            });
+            const good = list.filter(o=>{ const c=checkOf(o.r,activeLoc); return c&&c.s==="good"; }).length;
+            vals.discLocProgress = good+" of "+list.length+" confirmed in "+activeLoc;
+          } else {
+            list = list.slice().sort((a,b)=>(a.r.ttl||0)-(b.r.ttl||0));
+            vals.discLocProgress = "";
+          }
+
+          const pillOf = (o, p)=>{
+            const c = checkOf(o.r, p.name); const st = c ? c.s : "";
+            return { name:p.name, abbr:p.abbr, tint:p.tint, tintInk:p.tintInk, units:this.fmt(p.u),
+              good: st==="good", recount: st==="recount", unchecked: !st, newVal: (c&&c.s==="recount")?this.fmt(c.v):"",
+              amtInk: st==="good" ? "var(--ok)" : (st==="recount" ? "var(--warn)" : "var(--ink)"),
+              rowBg: st==="good" ? "var(--ok-bg)" : (st==="recount" ? "var(--surface-3)" : "transparent"),
+              tap: ()=>this.setState({ discSheet:{fid:fu.id, idx:o.i, loc:p.name, name:o.r.name, amount:p.u}, discRecount:String(this.fmt(p.u)) }) };
+          };
+          vals.discRows = list.map(o=>{
+            const r=o.r, it=o.it;
+            const pers = activeLoc ? o.per.filter(p=>p.name===activeLoc) : o.per;
             const sm = statusMeta[r.status] || statusMeta.open;
             return {
               name:r.name, code:r.code,
@@ -5366,14 +5464,33 @@ class Component extends DCLogic {
               varMoney: money(r.ttl), short: (r.ttl||0)<0,
               varInk: (r.ttl||0)<0?"var(--bad)":"var(--ink)",
               varQtyInk: (r.ttl||0)<0?"var(--bad)":"var(--ink-2)",
-              located: per.length>0, notLocated: !it, zeroLocated: !!it && per.length===0,
-              locs: per, spanLabel: per.length ? (per.length+(per.length===1?" area":" areas")) : "",
+              located: pers.length>0, notLocated: !it, zeroLocated: !!it && o.per.length===0,
+              locs: pers.map(p=>pillOf(o,p)),
               statusLabel: sm.label, statusBg: sm.bg, statusInk: sm.ink,
-              cycleStatus: ()=>this.patchFollowupItem(fu.id, i, {status: nextStatus[r.status||"open"]||"investigating"}),
+              cycleStatus: ()=>this.patchFollowupItem(fu.id, o.i, {status: nextStatus[r.status||"open"]||"investigating"}),
               note: r.note||"",
-              onNote: (e)=>this.patchFollowupItem(fu.id, i, {note:e.target.value}) };
+              onNote: (e)=>this.patchFollowupItem(fu.id, o.i, {note:e.target.value}) };
           });
           vals.discRowsEmpty = vals.discRows.length===0;
+
+          /* confirm / recount bottom sheet */
+          const sh = s.discSheet;
+          vals.discSheetOpen = !!sh;
+          if(sh){
+            const cf = (()=>{ const f=(s.followups||[]).find(x=>x.id===sh.fid); const rr=f&&(f.rows||[])[sh.idx]; return rr&&rr.checks?rr.checks[sh.loc]:null; })();
+            vals.discSheetName = sh.name;
+            vals.discSheetLoc = sh.loc;
+            vals.discSheetAmount = this.fmt(sh.amount);
+            vals.discSheetConfirmLabel = "Confirm "+this.fmt(sh.amount)+" is correct";
+            vals.discSheetHasCheck = !!cf;
+            vals.discSheetStateLabel = cf ? (cf.s==="good" ? "Confirmed correct" : ("Recount saved: "+this.fmt(cf.v))) : "";
+            vals.discRecountVal = s.discRecount!=null ? s.discRecount : String(this.fmt(sh.amount));
+            vals.onDiscRecount = (e)=>this.setState({discRecount:e.target.value});
+            vals.discConfirmGood = ()=>this.setLocCheck(sh.fid, sh.idx, sh.loc, "good", sh.amount);
+            vals.discSaveRecount = ()=>{ const v=parseFloat(this.state.discRecount); this.setLocCheck(sh.fid, sh.idx, sh.loc, "recount", isFinite(v)?v:0); };
+            vals.discClearCheck = ()=>this.setLocCheck(sh.fid, sh.idx, sh.loc, null, 0);
+            vals.closeDiscSheet = ()=>this.setState({discSheet:null, discRecount:""});
+          }
         }
       }
     }
