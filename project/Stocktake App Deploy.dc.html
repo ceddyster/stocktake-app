@@ -1011,6 +1011,9 @@ Sign in with Google
 <sc-if value="{{ ri.notLocated }}" hint-placeholder-val="{{ false }}">
 <div style="margin-top:8px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">Item {{ ri.code }} isn’t in this stocktake’s product list.</div>
 </sc-if>
+<sc-if value="{{ ri.canAdd }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ ri.openAdd }}" style="margin-top:8px;display:flex;align-items:center;gap:7px;padding:7px 10px;background:transparent;border:1px dashed var(--line-2);border-radius:9px;cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-2)"><span style="font:600 12px/1 'Public Sans',sans-serif;color:var(--primary)">＋</span> Add a count in another area</button>
+</sc-if>
 <div style="margin-top:11px;display:flex;align-items:center;gap:8px">
 <button onClick="{{ ri.statusTap }}" style="flex:none;padding:7px 12px;border-radius:999px;background:{{ ri.statusBg }};border:none;cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:{{ ri.statusInk }}">{{ ri.statusLabel }}</button>
 <input value="{{ ri.note }}" onChange="{{ ri.onNote }}" placeholder="Add a note…" style="flex:1;min-width:0;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-3);outline:none;font:400 11px/1 'Public Sans',sans-serif;color:var(--ink);box-shadow:var(--inset-shadow)" />
@@ -1031,6 +1034,7 @@ Sign in with Google
 <sc-if value="{{ discSheetOpen }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;z-index:36;background:rgba(36,29,22,.42);animation:fadeIn .18s ease" onClick="{{ closeDiscSheet }}"></div>
 <div style="position:absolute;left:0;right:0;bottom:0;z-index:37;padding:20px 18px 52px;background:var(--bg);border-radius:20px 20px 26px 26px;animation:sheetUp .22s cubic-bezier(.22,1,.36,1);box-shadow:var(--sheet-shadow)">
+<sc-if value="{{ discSheetConfirm }}" hint-placeholder-val="{{ true }}">
 <div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink-3)">{{ discSheetLoc }}</div>
 <div style="margin-top:7px;font:700 17px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ discSheetName }}</div>
 <div style="margin-top:8px;font:400 12px/1.5 'Public Sans',sans-serif;color:var(--ink-2)">This stocktake counted <b>{{ discSheetAmount }}</b> here. Is that right, or do you need to recount?</div>
@@ -1049,6 +1053,23 @@ Sign in with Google
 </sc-if>
 <button onClick="{{ closeDiscSheet }}" style="flex:1;min-height:44px;padding:12px;border-radius:12px;background:transparent;border:none;cursor:pointer;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">Close</button>
 </div>
+</sc-if>
+<sc-if value="{{ discSheetAdd }}" hint-placeholder-val="{{ false }}">
+<div style="font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink-3)">ADD A COUNT IN A MISSED AREA</div>
+<div style="margin-top:7px;font:700 17px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ discSheetName }}</div>
+<div style="margin-top:12px;font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">WHICH AREA</div>
+<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:7px;max-height:170px;overflow:auto">
+<sc-for list="{{ discAddLocs }}" as="al" hint-placeholder-count="0">
+<button onClick="{{ al.pick }}" style="flex:none;padding:9px 13px;border-radius:999px;background:{{ al.bg }};border:1px solid {{ al.border }};cursor:pointer;font:600 11px/1 'Public Sans',sans-serif;color:{{ al.ink }};white-space:nowrap">{{ al.name }}</button>
+</sc-for>
+</div>
+<div style="margin-top:14px;font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">COUNT FOUND</div>
+<div style="margin-top:8px;display:flex;gap:8px">
+<input value="{{ discRecountVal }}" onChange="{{ onDiscRecount }}" type="number" inputmode="decimal" placeholder="0" style="flex:1;min-width:0;padding:13px;border:1px solid var(--line);border-radius:11px;background:var(--surface);outline:none;font:600 15px/1 'Public Sans',sans-serif;color:var(--ink)" />
+<button onClick="{{ discAddSave }}" style="flex:none;padding:0 18px;border-radius:11px;background:{{ discAddSaveBg }};border:none;cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--on-primary)">Add count</button>
+</div>
+<button onClick="{{ closeDiscSheet }}" style="margin-top:14px;width:100%;min-height:44px;padding:12px;border-radius:12px;background:transparent;border:none;cursor:pointer;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">Cancel</button>
+</sc-if>
 </div>
 </sc-if>
 
@@ -5426,8 +5447,10 @@ class Component extends DCLogic {
              how much — so it can be filtered by area and each amount confirmed. */
           const enriched = rows.map((r,i)=>{
             const it = findProd(r);
+            /* Areas to show for the item: those the stocktake counted, plus any a
+               user has since confirmed/recounted or added manually. */
             const per = it ? allLocs.map(l=>{ const e=(snap.counts||{})[this.ck(l.name, it.id)]; const u=e?this.units(it,e):0;
-                return {name:l.name, u:u, abbr:l.abbr, tint:l.tint, tintInk:l.tintInk}; }).filter(x=>x.u>0) : [];
+                return {name:l.name, u:u, abbr:l.abbr, tint:l.tint, tintInk:l.tintInk}; }).filter(x=> x.u>0 || !!(r.checks||{})[x.name]) : [];
             return {r:r, i:i, it:it, per:per};
           });
           const activeLoc = s.discLoc||"";
@@ -5490,6 +5513,9 @@ class Component extends DCLogic {
               varInk: short?"var(--bad)":"var(--ink)",
               located: pers.length>0, notLocated: !it, zeroLocated: !!it && o.per.length===0,
               locs: pers.map(p=>pillOf(o,p)),
+              /* Add a count in an area this item isn't showing yet (a missed spot). */
+              canAdd: !!it && !r.final && allLocs.some(l=>!o.per.some(p=>p.name===l.name)),
+              openAdd: ()=>this.setState({ discSheet:{fid:fu.id, idx:o.i, name:r.name, add:true, loc:"", amount:0}, discRecount:"" }),
               statusLabel: sm.label, statusBg: sm.bg, statusInk: sm.ink,
               /* Final check is only tappable once everything is checked; tapping it
                  finalises (locks) the item. A finalised item can be reopened. */
@@ -5502,23 +5528,46 @@ class Component extends DCLogic {
           });
           vals.discRowsEmpty = vals.discRows.length===0;
 
-          /* confirm / recount bottom sheet */
+          /* confirm / recount / add-area bottom sheet */
           const sh = s.discSheet;
           vals.discSheetOpen = !!sh;
           if(sh){
-            const cf = (()=>{ const f=(s.followups||[]).find(x=>x.id===sh.fid); const rr=f&&(f.rows||[])[sh.idx]; return rr&&rr.checks?rr.checks[sh.loc]:null; })();
             vals.discSheetName = sh.name;
-            vals.discSheetLoc = sh.loc;
-            vals.discSheetAmount = this.fmt(sh.amount);
-            vals.discSheetConfirmLabel = "Confirm "+this.fmt(sh.amount)+" is correct";
-            vals.discSheetHasCheck = !!cf;
-            vals.discSheetStateLabel = cf ? (cf.s==="good" ? "Confirmed correct" : ("Recount saved: "+this.fmt(cf.v))) : "";
-            vals.discRecountVal = s.discRecount!=null ? s.discRecount : String(this.fmt(sh.amount));
+            vals.discSheetAdd = !!sh.add;
+            vals.discSheetConfirm = !sh.add;
             vals.onDiscRecount = (e)=>this.setState({discRecount:e.target.value});
-            vals.discConfirmGood = ()=>this.setLocCheck(sh.fid, sh.idx, sh.loc, "good", sh.amount);
-            vals.discSaveRecount = ()=>{ const v=parseFloat(this.state.discRecount); this.setLocCheck(sh.fid, sh.idx, sh.loc, "recount", isFinite(v)?v:0); };
-            vals.discClearCheck = ()=>this.setLocCheck(sh.fid, sh.idx, sh.loc, null, 0);
             vals.closeDiscSheet = ()=>this.setState({discSheet:null, discRecount:""});
+            if(sh.add){
+              /* Adding a count in a missed area: pick an area not yet shown for
+                 this item, then enter the count found there. */
+              const fu2 = (s.followups||[]).find(x=>x.id===sh.fid);
+              const r2 = fu2 && (fu2.rows||[])[sh.idx];
+              const it2 = r2 ? findProd(r2) : null;
+              const shownNames = {};
+              if(it2) allLocs.forEach(l=>{ const e=(snap.counts||{})[this.ck(l.name, it2.id)]; const u=e?this.units(it2,e):0; if(u>0 || (r2.checks||{})[l.name]) shownNames[l.name]=1; });
+              vals.discAddLocs = allLocs.filter(l=>!shownNames[l.name]).map(l=>({ name:l.name,
+                bg: sh.loc===l.name?"var(--primary)":"var(--surface)",
+                border: sh.loc===l.name?"var(--primary)":"var(--line)",
+                ink: sh.loc===l.name?"var(--on-primary)":"var(--ink-2)",
+                pick: ()=>this.setState({discSheet:Object.assign({}, this.state.discSheet, {loc:l.name})}) }));
+              vals.discAddHasLoc = !!sh.loc;
+              vals.discAddLocName = sh.loc || "";
+              vals.discAddSaveBg = sh.loc ? "var(--primary)" : "var(--line)";
+              vals.discRecountVal = s.discRecount||"";
+              vals.discAddSave = ()=>{ const st=this.state.discSheet; const v=parseFloat(this.state.discRecount);
+                if(st && st.loc && isFinite(v)) this.setLocCheck(st.fid, st.idx, st.loc, "recount", v); };
+            } else {
+              const cf = (()=>{ const f=(s.followups||[]).find(x=>x.id===sh.fid); const rr=f&&(f.rows||[])[sh.idx]; return rr&&rr.checks?rr.checks[sh.loc]:null; })();
+              vals.discSheetLoc = sh.loc;
+              vals.discSheetAmount = this.fmt(sh.amount);
+              vals.discSheetConfirmLabel = "Confirm "+this.fmt(sh.amount)+" is correct";
+              vals.discSheetHasCheck = !!cf;
+              vals.discSheetStateLabel = cf ? (cf.s==="good" ? "Confirmed correct" : ("Recount saved: "+this.fmt(cf.v))) : "";
+              vals.discRecountVal = s.discRecount!=null ? s.discRecount : String(this.fmt(sh.amount));
+              vals.discConfirmGood = ()=>this.setLocCheck(sh.fid, sh.idx, sh.loc, "good", sh.amount);
+              vals.discSaveRecount = ()=>{ const v=parseFloat(this.state.discRecount); this.setLocCheck(sh.fid, sh.idx, sh.loc, "recount", isFinite(v)?v:0); };
+              vals.discClearCheck = ()=>this.setLocCheck(sh.fid, sh.idx, sh.loc, null, 0);
+            }
           }
         }
       }
