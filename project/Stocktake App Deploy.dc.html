@@ -984,12 +984,7 @@ Sign in with Google
 <div style="padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--card-shadow)">
 <div style="display:flex;align-items:baseline;gap:10px">
 <span style="flex:1;min-width:0;font:600 13px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ ri.name }}</span>
-<span style="flex:none;display:flex;align-items:baseline;gap:14px;text-align:right">
-<sc-if value="{{ ri.showTotal }}" hint-placeholder-val="{{ true }}">
-<span style="flex:none"><span style="font:700 16px/1 'Public Sans',sans-serif;color:var(--ink)">{{ ri.newTotalUnits }}</span><span style="display:block;margin-top:2px;font:500 7.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">NEW TOTAL</span></span>
-</sc-if>
-<span style="flex:none"><span style="font:700 16px/1 'Public Sans',sans-serif;color:{{ ri.varInk }}">{{ ri.varUnits }}</span><span style="display:block;margin-top:2px;font:500 7.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">VAR UNITS</span></span>
-</span>
+<span style="flex:none;text-align:right"><span style="font:700 16px/1 'Public Sans',sans-serif;color:{{ ri.varInk }}">{{ ri.varUnits }}</span><span style="display:block;margin-top:2px;font:500 7.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">VAR UNITS</span></span>
 </div>
 <div style="margin-top:5px;font:400 10px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">{{ ri.qtyLine }}</div>
 <sc-if value="{{ ri.located }}" hint-placeholder-val="{{ true }}">
@@ -1019,6 +1014,12 @@ Sign in with Google
 </sc-if>
 <sc-if value="{{ ri.canAdd }}" hint-placeholder-val="{{ true }}">
 <button onClick="{{ ri.openAdd }}" style="margin-top:8px;display:flex;align-items:center;gap:7px;padding:7px 10px;background:transparent;border:1px dashed var(--line-2);border-radius:9px;cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-2)"><span style="font:600 12px/1 'Public Sans',sans-serif;color:var(--primary)">＋</span> Add a count in another area</button>
+</sc-if>
+<sc-if value="{{ ri.showTotal }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface-3);border-radius:9px;box-shadow:var(--inset-shadow)">
+<span style="font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">NEW TOTAL</span>
+<span style="font:700 15px/1 'Public Sans',sans-serif;color:var(--ink)">{{ ri.newTotalUnits }}</span>
+</div>
 </sc-if>
 <div style="margin-top:11px;display:flex;align-items:center;gap:8px">
 <button onClick="{{ ri.statusTap }}" style="flex:none;padding:7px 12px;border-radius:999px;background:{{ ri.statusBg }};border:none;cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:{{ ri.statusInk }}">{{ ri.statusLabel }}</button>
