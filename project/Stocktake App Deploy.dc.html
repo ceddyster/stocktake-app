@@ -954,6 +954,7 @@ Sign in with Google
 <div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ discViewTitle }}</div>
 <div style="margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ discViewSub }}</div>
 </div>
+<button onClick="{{ discExport }}" aria-label="Export to Excel" style="flex:none;height:32px;padding:0 11px;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:600 10.5px/1 'Public Sans',sans-serif;color:var(--ink-2)"><span style="font:400 13px/1 'Public Sans',sans-serif">⤓</span>Excel</button>
 </div>
 <div style="margin-top:12px;display:flex;gap:8px">
 <div style="flex:1;padding:11px 12px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)"><div style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">ITEMS</div><div style="margin-top:6px;font:700 17px/1 'Public Sans',sans-serif;color:var(--ink)">{{ discViewItems }}</div></div>
@@ -3463,6 +3464,16 @@ class Component extends DCLogic {
       });
     });
 
+    return this.xlsxFromSpecs(specs, this.exportName("xlsx", s));
+  }
+  /* Render an array of sheet specs ({name, head[], body[][], totals[]|null})
+     to a store-only .xlsx and download it. Shared by the stocktake export and
+     the discrepancy follow-up export. Each body/totals cell is a number
+     (right-aligned, numeric) or a string. */
+  xlsxFromSpecs(specs, filename){
+    const colLetter = c=>{ let r=""; c++; while(c>0){ const m=(c-1)%26; r=String.fromCharCode(65+m)+r; c=(c-m-1)/26; } return r; };
+    const xmlEsc = v=>String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    const fmt = this.fmt.bind(this);
     // ---- build each worksheet + its table ----
     const usedNames = {};
     const sheetName = raw=>{
@@ -3534,7 +3545,7 @@ class Component extends DCLogic {
     files["_rels/.rels"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
     files["xl/workbook.xml"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+wbSheets.join("")+'</sheets></workbook>';
     files["xl/_rels/workbook.xml.rels"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+wbRels.join("")+'<Relationship Id="rId'+stylesRid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
-    this.saveBlob(this.zipStore(files), this.exportName("xlsx", s));
+    this.saveBlob(this.zipStore(files), filename);
     return true;
   }
   zipStore(files){
@@ -3557,6 +3568,58 @@ class Component extends DCLogic {
     central.forEach(c=>{ const b = c instanceof Uint8Array ? c : new Uint8Array(c); cBufs.push(b); cSize += b.length; });
     const end = new Uint8Array([].concat(u32(0x06054b50),u16(0),u16(0),u16(Object.keys(files).length),u16(Object.keys(files).length),u32(cSize),u32(cStart),u16(0)));
     return new Blob(parts.concat(cBufs, [end]), {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  }
+
+  /* Export a discrepancy follow-up as an .xlsx that mirrors the variance
+     workbook's core columns and adds the recount + notes captured here:
+       Re-Count            – the item's updated total once areas are recounted
+       Re-Count Detail      – per-area breakdown (confirmed / old→new)
+       Var after Re-Count   – original variance adjusted by the recounts
+       Status               – Unchecked / In progress / Final check / Finalised
+       Comments             – the note typed against the item
+     Recount figures are left blank on rows nobody has touched. Notes still
+     export even when the linked stocktake isn't on this device. */
+  downloadFollowupXlsx(fu){
+    if(!fu || !((fu.rows||[]).length)) return false;
+    const s = this.state;
+    const entry = (s.archive||[]).find(a=>this.entryId(a)===fu.stocktakeId);
+    const snap = entry && entry.snap ? entry.snap : null;
+    const normNm = (x)=>String(x||"").trim().toUpperCase().replace(/\s+/g," ");
+    const byCode = {}, byName = {};
+    if(snap) (snap.master||[]).forEach(it=>{ if(!it) return;
+      if(it.code!=null && it.code!=="") byCode[String(it.code)]=it;
+      const nm=normNm(it.name); if(nm && !byName[nm]) byName[nm]=it; });
+    const findProd = (r)=> byCode[String(r.code)] || byName[normNm(r.name)] || null;
+    const allLocs = snap ? this.locsFrom(snap.locNames) : [];
+    const fmt = this.fmt.bind(this);
+    const stLabel = (r, per)=>{
+      const total=per.length, checked=per.filter(p=>(r.checks||{})[p.name]).length;
+      if(r.final) return "Finalised";
+      if(total>0 && checked===0) return "Unchecked";
+      if(total>0 && checked<total) return "In progress";
+      return "Final check";
+    };
+    const head = ["Item","Description","System Qty","Count Qty","Var","Unit Cost","TTL Var $",
+                  "Re-Count","Re-Count Detail","Var after Re-Count","Status","Comments"];
+    const body = (fu.rows||[]).map(r=>{
+      const it = findProd(r);
+      const per = it ? allLocs.map(l=>{ const e=(snap.counts||{})[this.ck(l.name, it.id)]; const u=e?this.units(it,e):0;
+          return {name:l.name, u:u}; }).filter(x=> x.u>0 || !!(r.checks||{})[x.name]) : [];
+      let delta = 0; const det = [];
+      per.forEach(p=>{ const c=(r.checks||{})[p.name]; if(!c) return;
+        if(c.s==="recount"){ delta += ((c.v||0)-(p.u||0)); det.push(p.name+": "+fmt(p.u)+"→"+fmt(c.v)); }
+        else if(c.s==="good"){ det.push(p.name+": confirmed "+fmt(p.u)); } });
+      const any = det.length>0;
+      const liveVar = (r.vr||0)+delta, newCnt = (r.cnt||0)+delta;
+      return [ r.code||"", r.name||"", r.sys||0, r.cnt||0, r.vr||0, r.cost||0, r.ttl||0,
+               any?newCnt:"", det.join("; "), any?liveVar:"", stLabel(r, per), r.note||"" ];
+    });
+    const specs = [{ name:"Discrepancies", head:head, body:body, totals:null }];
+    const slug = (fu.title||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
+    const d = new Date();
+    const stamp = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    const filename = "discrepancies-"+(slug?slug+"-":"")+stamp+".xlsx";
+    return this.xlsxFromSpecs(specs, filename);
   }
 
   downloadCsv(src){
@@ -5436,6 +5499,7 @@ class Component extends DCLogic {
           vals.discViewProgress = finalised+" / "+rows.length;
           vals.discViewMissing = !snap;
           vals.discViewBack = ()=>this.setState({screen:"disc", discView:null});
+          vals.discExport = ()=>this.downloadFollowupXlsx(fu);
           const q = (s.discQuery||"").trim().toLowerCase();
           vals.discQuery = s.discQuery||"";
           vals.onDiscQuery = (e)=>this.setState({discQuery:e.target.value});
