@@ -3571,14 +3571,11 @@ class Component extends DCLogic {
   }
 
   /* Export a discrepancy follow-up as an .xlsx that mirrors the variance
-     workbook's core columns and adds the recount + notes captured here:
-       Re-Count            – the item's updated total once areas are recounted
-       Re-Count Detail      – per-area breakdown (confirmed / old→new)
-       Var after Re-Count   – original variance adjusted by the recounts
-       Status               – Unchecked / In progress / Final check / Finalised
-       Comments             – the note typed against the item
-     Recount figures are left blank on rows nobody has touched. Notes still
-     export even when the linked stocktake isn't on this device. */
+     workbook's core columns and adds just the two follow-up fields:
+       Re-Count  – the item's updated total once areas are recounted
+       Comments  – the note typed against the item
+     Re-Count is left blank on rows nobody has touched. Notes still export
+     even when the linked stocktake isn't on this device. */
   downloadFollowupXlsx(fu){
     if(!fu || !((fu.rows||[]).length)) return false;
     const s = this.state;
@@ -3591,28 +3588,18 @@ class Component extends DCLogic {
       const nm=normNm(it.name); if(nm && !byName[nm]) byName[nm]=it; });
     const findProd = (r)=> byCode[String(r.code)] || byName[normNm(r.name)] || null;
     const allLocs = snap ? this.locsFrom(snap.locNames) : [];
-    const fmt = this.fmt.bind(this);
-    const stLabel = (r, per)=>{
-      const total=per.length, checked=per.filter(p=>(r.checks||{})[p.name]).length;
-      if(r.final) return "Finalised";
-      if(total>0 && checked===0) return "Unchecked";
-      if(total>0 && checked<total) return "In progress";
-      return "Final check";
-    };
     const head = ["Item","Description","System Qty","Count Qty","Var","Unit Cost","TTL Var $",
-                  "Re-Count","Re-Count Detail","Var after Re-Count","Status","Comments"];
+                  "Re-Count","Comments"];
     const body = (fu.rows||[]).map(r=>{
       const it = findProd(r);
       const per = it ? allLocs.map(l=>{ const e=(snap.counts||{})[this.ck(l.name, it.id)]; const u=e?this.units(it,e):0;
           return {name:l.name, u:u}; }).filter(x=> x.u>0 || !!(r.checks||{})[x.name]) : [];
-      let delta = 0; const det = [];
-      per.forEach(p=>{ const c=(r.checks||{})[p.name]; if(!c) return;
-        if(c.s==="recount"){ delta += ((c.v||0)-(p.u||0)); det.push(p.name+": "+fmt(p.u)+"→"+fmt(c.v)); }
-        else if(c.s==="good"){ det.push(p.name+": confirmed "+fmt(p.u)); } });
-      const any = det.length>0;
-      const liveVar = (r.vr||0)+delta, newCnt = (r.cnt||0)+delta;
+      let delta = 0, any = false;
+      per.forEach(p=>{ const c=(r.checks||{})[p.name]; if(!c) return; any = true;
+        if(c.s==="recount") delta += ((c.v||0)-(p.u||0)); });
+      const newCnt = (r.cnt||0)+delta;
       return [ r.code||"", r.name||"", r.sys||0, r.cnt||0, r.vr||0, r.cost||0, r.ttl||0,
-               any?newCnt:"", det.join("; "), any?liveVar:"", stLabel(r, per), r.note||"" ];
+               any?newCnt:"", r.note||"" ];
     });
     const specs = [{ name:"Discrepancies", head:head, body:body, totals:null }];
     const slug = (fu.title||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
