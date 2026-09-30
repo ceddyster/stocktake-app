@@ -211,6 +211,11 @@ Sign in with Google
 <span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--ink-3)">Past stocktakes</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-4)">None yet — finish a stocktake to see it here.</span></span>
 </div>
 </sc-if>
+<button onClick="{{ hubDisc }}" style="width:100%;display:flex;align-items:center;gap:13px;padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
+<span style="width:36px;height:36px;flex:none;border-radius:10px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 15px/1 'Public Sans',sans-serif;color:var(--ink)">⚖</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">Discrepancies</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Follow up variances against a past stocktake. {{ discCountLabel }}.</span></span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
+</button>
 <button onClick="{{ hubProfile }}" style="width:100%;display:flex;align-items:center;gap:13px;padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
 <span style="width:36px;height:36px;flex:none;border-radius:10px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 16px/1 'Public Sans',sans-serif;color:var(--ink)">☺</span>
 <span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">Profile</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Change your name or password.</span></span>
@@ -839,6 +844,170 @@ Sign in with Google
 <div style="padding:36px 24px;text-align:center">
 <div style="font:600 13px/1.3 'Public Sans',sans-serif;color:var(--ink)">Nothing counted here</div>
 <p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">No products were counted in this location for this stocktake.</p>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDiscList }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 12px;background:var(--bg);border-bottom:1px solid var(--line)">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ discBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink)">Discrepancies</div>
+<div style="margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3)">Follow up variances against a past stocktake</div>
+</div>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding:16px 16px 44px;display:flex;flex-direction:column;gap:9px">
+<button onClick="{{ discNew }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--primary);border:none;border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif">
+<span style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;font:600 16px/1 'Public Sans',sans-serif;color:var(--ink)">＋</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--on-primary)">New follow-up</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--surface)">Pick a stocktake and attach a variance report.</span></span>
+</button>
+<sc-if value="{{ discEmpty }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:6px;padding:18px 16px;background:var(--surface);border:1px dashed var(--line-2);border-radius:14px">
+<div style="font:600 13.5px/1.3 'Public Sans',sans-serif;color:var(--ink)">No follow-ups yet</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">Start one to compare a variance report against a finished stocktake and see where each item sat, area by area.</p>
+</div>
+</sc-if>
+<sc-for list="{{ discList }}" as="d" hint-placeholder-count="0">
+<div style="flex:none;background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow);overflow:hidden">
+<button onClick="{{ d.open }}" style="display:block;width:100%;text-align:left;padding:14px 14px 10px;background:transparent;border:none;cursor:pointer;font-family:'Public Sans',sans-serif" style-hover="background:var(--surface-2)">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="flex:1;min-width:0;font:600 13.5px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ d.title }}</span>
+<span style="flex:none;font:700 13px/1 'Public Sans',sans-serif;color:{{ d.varInk }}">{{ d.varLabel }}</span>
+</div>
+<div style="margin-top:6px;font:400 10px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ d.when }} · {{ d.source }}</div>
+<div style="margin-top:5px;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-2)">{{ d.progress }}</div>
+</button>
+<div style="display:flex;align-items:center;justify-content:flex-end;padding:0 14px 12px">
+<button onClick="{{ d.del }}" style="flex:none;min-height:30px;padding:6px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--bad)">DELETE</button>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDiscNew }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 12px;background:var(--bg);border-bottom:1px solid var(--line)">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ discNewBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<div style="flex:1;min-width:0"><div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink)">New follow-up</div></div>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding:16px 16px 44px">
+<sc-if value="{{ discNoStk }}" hint-placeholder-val="{{ false }}">
+<div style="padding:18px 16px;background:var(--surface);border:1px dashed var(--line-2);border-radius:14px">
+<div style="font:600 13.5px/1.3 'Public Sans',sans-serif;color:var(--ink)">No finished stocktakes</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">Close a stocktake first — a follow-up compares a variance report against a saved stocktake.</p>
+</div>
+</sc-if>
+<sc-if value="{{ discHasStk }}" hint-placeholder-val="{{ true }}">
+<div style="font:500 10px/1 'Public Sans',sans-serif;letter-spacing:.14em;color:var(--ink-3)">1 · CHOOSE A STOCKTAKE</div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ discPickList }}" as="p" hint-placeholder-count="0">
+<button onClick="{{ p.pick }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:13px 14px;background:var(--surface);border:1px solid {{ p.borderCol }};border-radius:12px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)">
+<span style="width:18px;height:18px;flex:none;border-radius:50%;border:2px solid {{ p.dotBorder }};background:{{ p.dotBg }}"></span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 12.5px/1.2 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ p.title }}</span><span style="display:block;margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ p.when }} {{ p.by }}</span></span>
+</button>
+</sc-for>
+</div>
+
+<sc-if value="{{ discHasPick }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:20px;font:500 10px/1 'Public Sans',sans-serif;letter-spacing:.14em;color:var(--ink-3)">2 · ATTACH THE VARIANCE REPORT</div>
+<label style="margin-top:10px;display:flex;align-items:center;gap:11px;padding:14px;background:var(--surface);border:1px dashed var(--line-2);border-radius:12px;cursor:pointer">
+<span style="width:30px;height:30px;flex:none;border-radius:9px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 13px/1 'Public Sans',sans-serif;color:var(--ink-2)">↑</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 12px/1.25 'Public Sans',sans-serif;color:var(--ink);word-break:break-all">{{ discFileName }}</span><span style="display:block;margin-top:3px;font:400 10px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Excel from the stock system — matched to this stocktake by item code.</span></span>
+<input type="file" accept=".xlsx,.csv" onChange="{{ onDiscFile }}" style="display:none" />
+</label>
+<sc-if value="{{ discHasRecs }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:9px;padding:11px 13px;background:var(--surface);border:1px solid var(--ok-bg);border-radius:11px;font:500 11px/1.4 'Public Sans',sans-serif;color:var(--ink)">✓ {{ discRecCount }}</div>
+</sc-if>
+<sc-if value="{{ discHasErr }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:9px;padding:11px 13px;background:var(--bad-bg2);border:1px solid var(--bad-bg);border-radius:11px;font:400 11px/1.5 'Public Sans',sans-serif;color:var(--bad);text-wrap:pretty">{{ discNewErr }}</div>
+</sc-if>
+<button onClick="{{ discBuild }}" style="margin-top:14px;width:100%;padding:15px;border-radius:12px;background:{{ discBuildBg }};border:none;cursor:pointer;font:600 13px/1 'Public Sans',sans-serif;color:var(--on-primary)">Create follow-up</button>
+</sc-if>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDiscView }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<sc-if value="{{ discGone }}" hint-placeholder-val="{{ false }}">
+<div style="padding:36px 24px;text-align:center">
+<div style="font:600 13px/1.3 'Public Sans',sans-serif;color:var(--ink)">Follow-up not found</div>
+<button onClick="{{ discBackToList }}" style="margin-top:14px;padding:12px 18px;border-radius:11px;background:var(--primary);border:none;cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--on-primary)">Back to follow-ups</button>
+</div>
+</sc-if>
+<sc-if value="{{ discHere }}" hint-placeholder-val="{{ true }}">
+<div style="padding:12px 16px 12px;background:var(--bg);border-bottom:1px solid var(--line)">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ discViewBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ discViewTitle }}</div>
+<div style="margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ discViewSub }}</div>
+</div>
+</div>
+<div style="margin-top:12px;display:flex;gap:8px">
+<div style="flex:1;padding:11px 12px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)"><div style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">TOTAL VARIANCE</div><div style="margin-top:6px;font:700 17px/1 'Public Sans',sans-serif;color:{{ discViewVarInk }}">{{ discViewVar }}</div></div>
+<div style="flex:1;padding:11px 12px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)"><div style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">PROGRESS</div><div style="margin-top:6px;font:700 17px/1 'Public Sans',sans-serif;color:var(--ink)">{{ discViewProgress }}</div></div>
+</div>
+<div style="margin-top:10px;display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:11px">
+<span style="font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">⌕</span>
+<input value="{{ discQuery }}" onChange="{{ onDiscQuery }}" placeholder="Search variance items" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink)" />
+<sc-if value="{{ discQueryHas }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ clearDiscQuery }}" aria-label="Clear search" style="flex:none;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:none;border-radius:999px;background:var(--surface-3);cursor:pointer;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink-2);box-shadow:var(--inset-shadow)">✕</button>
+</sc-if>
+</div>
+<sc-if value="{{ discViewMissing }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:10px;padding:10px 12px;background:var(--surface);border:1px dashed var(--line-2);border-radius:10px;font:400 10px/1.5 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">The linked stocktake isn’t on this device, so the per-area breakdown can’t be shown. Variance figures are still here.</div>
+</sc-if>
+</div>
+<div style="flex:1;overflow:auto;padding:14px 16px 44px;display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ discRows }}" as="ri" hint-placeholder-count="0">
+<div style="padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--card-shadow)">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="flex:1;min-width:0;font:600 13px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ ri.name }}</span>
+<span style="flex:none;font:700 15px/1 'Public Sans',sans-serif;color:{{ ri.varInk }}">{{ ri.varMoney }}</span>
+</div>
+<div style="margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font:400 10px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">{{ ri.qtyLine }}</span>
+<span style="font:600 10px/1 'Public Sans',sans-serif;color:{{ ri.varQtyInk }}">Var {{ ri.varQty }}</span>
+</div>
+<sc-if value="{{ ri.located }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:1px;border-top:1px solid var(--surface-3)">
+<sc-for list="{{ ri.locs }}" as="pl" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--surface-3)">
+<span style="width:22px;height:22px;flex:none;border-radius:6px;background:{{ pl.tint }};display:flex;align-items:center;justify-content:center;font:600 8.5px/1 'Public Sans',sans-serif;color:{{ pl.tintInk }}">{{ pl.abbr }}</span>
+<span style="flex:1;min-width:0;font:500 11.5px/1.2 'Public Sans',sans-serif;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pl.name }}</span>
+<span style="flex:none;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink)">{{ pl.units }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ ri.zeroLocated }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:8px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">Counted 0 across all areas in this stocktake.</div>
+</sc-if>
+<sc-if value="{{ ri.notLocated }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:8px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">Item {{ ri.code }} isn’t in this stocktake’s product list.</div>
+</sc-if>
+<div style="margin-top:11px;display:flex;align-items:center;gap:8px">
+<button onClick="{{ ri.cycleStatus }}" style="flex:none;padding:6px 11px;border-radius:999px;background:{{ ri.statusBg }};border:none;cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:{{ ri.statusInk }}">{{ ri.statusLabel }}</button>
+<input value="{{ ri.note }}" onChange="{{ ri.onNote }}" placeholder="Add a note…" style="flex:1;min-width:0;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-3);outline:none;font:400 11px/1 'Public Sans',sans-serif;color:var(--ink);box-shadow:var(--inset-shadow)" />
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ discRowsEmpty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:36px 24px;text-align:center">
+<div style="font:600 13px/1.3 'Public Sans',sans-serif;color:var(--ink)">No matching items</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">Nothing in this variance report matches that search.</p>
 </div>
 </sc-if>
 </div>
@@ -1851,6 +2020,7 @@ class Component extends DCLogic {
       submitted:{}, subAt:{}, totalsMode:"cat", expanded:{}, groupMode:"sub", sortMode:"none", sortOpen:false,
       buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, dupCleared:{}, subOpen:false,
       overwriteWarn:null, overwriteBy:"", overwriteOk:{}, reviewSnap:null, reviewLoc:null, reviewQuery:"",
+      followups:[], fuDeleted:[], discView:null, discQuery:"", discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"",
       mQuery:"", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
       imported:null, importName:"",
@@ -1915,6 +2085,7 @@ class Component extends DCLogic {
         admin: saved.admin||saved.me||"", archive: saved.archive||[], archDeleted: saved.archDeleted||[], joined: joined, started: startedVal,
         org: saved.org||null, orgId: saved.orgId||"",
         removedIds: saved.removedIds||[], resetAt: saved.resetAt||0,
+        followups: saved.followups||[], fuDeleted: saved.fuDeleted||[],
         authed: authed, authEmail: (sess&&sess.email)||"",
         screen: gate ? "auth" : (joined ? "home" : "hub"), ready:true
       }, ()=>this.save({}));
@@ -2078,6 +2249,169 @@ class Component extends DCLogic {
     });
   }
 
+  /* ---------- discrepancy follow-ups ----------
+     A follow-up links a past stocktake to an uploaded variance report. It stores
+     the parsed variance rows plus a per-item status/note, and syncs across
+     devices the same way the archive does (org-shared when in an org, otherwise
+     the account's own), merged by id with the newest updatedAt winning and a
+     tombstone list so deletes stick. */
+  followKey(uid){ return this.state.orgId ? ("of:"+this.state.orgId) : ("fu:"+uid); }
+  mergeFollowups(a, b, del){
+    a=a||[]; b=b||[]; const tomb={}; (del||[]).forEach(id=>{ if(id) tomb[id]=1; });
+    const map={};
+    a.concat(b).forEach(e=>{ if(!e || !e.id || tomb[e.id]) return; const p=map[e.id];
+      if(!p || (e.updatedAt||0) >= (p.updatedAt||0)) map[e.id]=e; });
+    return Object.keys(map).map(k=>map[k]).sort((x,y)=>((x.ts||0)-(y.ts||0)));
+  }
+  fetchFollowupsDoc(uid){
+    if(!uid || !SB.on()) return Promise.resolve({followups:this.state.followups||[], deleted:this.state.fuDeleted||[]});
+    return SB.get(this.followKey(uid)).then(
+      d=>({followups:(d&&d.followups)||[], deleted:(d&&d.deleted)||[]}),
+      ()=>({followups:this.state.followups||[], deleted:this.state.fuDeleted||[]}));
+  }
+  pushFollowups(uid, list, del){
+    if(!uid || !SB.on()) return;
+    SB.put(this.followKey(uid), {followups:list||[], deleted:del||this.state.fuDeleted||[], ts:Date.now()})
+      .catch(err=>console.error("[followups] cloud sync failed:", err));
+  }
+  syncFollowups(uid){
+    if(!uid || !SB.on() || this.state.joined) return;
+    this.fetchFollowupsDoc(uid).then(doc=>{
+      const del = this.mergeDeleted(this.state.fuDeleted, doc.deleted);
+      const merged = this.mergeFollowups(this.state.followups, doc.followups, del);
+      if(JSON.stringify(merged)!==JSON.stringify(this.state.followups||[]) || JSON.stringify(del)!==JSON.stringify(this.state.fuDeleted||[]))
+        this.setState({followups:merged, fuDeleted:del}, ()=>this.save({}));
+      if(JSON.stringify(merged)!==JSON.stringify(doc.followups||[]) || JSON.stringify(del)!==JSON.stringify(doc.deleted||[]))
+        this.pushFollowups(uid, merged, del);
+    });
+  }
+  createFollowup(entry, fileName, recs){
+    const now = Date.now();
+    const id = "fu"+now.toString(36)+Math.random().toString(36).slice(2,6);
+    const rows = (recs||[]).map(r=>({ code:String(r.code||""), name:r.name||"", sys:r.sys||0, cnt:r.cnt||0,
+      vr:r.vr||0, cost:r.cost||0, ttl:r.ttl||0, status:"open", note:"" }));
+    const fu = { id:id, ts:now, updatedAt:now, stocktakeId:this.entryId(entry),
+      title:entry.title||"Stocktake", when:entry.when||"", source:fileName||"variance.xlsx", rows:rows };
+    const list = (this.state.followups||[]).concat([fu]);
+    const uid = this.state.owner;
+    this.setState({followups:list, discView:id, discQuery:"",
+      discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"", screen:"discView"},
+      ()=>{ this.save({}); if(uid) this.pushFollowups(uid, list, this.state.fuDeleted); });
+  }
+  patchFollowupItem(fid, idx, patch){
+    const list = (this.state.followups||[]).map(f=>{
+      if(f.id!==fid) return f;
+      const rows = (f.rows||[]).map((r,i)=> i===idx ? Object.assign({}, r, patch) : r);
+      return Object.assign({}, f, {rows:rows, updatedAt:Date.now()});
+    });
+    const uid = this.state.owner;
+    this.setState({followups:list}, ()=>{ this.save({}); if(uid) this.pushFollowups(uid, list, this.state.fuDeleted); });
+  }
+  deleteFollowup(id){
+    if(!id){ this.setState({confirm:null, pendingDelete:null}); return; }
+    const list = (this.state.followups||[]).filter(f=>f.id!==id);
+    const del = this.mergeDeleted(this.state.fuDeleted, [id]);
+    const uid = this.state.owner;
+    this.setState({followups:list, fuDeleted:del, confirm:null, pendingDelete:null, discView:null, screen:"disc"},
+      ()=>{ this.save({}); if(uid) this.pushFollowups(uid, list, del); });
+  }
+
+  /* ---- variance-report parsing (reuses the xlsx zip reader; returns raw rows
+     per sheet so the variance columns can be picked out separately from the
+     product-import parser). ---- */
+  async xlsxAllSheets(buf){
+    const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+    let eocd=-1;
+    for(let i=buf.length-22;i>=0;i--){ if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break; } }
+    if(eocd<0) return [];
+    const n=dv.getUint16(eocd+10,true), cd=dv.getUint32(eocd+16,true);
+    let p=cd; const map={};
+    for(let i=0;i<n;i++){
+      const nl=dv.getUint16(p+28,true), el=dv.getUint16(p+30,true), cl=dv.getUint16(p+32,true);
+      map[new TextDecoder().decode(buf.slice(p+46,p+46+nl))]=dv.getUint32(p+42,true);
+      p+=46+nl+el+cl;
+    }
+    const get = async (nm)=>{
+      if(map[nm]===undefined) return "";
+      const lho=map[nm], nl=dv.getUint16(lho+26,true), el=dv.getUint16(lho+28,true);
+      const method=dv.getUint16(lho+8,true), cs=dv.getUint32(lho+18,true), start=lho+30+nl+el;
+      const data = cs===0 ? buf.slice(start) : buf.slice(start, start+cs);
+      if(method===0) return new TextDecoder().decode(data);
+      return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+    };
+    const dec = (s)=>String(s).replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#x([0-9a-f]+);/gi,(m,h)=>String.fromCharCode(parseInt(h,16))).replace(/&#(\d+);/g,(m,d)=>String.fromCharCode(+d)).replace(/&amp;/g,"&");
+    const ssXml = await get("xl/sharedStrings.xml");
+    const strs = (ssXml.match(/<si>[\s\S]*?<\/si>/g)||[]).map(si=>
+      dec((si.match(/<t[^>]*>[\s\S]*?<\/t>/g)||[]).map(t=>t.replace(/<[^>]+>/g,"")).join("")));
+    const wb = await get("xl/workbook.xml");
+    const rels = await get("xl/_rels/workbook.xml.rels");
+    const rmap = {};
+    (rels.match(/<Relationship [^>]*>/g)||[]).forEach(r=>{
+      const id=(r.match(/Id="([^"]+)"/)||[])[1], t=(r.match(/Target="([^"]+)"/)||[])[1];
+      if(id&&t) rmap[id]=t.replace(/^\/?xl\//,"");
+    });
+    const sheets=[];
+    (wb.match(/<sheet [^>]*>/g)||[]).forEach(sh=>{
+      const rid=(sh.match(/r:id="([^"]+)"/)||[])[1]; const tgt=rmap[rid];
+      if(tgt) sheets.push({name:(sh.match(/name="([^"]+)"/)||[])[1]||"", target:tgt});
+    });
+    if(!sheets.length) sheets.push({name:"", target:"worksheets/sheet1.xml"});
+    const toRows = (xml)=>{
+      const rows=[];
+      (xml.match(/<row[\s\S]*?<\/row>|<row[^>]*\/>/g)||[]).forEach(r=>{
+        const cells=[];
+        (r.match(/<c [^>]*\/>|<c [^>]*>[\s\S]*?<\/c>/g)||[]).forEach(c=>{
+          const ref=(c.match(/r="([A-Z]+)/)||[])[1]||"A";
+          let ci=0; for(let i=0;i<ref.length;i++) ci=ci*26+(ref.charCodeAt(i)-64); ci--;
+          const isStr=/t="s"/.test(c);
+          const inline=(()=>{ const m=(c.match(/<is>[\s\S]*?<t[^>]*>([\s\S]*?)<\/t>/)||[])[1]; return m===undefined?undefined:dec(m); })();
+          const v=(c.match(/<v>([\s\S]*?)<\/v>/)||[])[1];
+          cells[ci] = inline!==undefined ? inline : (v===undefined ? "" : (isStr ? strs[+v] : v));
+        });
+        rows.push(cells);
+      });
+      return rows;
+    };
+    const out=[];
+    for(const sh of sheets){ out.push({name:sh.name, rows:toRows(await get("xl/"+sh.target))}); }
+    return out;
+  }
+  parseVarianceRows(rows){
+    const txt=(v)=>String(v==null?"":v).trim();
+    let hdr=-1;
+    for(let i=0;i<Math.min(rows.length,15);i++){
+      const low=(rows[i]||[]).map(c=>txt(c).toLowerCase());
+      if(low.some(v=>v==="item") && low.some(v=>/system\s*qty/.test(v))){ hdr=i; break; }
+    }
+    if(hdr<0) return null;
+    const H=(rows[hdr]||[]).map(c=>txt(c).toLowerCase());
+    const col=(rx)=>H.findIndex(h=>rx.test(h));
+    const ci={ code:col(/^item$/), name:col(/description/), sys:col(/system\s*qty/),
+      cnt:col(/count\s*qty/), vr:col(/^var$/), cost:col(/unit\s*cost/), ttl:col(/ttl\s*var|total\s*var|var\s*\$/) };
+    if(ci.code<0 || ci.name<0) return null;
+    const num=(v)=>{ const n=parseFloat(String(v==null?"":v).replace(/,/g,"")); return isFinite(n)?n:0; };
+    const out=[];
+    for(let i=hdr+1;i<rows.length;i++){
+      const r=rows[i]||[]; const code=txt(r[ci.code]);
+      if(!/^\d+$/.test(code)) continue;
+      const name=txt(r[ci.name]); if(!name) continue;
+      out.push({ code:code, name:name,
+        sys:num(r[ci.sys]), cnt:num(r[ci.cnt]), vr:num(r[ci.vr]),
+        cost:num(r[ci.cost]), ttl:num(r[ci.ttl]) });
+    }
+    return out.length ? out : null;
+  }
+  async readVarianceFile(file){
+    const name=(file.name||"").toLowerCase();
+    if(name.endsWith(".csv")){
+      const rows=(await file.text()).split(/\r?\n/).filter(l=>l.length).map(l=>this.splitCsvLine(l));
+      return this.parseVarianceRows(rows);
+    }
+    const sheets = await this.xlsxAllSheets(new Uint8Array(await file.arrayBuffer()));
+    for(const sh of sheets){ const v=this.parseVarianceRows(sh.rows); if(v) return v; }
+    return null;
+  }
+
   /* ---------- organisations ----------
      Everyone in an org has full access to all its stocktakes and past
      stocktakes. Rows in the shared table: o:<id> (record + members),
@@ -2114,7 +2448,7 @@ class Component extends DCLogic {
         /* seed the org's live-stocktake list so the home screen can show it right away */
         SB.get(this.orgActiveKey(orgId)).then(d=>{ this.setState({orgActive:((d&&d.active)||[])}); }, ()=>{});
         this.fetchOrgArchive(orgId).then(arch=>{
-          this.setState({ org:(org&&org.id)?org:this.state.org, orgId:orgId, archive:arch }, ()=>{ this.save({}); this.resumeOwn(uid); });
+          this.setState({ org:(org&&org.id)?org:this.state.org, orgId:orgId, archive:arch, followups:[], fuDeleted:[] }, ()=>{ this.save({}); this.resumeOwn(uid); });
         });
       }, ()=>this.resumeOwn(uid));
     }, ()=>this.resumeOwn(uid));
@@ -2140,7 +2474,7 @@ class Component extends DCLogic {
     /* Carry the creator's own past stocktakes into the new org so their history
        isn't hidden. */
     const seed=(s.archive||[]).slice();
-    this.setState({ org:org, orgId:id, orgActive:mineActive, orgNameInput:"", orgMsg:"", archive:seed },
+    this.setState({ org:org, orgId:id, orgActive:mineActive, orgNameInput:"", orgMsg:"", archive:seed, followups:[], fuDeleted:[] },
       ()=>{ this.save({}); this.pushArchive(s.owner, seed); });
   }
 
@@ -2160,7 +2494,7 @@ class Component extends DCLogic {
         this.cloudPut(this.orgKey(orgId), norg);
         this.cloudPut(this.memberKey(s.owner), {orgId:orgId, ts:Date.now()});
         this.fetchOrgArchive(orgId).then(arch=>{
-          this.setState({ org:norg, orgId:orgId, orgActive:[], orgJoinCode:"", orgBusy:false, orgMsg:"", archive:arch },
+          this.setState({ org:norg, orgId:orgId, orgActive:[], orgJoinCode:"", orgBusy:false, orgMsg:"", archive:arch, followups:[], fuDeleted:[] },
             ()=>{ this.save({}); this.refreshOrg(); });
         });
       }, ()=>this.setState({orgBusy:false, orgMsg:"Couldn't load that organisation."}));
@@ -2175,7 +2509,7 @@ class Component extends DCLogic {
     if(uid) this.cloudPut(this.memberKey(uid), {orgId:null, ts:Date.now()});
     /* Back to the account's own past stocktakes (don't drag org history along). */
     this.fetchPersonalArchive(uid).then(arch=>{
-      this.setState({ org:null, orgId:"", orgActive:[], confirm:null, orgMsg:"" , archive:arch, screen:"org" }, ()=>this.save({}));
+      this.setState({ org:null, orgId:"", orgActive:[], confirm:null, orgMsg:"" , archive:arch, followups:[], fuDeleted:[], screen:"org" }, ()=>this.save({}));
     });
   }
 
@@ -2235,7 +2569,7 @@ class Component extends DCLogic {
   orgSelfRemove(msg){
     const uid=this.state.owner;
     if(uid && SB.on()) SB.put(this.memberKey(uid), {orgId:null, ts:Date.now()}).catch(()=>{});
-    const done=(arch)=>this.setState({ org:null, orgId:"", orgActive:[], orgRename:"", confirm:null, archive:(arch||[]), orgMsg: msg||"" }, ()=>this.save({}));
+    const done=(arch)=>this.setState({ org:null, orgId:"", orgActive:[], orgRename:"", confirm:null, archive:(arch||[]), followups:[], fuDeleted:[], orgMsg: msg||"" }, ()=>this.save({}));
     this.fetchPersonalArchive(uid).then(done, ()=>done(this.state.archive));
   }
   /* Like orgSelfRemove, but surfaces a popup so the member actually sees why
@@ -2246,7 +2580,7 @@ class Component extends DCLogic {
     const uid=this.state.owner;
     if(uid && SB.on()) SB.put(this.memberKey(uid), {orgId:null, ts:Date.now()}).catch(()=>{});
     const dlg={kind:"orgKicked", title:title, note:note, label:"OK", cancel:""};
-    const done=(arch)=>this.setState({ org:null, orgId:"", orgActive:[], orgRename:"", archive:(arch||[]), orgMsg:"", confirm:dlg }, ()=>this.save({}));
+    const done=(arch)=>this.setState({ org:null, orgId:"", orgActive:[], orgRename:"", archive:(arch||[]), followups:[], fuDeleted:[], orgMsg:"", confirm:dlg }, ()=>this.save({}));
     this.fetchPersonalArchive(uid).then(done, ()=>done(this.state.archive));
   }
 
@@ -2356,6 +2690,7 @@ class Component extends DCLogic {
     if(!uid){ this._recoverPending = false; return; }
     if(this.state.reviewSnap!=null){ this._recoverPending = false; return; }
     this.syncArchive(uid);
+    this.syncFollowups(uid);
     if(!SB.on()){ this._recoverPending = false; return; }
     const localOwn = ()=>{ const st=this.state; return !!(st.owner===uid && !st.joined && st.started && (st.locNames||[]).length && st.code); };
     SB.get(this.ownCodeKey(uid)).then(rec=>{
@@ -2490,7 +2825,7 @@ class Component extends DCLogic {
         authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
         me: nm, admin: "", owner: uid,
         title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
-        archive:[], archDeleted:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
+        archive:[], archDeleted:[], followups:[], fuDeleted:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
         cParts:[], sParts:[],
         org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgMsg:"", orgRename:"", pendingOrgUid:"", pendingOrgName:"",
         screen: newSignup ? "profile" : "hub", setupStep:1, menuOpen:false
@@ -2511,7 +2846,7 @@ class Component extends DCLogic {
       authErr:"", authPwInput:"", authEmailInput:"",
       owner:"", me:"", admin:"", joined:false, started:false,
       org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgMsg:"", orgRename:"", pendingOrgUid:"", pendingOrgName:"",
-      archive:[], archDeleted:[],
+      archive:[], archDeleted:[], followups:[], fuDeleted:[],
       title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{},
       hidden:{}, hideEmpty:{}, pushed:{}, removedIds:[], resetAt:0, code:this.makeCode(),
       cParts:[], sParts:[], stkFrom:"hub", navFrom:"", sheet:null, loc:null, screen:"auth"
@@ -2523,7 +2858,7 @@ class Component extends DCLogic {
     this.setState({
       joined:false, viewAs:"admin", menuOpen:false, started:false,
       title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
-      archive:[], removedIds:[], resetAt:0, admin:"", me:"", code:this.makeCode(),
+      archive:[], followups:[], fuDeleted:[], removedIds:[], resetAt:0, admin:"", me:"", code:this.makeCode(),
       joinCode:"", joinName:"", joinNote:"", authView:"join", screen:"auth"
     });
   }
@@ -2560,7 +2895,8 @@ class Component extends DCLogic {
       title:s.title, locNames:s.locNames, master:s.master, counts:s.counts, submitted:s.submitted, subAt:s.subAt,
       me:s.me, code:s.code, dup:s.dup, dupCleared:s.dupCleared, drive:s.drive, pushed:s.pushed, metaAt:this._metaAt,
       hidden:s.hidden, hideEmpty:s.hideEmpty, org:s.org, orgId:s.orgId,
-      admin:s.admin, owner:s.owner, archive:s.archive, archDeleted:s.archDeleted, joined:s.joined, started:s.started, removedIds:s.removedIds, resetAt:s.resetAt
+      admin:s.admin, owner:s.owner, archive:s.archive, archDeleted:s.archDeleted, joined:s.joined, started:s.started, removedIds:s.removedIds, resetAt:s.resetAt,
+      followups:s.followups, fuDeleted:s.fuDeleted
     }, patch);
     try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
     this._localWriteAt = Date.now();
@@ -2581,6 +2917,7 @@ class Component extends DCLogic {
     const s = this.state;
     if(!SB.on() || !s.ready || !s.owner || s.joined || this._recoverPending) return;
     this.syncArchive(s.owner);
+    this.syncFollowups(s.owner);
   }
   /* Keep the signed-in user's access token fresh so owner-only (RLS-protected)
      rows — profile, personal archive, active-stocktake pointer — stay reachable
@@ -3517,6 +3854,9 @@ class Component extends DCLogic {
       darkSegBg: s.theme!=="light" ? "var(--primary)" : "transparent",
       darkSegInk: s.theme!=="light" ? "var(--on-primary)" : "var(--ink-3)",
       isReview: s.screen==="review",
+      isDiscList: s.screen==="disc",
+      isDiscNew: s.screen==="discNew",
+      isDiscView: s.screen==="discView",
       pastCount: (s.archive||[]).length,
       pastRowMeta: (s.archive||[]).length ? (s.archive||[]).length+" finished in "+(s.drive.folder||"My Drive") : "",
       pastEmpty: !(s.archive||[]).length,
@@ -3614,6 +3954,9 @@ class Component extends DCLogic {
       pastCountLabel: ((s.archive||[]).length)+((s.archive||[]).length===1?" finished stocktake":" finished stocktakes"),
       hubPast: ()=>{ if((this.state.archive||[]).length) this.setState({screen:"past", navFrom:"hub"}); },
       hubProfile: ()=>this.setState({screen:"account", pwCur:"", pwNew:"", pwMsg:"", accountMsg:"", navFrom:"hub"}),
+      hubDisc: ()=>this.setState({screen:"disc", discView:null, discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"", discQuery:""}),
+      discCount: (s.followups||[]).length,
+      discCountLabel: ((s.followups||[]).length)+((s.followups||[]).length===1?" follow-up":" follow-ups"),
       hubOrg: ()=>this.openOrg(),
       hubSignOut: ()=>this.signOut(),
       goHub: ()=>this.goHubNav(),
@@ -3907,6 +4250,8 @@ class Component extends DCLogic {
           this.resumeRecover();
         } else if(c.kind==="deletePast"){
           this.deletePast(this.state.pendingDelete);
+        } else if(c.kind==="deleteFollowup"){
+          this.deleteFollowup(this.state.pendingDelete);
         } else if(c.kind==="cancel"){
           /* Cancel = discard the stocktake: clear every count, finalise the cloud
              doc so counters lose access, drop the account pointer, and go back to
@@ -4908,6 +5253,131 @@ class Component extends DCLogic {
         vals.reviewExportCsv = ()=>this.downloadCsv(snap);
       }
     }
+
+    /* ---- discrepancy follow-ups ---- */
+    if(s.screen==="disc" || s.screen==="discNew" || s.screen==="discView"){
+      const money = (n)=>{ const v=Math.round((n||0)*100)/100; const neg=v<0; return (neg?"-$":"$")+Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}); };
+      const statusMeta = { open:{label:"Open", bg:"var(--surface-3)", ink:"var(--ink-3)"},
+        investigating:{label:"Looking into it", bg:"var(--surface-3)", ink:"var(--warn)"},
+        found:{label:"Found", bg:"var(--surface-3)", ink:"var(--ink)"},
+        resolved:{label:"Resolved", bg:"var(--ok-bg)", ink:"var(--ok)"} };
+      const nextStatus = { open:"investigating", investigating:"found", found:"resolved", resolved:"open" };
+      vals.discBack = ()=>this.goHubNav();
+
+      /* ---- list of saved follow-ups ---- */
+      if(s.screen==="disc"){
+        const list = (s.followups||[]).slice().sort((a,b)=>((b.ts||0)-(a.ts||0)));
+        vals.discEmpty = list.length===0;
+        vals.discList = list.map(f=>{
+          const rows = f.rows||[];
+          const resolved = rows.filter(r=>r.status==="resolved").length;
+          const totVar = rows.reduce((a,r)=>a+(r.ttl||0),0);
+          return { id:f.id, title:f.title||"Stocktake", when:f.when||"", source:f.source||"",
+            progress: resolved+" of "+rows.length+" resolved",
+            varLabel: money(totVar), varInk: totVar<0?"var(--bad)":"var(--ink)",
+            open: ()=>this.setState({screen:"discView", discView:f.id, discQuery:""}),
+            del: ()=>this.setState({ pendingDelete:f.id, confirm:{ kind:"deleteFollowup",
+              title:"Delete this follow-up?", note:"“"+(f.title||"This follow-up")+"” and its notes will be removed for everyone. The past stocktake itself is not affected.",
+              label:"Delete", cancel:"Keep it" } }) };
+        });
+        vals.discNew = ()=>this.setState({screen:"discNew", discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:""});
+      }
+
+      /* ---- new follow-up: pick a stocktake, attach a variance report ---- */
+      if(s.screen==="discNew"){
+        const withSnap = (s.archive||[]).filter(a=>a && a.snap).map((a,i)=>Object.assign({},a,{__i:i})).reverse();
+        vals.discNoStk = withSnap.length===0;
+        vals.discHasStk = withSnap.length>0;
+        vals.discHasRecs = !!(s.discNewRecs && s.discNewRecs.length);
+        vals.discHasErr = !!(s.discNewErr||"").length;
+        const forId = s.discNewFor;
+        vals.discPickList = withSnap.map(a=>{ const sel=this.entryId(a)===forId; return {
+          title:a.title||"Stocktake", when:a.when||"", by:a.by?("by "+a.by):"",
+          borderCol: sel?"var(--primary)":"var(--line)",
+          dotBorder: sel?"var(--primary)":"var(--line-2)",
+          dotBg: sel?"var(--primary)":"transparent",
+          pick: ()=>this.setState({discNewFor:this.entryId(a), discNewRecs:null, discNewFile:"", discNewErr:""}) }; });
+        vals.discHasPick = forId!=null;
+        const chosen = (s.archive||[]).find(a=>this.entryId(a)===forId);
+        vals.discPickName = chosen ? (chosen.title||"Stocktake")+(chosen.when?(" · "+chosen.when):"") : "";
+        vals.discFileName = s.discNewFile || "Choose a variance report (.xlsx or .csv)";
+        vals.discHasFile = !!s.discNewFile;
+        vals.discRecCount = s.discNewRecs ? (s.discNewRecs.length+(s.discNewRecs.length===1?" line read":" variance lines read")) : "";
+        vals.discNewErr = s.discNewErr||"";
+        vals.discReady = !!(forId!=null && s.discNewRecs && s.discNewRecs.length);
+        vals.discBuildBg = vals.discReady ? "var(--primary)" : "var(--line)";
+        vals.onDiscFile = (e)=>{
+          const file = e.target.files && e.target.files[0]; e.target.value="";
+          if(!file) return;
+          this.setState({discNewFile:file.name, discNewRecs:null, discNewErr:""});
+          this.readVarianceFile(file).then(recs=>{
+            if(recs && recs.length) this.setState({discNewRecs:recs, discNewErr:""});
+            else this.setState({discNewRecs:null, discNewErr:"Couldn’t find variance columns in that file. It needs an “Item” code column and a “System Qty” / “Count Qty” / “Var” column."});
+          }).catch(()=>this.setState({discNewRecs:null, discNewErr:"Couldn’t read that file."}));
+        };
+        vals.discBuild = ()=>{
+          const st = (this.state.archive||[]).find(a=>this.entryId(a)===this.state.discNewFor);
+          if(st && this.state.discNewRecs && this.state.discNewRecs.length) this.createFollowup(st, this.state.discNewFile, this.state.discNewRecs);
+        };
+        vals.discNewBack = ()=>this.setState({screen:"disc"});
+      }
+
+      /* ---- follow-up detail: variance rows + where each product sits ---- */
+      if(s.screen==="discView"){
+        const fu = (s.followups||[]).find(f=>f.id===s.discView);
+        if(!fu){ vals.discGone = true; vals.discHere = false; vals.discBackToList = ()=>this.setState({screen:"disc", discView:null}); }
+        else {
+          vals.discHere = true;
+          const entry = (s.archive||[]).find(a=>this.entryId(a)===fu.stocktakeId);
+          const snap = entry && entry.snap ? entry.snap : null;
+          const byCode = {}; if(snap) (snap.master||[]).forEach(it=>{ if(it && it.code!=null && it.code!=="") byCode[String(it.code)]=it; });
+          const locMeta = {}; if(snap) this.locsFrom(snap.locNames).forEach(l=>{ locMeta[l.name]=l; });
+          const rows = fu.rows||[];
+          const resolved = rows.filter(r=>r.status==="resolved").length;
+          const totVar = rows.reduce((a,r)=>a+(r.ttl||0),0);
+          vals.discGone = false;
+          vals.discViewTitle = fu.title||"Stocktake";
+          vals.discViewSub = (fu.when?("finished "+fu.when+" · "):"")+(fu.source||"");
+          vals.discViewVar = money(totVar);
+          vals.discViewVarInk = totVar<0?"var(--bad)":"var(--ink)";
+          vals.discViewProgress = resolved+" / "+rows.length+" resolved";
+          vals.discViewMissing = !snap;
+          vals.discViewBack = ()=>this.setState({screen:"disc", discView:null});
+          const q = (s.discQuery||"").trim().toLowerCase();
+          vals.discQuery = s.discQuery||"";
+          vals.onDiscQuery = (e)=>this.setState({discQuery:e.target.value});
+          vals.discQueryHas = !!(s.discQuery||"").length;
+          vals.clearDiscQuery = ()=>this.setState({discQuery:""});
+          const idx = rows.map((r,i)=>({r:r,i:i}));
+          const filtered = q ? idx.filter(o=>((o.r.name||"")+" "+(o.r.code||"")).toLowerCase().indexOf(q)>=0) : idx;
+          filtered.sort((a,b)=>(a.r.ttl||0)-(b.r.ttl||0)); // biggest shortage ($) first
+          vals.discRows = filtered.map(o=>{
+            const r=o.r, i=o.i, it=byCode[String(r.code)];
+            let per = [];
+            if(it){
+              per = this.locsFrom(snap.locNames).map(l=>{ const e=(snap.counts||{})[this.ck(l.name, it.id)]; return {name:l.name, u:e?this.units(it,e):0, abbr:l.abbr, tint:l.tint, tintInk:l.tintInk}; }).filter(x=>x.u>0)
+                .map(x=>({name:x.name, units:this.fmt(x.u), abbr:x.abbr, tint:x.tint, tintInk:x.tintInk}));
+            }
+            const sm = statusMeta[r.status] || statusMeta.open;
+            return {
+              name:r.name, code:r.code,
+              qtyLine: "System "+this.fmt(r.sys)+" · Counted "+this.fmt(r.cnt),
+              varQty: (r.vr>0?"+":"")+this.fmt(r.vr),
+              varMoney: money(r.ttl), short: (r.ttl||0)<0,
+              varInk: (r.ttl||0)<0?"var(--bad)":"var(--ink)",
+              varQtyInk: (r.ttl||0)<0?"var(--bad)":"var(--ink-2)",
+              located: per.length>0, notLocated: !it, zeroLocated: !!it && per.length===0,
+              locs: per, spanLabel: per.length ? (per.length+(per.length===1?" area":" areas")) : "",
+              statusLabel: sm.label, statusBg: sm.bg, statusInk: sm.ink,
+              cycleStatus: ()=>this.patchFollowupItem(fu.id, i, {status: nextStatus[r.status||"open"]||"investigating"}),
+              note: r.note||"",
+              onNote: (e)=>this.patchFollowupItem(fu.id, i, {note:e.target.value}) };
+          });
+          vals.discRowsEmpty = vals.discRows.length===0;
+        }
+      }
+    }
+
     return vals;
   }
 }
