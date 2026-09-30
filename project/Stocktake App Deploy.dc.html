@@ -984,7 +984,12 @@ Sign in with Google
 <div style="padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--card-shadow)">
 <div style="display:flex;align-items:baseline;gap:10px">
 <span style="flex:1;min-width:0;font:600 13px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ ri.name }}</span>
-<span style="flex:none;text-align:right"><span style="font:700 16px/1 'Public Sans',sans-serif;color:{{ ri.varInk }}">{{ ri.varUnits }}</span><span style="display:block;margin-top:2px;font:500 7.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">VAR UNITS</span></span>
+<span style="flex:none;display:flex;align-items:baseline;gap:14px;text-align:right">
+<sc-if value="{{ ri.showTotal }}" hint-placeholder-val="{{ true }}">
+<span style="flex:none"><span style="font:700 16px/1 'Public Sans',sans-serif;color:var(--ink)">{{ ri.newTotalUnits }}</span><span style="display:block;margin-top:2px;font:500 7.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">NEW TOTAL</span></span>
+</sc-if>
+<span style="flex:none"><span style="font:700 16px/1 'Public Sans',sans-serif;color:{{ ri.varInk }}">{{ ri.varUnits }}</span><span style="display:block;margin-top:2px;font:500 7.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">VAR UNITS</span></span>
+</span>
 </div>
 <div style="margin-top:5px;font:400 10px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">{{ ri.qtyLine }}</div>
 <sc-if value="{{ ri.located }}" hint-placeholder-val="{{ true }}">
@@ -3594,12 +3599,14 @@ class Component extends DCLogic {
       const it = findProd(r);
       const per = it ? allLocs.map(l=>{ const e=(snap.counts||{})[this.ck(l.name, it.id)]; const u=e?this.units(it,e):0;
           return {name:l.name, u:u}; }).filter(x=> x.u>0 || !!(r.checks||{})[x.name]) : [];
-      let delta = 0, any = false;
-      per.forEach(p=>{ const c=(r.checks||{})[p.name]; if(!c) return; any = true;
-        if(c.s==="recount") delta += ((c.v||0)-(p.u||0)); });
-      const newCnt = (r.cnt||0)+delta;
+      /* Re-Count = the item's new physical total: each area's current best
+         count (recount value where recounted, otherwise the counted amount),
+         summed. Left blank on rows nobody has checked. */
+      let any = false, newTotal = 0;
+      per.forEach(p=>{ const c=(r.checks||{})[p.name]; if(c) any = true;
+        newTotal += (c && c.s==="recount") ? (c.v||0) : (p.u||0); });
       return [ r.code||"", r.name||"", r.sys||0, r.cnt||0, r.vr||0, r.cost||0, r.ttl||0,
-               any?newCnt:"", r.note||"" ];
+               any?newTotal:"", r.note||"" ];
     });
     const specs = [{ name:"Discrepancies", head:head, body:body, totals:null }];
     const slug = (fu.title||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
@@ -5553,8 +5560,10 @@ class Component extends DCLogic {
             /* Live variance updates as areas are recounted: original variance plus
                the change in units from each recount (recount value − counted here).
                Confirming a count as-is leaves it unchanged. */
-            let delta = 0;
-            o.per.forEach(p=>{ const c=(r.checks||{})[p.name]; if(c && c.s==="recount") delta += ((c.v||0) - (p.u||0)); });
+            let delta = 0, newTotal = 0;
+            o.per.forEach(p=>{ const c=(r.checks||{})[p.name];
+              if(c && c.s==="recount") delta += ((c.v||0) - (p.u||0));
+              newTotal += (c && c.s==="recount") ? (c.v||0) : (p.u||0); });
             const liveVar = (r.vr||0) + delta;
             const short = liveVar<0;
             return {
@@ -5562,6 +5571,7 @@ class Component extends DCLogic {
               qtyLine: "System "+this.fmt(r.sys)+" · Counted "+this.fmt(r.cnt)+" · Orig Var "+(r.vr>0?"+":"")+this.fmt(r.vr),
               varUnits: (liveVar>0?"+":"")+this.fmt(liveVar),
               varInk: short?"var(--bad)":"var(--ink)",
+              newTotalUnits: this.fmt(newTotal), showTotal: o.per.length>0,
               located: pers.length>0, notLocated: !it, zeroLocated: !!it && o.per.length===0,
               locs: pers.map(p=>pillOf(o,p)),
               /* Add a count in an area this item isn't showing yet (a missed spot). */
