@@ -878,10 +878,10 @@ Sign in with Google
 <button onClick="{{ d.open }}" style="display:block;width:100%;text-align:left;padding:14px 14px 10px;background:transparent;border:none;cursor:pointer;font-family:'Public Sans',sans-serif" style-hover="background:var(--surface-2)">
 <div style="display:flex;align-items:baseline;gap:10px">
 <span style="flex:1;min-width:0;font:600 13.5px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ d.title }}</span>
-<span style="flex:none;font:700 13px/1 'Public Sans',sans-serif;color:{{ d.varInk }}">{{ d.varLabel }}</span>
+<span style="flex:none;font:600 10px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-2)">{{ d.progress }}</span>
 </div>
 <div style="margin-top:6px;font:400 10px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ d.when }} · {{ d.source }}</div>
-<div style="margin-top:5px;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-2)">{{ d.progress }}</div>
+<div style="margin-top:5px;font:400 10px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ d.itemsLabel }}</div>
 </button>
 <div style="display:flex;align-items:center;justify-content:flex-end;padding:0 14px 12px">
 <button onClick="{{ d.del }}" style="flex:none;min-height:30px;padding:6px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--bad)">DELETE</button>
@@ -956,8 +956,8 @@ Sign in with Google
 </div>
 </div>
 <div style="margin-top:12px;display:flex;gap:8px">
-<div style="flex:1;padding:11px 12px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)"><div style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">TOTAL VARIANCE</div><div style="margin-top:6px;font:700 17px/1 'Public Sans',sans-serif;color:{{ discViewVarInk }}">{{ discViewVar }}</div></div>
-<div style="flex:1;padding:11px 12px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)"><div style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">PROGRESS</div><div style="margin-top:6px;font:700 17px/1 'Public Sans',sans-serif;color:var(--ink)">{{ discViewProgress }}</div></div>
+<div style="flex:1;padding:11px 12px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)"><div style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">ITEMS</div><div style="margin-top:6px;font:700 17px/1 'Public Sans',sans-serif;color:var(--ink)">{{ discViewItems }}</div></div>
+<div style="flex:1;padding:11px 12px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)"><div style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">FINALISED</div><div style="margin-top:6px;font:700 17px/1 'Public Sans',sans-serif;color:var(--ink)">{{ discViewProgress }}</div></div>
 </div>
 <div style="margin-top:10px;display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:11px">
 <span style="font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">⌕</span>
@@ -983,12 +983,9 @@ Sign in with Google
 <div style="padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--card-shadow)">
 <div style="display:flex;align-items:baseline;gap:10px">
 <span style="flex:1;min-width:0;font:600 13px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ ri.name }}</span>
-<span style="flex:none;font:700 15px/1 'Public Sans',sans-serif;color:{{ ri.varInk }}">{{ ri.varMoney }}</span>
+<span style="flex:none;text-align:right"><span style="font:700 16px/1 'Public Sans',sans-serif;color:{{ ri.varInk }}">{{ ri.varUnits }}</span><span style="display:block;margin-top:2px;font:500 7.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">VAR UNITS</span></span>
 </div>
-<div style="margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-<span style="font:400 10px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">{{ ri.qtyLine }}</span>
-<span style="font:600 10px/1 'Public Sans',sans-serif;color:{{ ri.varQtyInk }}">Var {{ ri.varQty }}</span>
-</div>
+<div style="margin-top:5px;font:400 10px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">{{ ri.qtyLine }}</div>
 <sc-if value="{{ ri.located }}" hint-placeholder-val="{{ true }}">
 <div style="margin-top:10px;display:flex;flex-direction:column;gap:1px;border-top:1px solid var(--surface-3)">
 <sc-for list="{{ ri.locs }}" as="pl" hint-placeholder-count="2">
@@ -999,7 +996,7 @@ Sign in with Google
 <span style="flex:none;font:700 11.5px/1 'Public Sans',sans-serif;color:var(--ok)">✓ {{ pl.units }}</span>
 </sc-if>
 <sc-if value="{{ pl.recount }}" hint-placeholder-val="{{ false }}">
-<span style="flex:none;font:700 11.5px/1 'Public Sans',sans-serif;color:var(--warn)">{{ pl.units }} → {{ pl.newVal }}</span>
+<span style="flex:none;display:flex;align-items:baseline;gap:5px"><span style="font:400 9.5px/1 'Public Sans',sans-serif;color:var(--ink-4);text-decoration:line-through">{{ pl.units }}</span><span style="font:700 11.5px/1 'Public Sans',sans-serif;color:var(--warn)">✓ {{ pl.newVal }}</span></span>
 </sc-if>
 <sc-if value="{{ pl.unchecked }}" hint-placeholder-val="{{ true }}">
 <span style="flex:none;display:flex;align-items:center;gap:6px"><span style="font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink)">{{ pl.units }}</span><span style="font:400 13px/1 'Public Sans',sans-serif;color:var(--ink-4)">›</span></span>
@@ -1015,7 +1012,7 @@ Sign in with Google
 <div style="margin-top:8px;font:400 10.5px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">Item {{ ri.code }} isn’t in this stocktake’s product list.</div>
 </sc-if>
 <div style="margin-top:11px;display:flex;align-items:center;gap:8px">
-<button onClick="{{ ri.cycleStatus }}" style="flex:none;padding:6px 11px;border-radius:999px;background:{{ ri.statusBg }};border:none;cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:{{ ri.statusInk }}">{{ ri.statusLabel }}</button>
+<button onClick="{{ ri.statusTap }}" style="flex:none;padding:7px 12px;border-radius:999px;background:{{ ri.statusBg }};border:none;cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:{{ ri.statusInk }}">{{ ri.statusLabel }}</button>
 <input value="{{ ri.note }}" onChange="{{ ri.onNote }}" placeholder="Add a note…" style="flex:1;min-width:0;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-3);outline:none;font:400 11px/1 'Public Sans',sans-serif;color:var(--ink);box-shadow:var(--inset-shadow)" />
 </div>
 </div>
@@ -5314,12 +5311,23 @@ class Component extends DCLogic {
 
     /* ---- discrepancy follow-ups ---- */
     if(s.screen==="disc" || s.screen==="discNew" || s.screen==="discView"){
-      const money = (n)=>{ const v=Math.round((n||0)*100)/100; const neg=v<0; return (neg?"-$":"$")+Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}); };
-      const statusMeta = { open:{label:"Open", bg:"var(--surface-3)", ink:"var(--ink-3)"},
-        investigating:{label:"Looking into it", bg:"var(--surface-3)", ink:"var(--warn)"},
-        found:{label:"Found", bg:"var(--surface-3)", ink:"var(--ink)"},
-        resolved:{label:"Resolved", bg:"var(--ok-bg)", ink:"var(--ok)"} };
-      const nextStatus = { open:"investigating", investigating:"found", found:"resolved", resolved:"open" };
+      /* Item status is derived from how many of its areas have been checked
+         (confirmed or recounted); "Finalised" is a manual lock set once
+         everything is checked. */
+      const stMeta = {
+        unchecked:  {label:"Unchecked",   bg:"var(--surface-3)", ink:"var(--ink-3)"},
+        inprogress: {label:"In progress", bg:"var(--surface-3)", ink:"var(--warn)"},
+        ready:      {label:"Final check", bg:"var(--primary)",   ink:"var(--on-primary)"},
+        finalised:  {label:"✓ Finalised", bg:"var(--ok-bg)",     ink:"var(--ok)"} };
+      const statusOf = (r, per)=>{
+        const total = per.length;
+        const checked = per.filter(p=> (r.checks||{})[p.name]).length;
+        const allChecked = total>0 ? (checked===total) : true;
+        if(r.final) return "finalised";
+        if(total>0 && checked===0) return "unchecked";
+        if(!allChecked) return "inprogress";
+        return "ready";
+      };
       vals.discBack = ()=>this.goHubNav();
 
       /* ---- list of saved follow-ups ---- */
@@ -5328,11 +5336,10 @@ class Component extends DCLogic {
         vals.discEmpty = list.length===0;
         vals.discList = list.map(f=>{
           const rows = f.rows||[];
-          const resolved = rows.filter(r=>r.status==="resolved").length;
-          const totVar = rows.reduce((a,r)=>a+(r.ttl||0),0);
+          const finalised = rows.filter(r=>r.final).length;
           return { id:f.id, title:f.title||"Stocktake", when:f.when||"", source:f.source||"",
-            progress: resolved+" of "+rows.length+" resolved",
-            varLabel: money(totVar), varInk: totVar<0?"var(--bad)":"var(--ink)",
+            progress: finalised+" of "+rows.length+" finalised",
+            itemsLabel: rows.length+(rows.length===1?" variance item":" variance items"),
             open: ()=>this.setState({screen:"discView", discView:f.id, discQuery:"", discLoc:"", discSheet:null, discRecount:""}),
             del: ()=>this.setState({ pendingDelete:f.id, confirm:{ kind:"deleteFollowup",
               title:"Delete this follow-up?", note:"“"+(f.title||"This follow-up")+"” and its notes will be removed for everyone. The past stocktake itself is not affected.",
@@ -5391,14 +5398,12 @@ class Component extends DCLogic {
           const byCode = {}; if(snap) (snap.master||[]).forEach(it=>{ if(it && it.code!=null && it.code!=="") byCode[String(it.code)]=it; });
           const locMeta = {}; if(snap) this.locsFrom(snap.locNames).forEach(l=>{ locMeta[l.name]=l; });
           const rows = fu.rows||[];
-          const resolved = rows.filter(r=>r.status==="resolved").length;
-          const totVar = rows.reduce((a,r)=>a+(r.ttl||0),0);
+          const finalised = rows.filter(r=>r.final).length;
           vals.discGone = false;
           vals.discViewTitle = fu.title||"Stocktake";
           vals.discViewSub = (fu.when?("finished "+fu.when+" · "):"")+(fu.source||"");
-          vals.discViewVar = money(totVar);
-          vals.discViewVarInk = totVar<0?"var(--bad)":"var(--ink)";
-          vals.discViewProgress = resolved+" / "+rows.length+" resolved";
+          vals.discViewItems = String(rows.length);
+          vals.discViewProgress = finalised+" / "+rows.length;
           vals.discViewMissing = !snap;
           vals.discViewBack = ()=>this.setState({screen:"disc", discView:null});
           const q = (s.discQuery||"").trim().toLowerCase();
@@ -5428,46 +5433,55 @@ class Component extends DCLogic {
           vals.discInLoc = !!activeLoc;
 
           const checkOf = (r, loc)=> (r.checks||{})[loc] || null;
+          const doneRank = (o)=>{
+            if(o.r.final) return 2;                                   // finalised sinks last
+            if(activeLoc) return checkOf(o.r, activeLoc) ? 1 : 0;     // checked-in-area sinks
+            return 0;
+          };
           let list = enriched;
           if(q) list = list.filter(o=>((o.r.name||"")+" "+(o.r.code||"")).toLowerCase().indexOf(q)>=0);
           if(activeLoc) list = list.filter(o=>o.per.some(p=>p.name===activeLoc));
+          list = list.slice().sort((a,b)=>{
+            const ra=doneRank(a), rb=doneRank(b);
+            if(ra!==rb) return ra-rb;
+            return (a.r.vr||0)-(b.r.vr||0);            // biggest shortage (most negative) first
+          });
           if(activeLoc){
-            list = list.slice().sort((a,b)=>{
-              const ga=(checkOf(a.r,activeLoc)&&checkOf(a.r,activeLoc).s==="good")?1:0;
-              const gb=(checkOf(b.r,activeLoc)&&checkOf(b.r,activeLoc).s==="good")?1:0;
-              if(ga!==gb) return ga-gb;               // confirmed-good sink to the bottom
-              return (a.r.ttl||0)-(b.r.ttl||0);        // then biggest shortage first
-            });
-            const good = list.filter(o=>{ const c=checkOf(o.r,activeLoc); return c&&c.s==="good"; }).length;
-            vals.discLocProgress = good+" of "+list.length+" confirmed in "+activeLoc;
+            const checked = list.filter(o=>!!checkOf(o.r, activeLoc)).length;
+            vals.discLocProgress = checked+" of "+list.length+" checked in "+activeLoc;
           } else {
-            list = list.slice().sort((a,b)=>(a.r.ttl||0)-(b.r.ttl||0));
             vals.discLocProgress = "";
           }
 
           const pillOf = (o, p)=>{
             const c = checkOf(o.r, p.name); const st = c ? c.s : "";
+            const locked = !!o.r.final;
             return { name:p.name, abbr:p.abbr, tint:p.tint, tintInk:p.tintInk, units:this.fmt(p.u),
-              good: st==="good", recount: st==="recount", unchecked: !st, newVal: (c&&c.s==="recount")?this.fmt(c.v):"",
-              amtInk: st==="good" ? "var(--ok)" : (st==="recount" ? "var(--warn)" : "var(--ink)"),
+              good: st==="good", recount: st==="recount", unchecked: !st,
+              newVal: (c&&c.s==="recount")?this.fmt(c.v):"",
               rowBg: st==="good" ? "var(--ok-bg)" : (st==="recount" ? "var(--surface-3)" : "transparent"),
-              tap: ()=>this.setState({ discSheet:{fid:fu.id, idx:o.i, loc:p.name, name:o.r.name, amount:p.u}, discRecount:String(this.fmt(p.u)) }) };
+              tap: locked ? ()=>{} : ()=>this.setState({ discSheet:{fid:fu.id, idx:o.i, loc:p.name, name:o.r.name, amount:p.u}, discRecount:String(this.fmt(p.u)) }) };
           };
           vals.discRows = list.map(o=>{
             const r=o.r, it=o.it;
             const pers = activeLoc ? o.per.filter(p=>p.name===activeLoc) : o.per;
-            const sm = statusMeta[r.status] || statusMeta.open;
+            const key = statusOf(r, o.per);
+            const sm = stMeta[key];
+            const short = (r.vr||0)<0;
             return {
               name:r.name, code:r.code,
               qtyLine: "System "+this.fmt(r.sys)+" · Counted "+this.fmt(r.cnt),
-              varQty: (r.vr>0?"+":"")+this.fmt(r.vr),
-              varMoney: money(r.ttl), short: (r.ttl||0)<0,
-              varInk: (r.ttl||0)<0?"var(--bad)":"var(--ink)",
-              varQtyInk: (r.ttl||0)<0?"var(--bad)":"var(--ink-2)",
+              varUnits: (r.vr>0?"+":"")+this.fmt(r.vr),
+              varInk: short?"var(--bad)":"var(--ink)",
               located: pers.length>0, notLocated: !it, zeroLocated: !!it && o.per.length===0,
               locs: pers.map(p=>pillOf(o,p)),
               statusLabel: sm.label, statusBg: sm.bg, statusInk: sm.ink,
-              cycleStatus: ()=>this.patchFollowupItem(fu.id, o.i, {status: nextStatus[r.status||"open"]||"investigating"}),
+              /* Final check is only tappable once everything is checked; tapping it
+                 finalises (locks) the item. A finalised item can be reopened. */
+              statusTap: key==="ready" ? ()=>this.patchFollowupItem(fu.id, o.i, {final:true})
+                       : key==="finalised" ? ()=>this.patchFollowupItem(fu.id, o.i, {final:false})
+                       : ()=>{},
+              finalised: key==="finalised",
               note: r.note||"",
               onNote: (e)=>this.patchFollowupItem(fu.id, o.i, {note:e.target.value}) };
           });
