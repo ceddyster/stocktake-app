@@ -1113,6 +1113,9 @@ Sign in with Google
 <button onClick="{{ beo.remove }}" style="flex:none;min-height:26px;padding:5px 9px;border-radius:7px;background:var(--surface);border:1px solid var(--line);cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-3)">REMOVE</button>
 </div>
 <div style="margin-top:4px;font:400 9.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ beo.sub }}</div>
+<sc-if value="{{ beo.hasPax }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:4px;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-2)">{{ beo.paxLabel }}</div>
+</sc-if>
 <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
 <span style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">EVENT</span>
 <sc-for list="{{ beo.eventChips }}" as="ec" hint-placeholder-count="3">
@@ -1156,6 +1159,21 @@ Sign in with Google
 <div style="display:flex;align-items:baseline;gap:8px;padding:4px 0">
 <span style="flex:1;min-width:0;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">{{ ex.name }}</span>
 <span style="flex:none;font:700 12px/1 'Public Sans',sans-serif;color:var(--ink)">{{ ex.qty }}</span>
+<span style="flex:none;width:44px;text-align:right;font:400 8.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ ex.unit }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ beo.hasManual }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:11px;padding:11px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)">
+<div style="font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">ON CONSUMPTION — SET QTY TO ORDER</div>
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">
+<sc-for list="{{ beo.manual }}" as="mn" hint-placeholder-count="0">
+<div style="display:flex;align-items:center;gap:8px;padding:3px 0">
+<span style="flex:1;min-width:0;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">{{ mn.name }}</span>
+<input value="{{ mn.qtyVal }}" onChange="{{ mn.onQty }}" type="number" inputmode="numeric" style="flex:none;width:56px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" />
+<span style="flex:none;width:44px;text-align:right;font:400 8.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ mn.unit }}</span>
 </div>
 </sc-for>
 </div>
@@ -2741,9 +2759,38 @@ class Component extends DCLogic {
     let event="corporate";
     if(/football club|football/.test(low)) event="football"; else if(/wedding/.test(low)) event="wedding";
     let tables=0, tm; const trx=/(\d+)\s*Banquet round/gi; while((tm=trx.exec(text))) tables+=+tm[1];
-    const hm=text.match(/(\d+)\s*Hours/i); const defHours=hm?+hm[1]:0;
+    const hm=text.match(/(\d+(?:\.\d+)?)\s*Hours/i); const defHours=hm?+hm[1]:0;
+    // event headcount: largest "NNN guests @ $" (the catering number), used to
+    // confirm pax even when the beverage block carries no count of its own.
+    let pax=0, pm; const prx=/(\d+)\s*guests?\s*@\s*\$/gi; while((pm=prx.exec(text))){ if(+pm[1]>pax) pax=+pm[1]; }
     const explicit=[]; const ex=/(?:^|\n)[>\s]*?(\d+)\s*x\s*bottles?\s+of\s+(.+?)\s*(?=\n|$)/gi;
-    let em; while((em=ex.exec(text))) explicit.push({qty:+em[1], name:em[2].trim()});
+    let em; while((em=ex.exec(text))) explicit.push({qty:+em[1], name:em[2].trim(), unit:"bottles"});
+    /* "On consumption" events: cocktails carry planned counts ("100 x
+       Cosmopolitan") captured as fixed items; the open-bar list is priced per
+       bottle with no quantity, captured as editable items seeded at 0. */
+    const manual=[];
+    for(let i=0;i<lines.length;i++){
+      if(!/cocktails?\b.*consumption/i.test(lines[i])) continue;
+      for(let j=i+1;j<lines.length && j<i+40;j++){
+        const ln=lines[j].trim();
+        if(/^\d+\s*@\s*\$.*per event/i.test(ln)) break;
+        if(isHeader(ln)||/^(setup|dietary|technical|health|miscellaneous|billing|beverage notes)\b/i.test(ln)) break;
+        const cm=ln.match(/^(\d+)\s*x\s*([A-Za-z][^@]*?)\s*$/);
+        if(cm && !/banquet|panel|table|chair|pinboard|trestle|stage|step|gate|linen|napkin/i.test(cm[2]))
+          explicit.push({qty:+cm[1], name:cm[2].trim(), unit:"cocktails"});
+      }
+    }
+    for(let i=0;i<lines.length;i++){
+      if(!/beverages?\s+on\s+consumption/i.test(lines[i])) continue;
+      for(let j=i+1;j<lines.length && j<i+40;j++){
+        const ln=lines[j].trim();
+        if(/^\d+\s*@\s*\$.*per event/i.test(ln)) break;
+        if(isHeader(ln)||/^(setup|dietary|technical|health|miscellaneous|billing|beverage notes|beverage supplied|corkage)\b/i.test(ln)) break;
+        if(/per cocktail/i.test(ln)) continue;
+        const bm=ln.match(/^(.+?)\s*@\s*\$[\d,.]+/);
+        if(bm){ const nmx=bm[1].trim(); if(nmx && !/please note|maximum|estimated|spend/i.test(nmx)) manual.push({name:nmx, qty:0, unit:"bottles"}); }
+      }
+    }
     const blocks=[];
     for(let i=0;i<lines.length;i++){
       if(!isHeader(lines[i])) continue;
@@ -2762,7 +2809,11 @@ class Component extends DCLogic {
         i=consumed;
       }
     }
-    return { meta, event, tables, defHours, explicit, blocks };
+    const dedupe=(arr, keyFn)=>{ const seen={}, o=[]; arr.forEach(x=>{ const k=keyFn(x); if(!seen[k]){ seen[k]=1; o.push(x); } }); return o; };
+    const nmz=(x)=>String(x||"").trim().toLowerCase().replace(/\s+/g," ");
+    return { meta, event, tables, defHours, pax,
+      explicit: dedupe(explicit, e=>nmz(e.name)+"|"+e.unit+"|"+e.qty),
+      manual: dedupe(manual, m=>nmz(m.name)), blocks };
   }
   /* Load pdf.js on demand (text PDFs only). */
   ensurePdfJs(){
@@ -2847,9 +2898,10 @@ class Component extends DCLogic {
       const p=this.parseBEO(text);
       const beo={ id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
         name:file.name, beo:p.meta.beo||"", date:p.meta.date||"", booking:p.meta.booking||"",
-        event:p.event, bars:1,
+        event:p.event, bars:1, pax:p.pax||0,
         blocks:(p.blocks||[]).map(bl=>({ tier:bl.tier, pax:bl.pax, tables:p.tables||0, hours:bl.hours||p.defHours||0, rawName:bl.rawName, wines:bl.wines, bevs:bl.bevs })),
-        explicit:(p.explicit||[]).map(e=>({name:e.name, qty:e.qty})) };
+        explicit:(p.explicit||[]).map(e=>({name:e.name, qty:e.qty, unit:e.unit||"bottles"})),
+        manual:(p.manual||[]).map(m=>({name:m.name, qty:m.qty||0, unit:m.unit||"bottles"})) };
       const list=(this.state.barOrders||[]).map(b=> b.id===id ? Object.assign({}, b, {beos:(b.beos||[]).concat([beo]), updatedAt:Date.now()}) : b);
       return new Promise(res=>this.setState({barOrders:list}, ()=>{ this.save({}); res(); }));
     })), Promise.resolve());
@@ -2868,10 +2920,23 @@ class Component extends DCLogic {
           add(l.name, l.qty, unit);
         });
       });
-      (beo.explicit||[]).forEach(e=> add(e.name, e.qty, "bottles"));
+      (beo.explicit||[]).forEach(e=> add(e.name, e.qty, e.unit||"bottles"));
+      (beo.manual||[]).forEach(m=> add(m.name, +m.qty||0, m.unit||"bottles"));
     });
     const items=order.map(k=>tot[k]).sort((a,b)=>b.qty-a.qty);
     return { items };
+  }
+  boPatchManual(id, beoIdx, manIdx, patch){
+    const list=(this.state.barOrders||[]).map(b=>{
+      if(b.id!==id) return b;
+      const beos=(b.beos||[]).map((e,i)=>{
+        if(i!==beoIdx) return e;
+        const manual=(e.manual||[]).map((m,k)=> k===manIdx ? Object.assign({}, m, patch) : m);
+        return Object.assign({}, e, {manual:manual});
+      });
+      return Object.assign({}, b, {beos:beos, updatedAt:Date.now()});
+    });
+    this.boSave(list);
   }
   downloadBarOrderXlsx(bo){
     if(!bo) return false;
@@ -2887,7 +2952,8 @@ class Component extends DCLogic {
       (beo.blocks||[]).forEach(bl=>{
         this.boCompute(bl, beo).forEach(l=> bbody.push([ tag, bl.rawName||bl.tier, bl.pax||0, l.name, Math.round(l.qty*100)/100, /lemon|lime/i.test(l.role)?"kg":"bottles" ]));
       });
-      (beo.explicit||[]).forEach(e=> bbody.push([ tag, "Listed in BEO", "", e.name, e.qty, "bottles" ]));
+      (beo.explicit||[]).forEach(e=> bbody.push([ tag, "Listed in BEO", "", e.name, e.qty, e.unit||"bottles" ]));
+      (beo.manual||[]).forEach(m=> bbody.push([ tag, "On consumption", beo.pax||"", m.name, +m.qty||0, m.unit||"bottles" ]));
     });
     if(bbody.length) specs.push({ name:"By BEO", head:bhead, body:bbody, totals:null });
     const slug=(bo.title||"bar-order").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
@@ -6094,13 +6160,16 @@ class Component extends DCLogic {
                 hours:String(bl.hours||0), onHours:(e)=>this.boPatchBlock(bo.id,bi,ki,{hours:parseFloat(e.target.value)||0}),
                 lines:lines };
             });
-            const explicit = (beo.explicit||[]).map(e=>({ name:e.name, qty:this.fmt(e.qty) }));
+            const explicit = (beo.explicit||[]).map(e=>({ name:e.name, qty:this.fmt(e.qty), unit:e.unit||"bottles" }));
+            const manual = (beo.manual||[]).map((m,mi)=>({ name:m.name, unit:m.unit||"bottles",
+              qtyVal:String(m.qty||0), onQty:(e)=>this.boPatchManual(bo.id,bi,mi,{qty:parseFloat(e.target.value)||0}) }));
             return { title: (beo.beo?("#"+beo.beo+" "):"")+(beo.booking||beo.name||"BEO"),
               sub: [beo.date, beo.name].filter(Boolean).join(" · "),
+              paxLabel: beo.pax?("Event pax: "+this.fmt(beo.pax)):"", hasPax: !!beo.pax,
               barsVal:String(beo.bars||0), onBars:(e)=>this.boPatchBeo(bo.id,bi,{bars:parseFloat(e.target.value)||0}),
-              eventChips:evChips, blocks:blocks, explicit:explicit,
-              hasBlocks:blocks.length>0, hasExplicit:explicit.length>0,
-              nothing: blocks.length===0 && explicit.length===0,
+              eventChips:evChips, blocks:blocks, explicit:explicit, manual:manual,
+              hasBlocks:blocks.length>0, hasExplicit:explicit.length>0, hasManual:manual.length>0,
+              nothing: blocks.length===0 && explicit.length===0 && manual.length===0,
               remove: ()=>this.boRemoveBeo(bo.id,bi) };
           });
           vals.boBeosEmpty = (bo.beos||[]).length===0;
