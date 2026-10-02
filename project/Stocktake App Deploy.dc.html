@@ -216,6 +216,11 @@ Sign in with Google
 <span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">Discrepancies</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Follow up variances against a past stocktake. {{ discCountLabel }}.</span></span>
 <span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
 </button>
+<button onClick="{{ hubBar }}" style="width:100%;display:flex;align-items:center;gap:13px;padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
+<span style="width:36px;height:36px;flex:none;border-radius:10px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 15px/1 'Public Sans',sans-serif;color:var(--ink)">🍺</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">Bar Ordering</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Build a beverage order from event BEOs. {{ barCountLabel }}.</span></span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
+</button>
 <button onClick="{{ hubProfile }}" style="width:100%;display:flex;align-items:center;gap:13px;padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
 <span style="width:36px;height:36px;flex:none;border-radius:10px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 16px/1 'Public Sans',sans-serif;color:var(--ink)">☺</span>
 <span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">Profile</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Change your name or password.</span></span>
@@ -1033,6 +1038,160 @@ Sign in with Google
 <p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">Nothing in this variance report matches that search.</p>
 </div>
 </sc-if>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBoList }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 12px;background:var(--bg);border-bottom:1px solid var(--line)">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ boBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink)">Bar Ordering</div>
+<div style="margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3)">Build a beverage order from event BEOs</div>
+</div>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding:16px 16px 44px;display:flex;flex-direction:column;gap:9px">
+<button onClick="{{ boNew }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--primary);border:none;border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif">
+<span style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;font:600 16px/1 'Public Sans',sans-serif;color:var(--ink)">＋</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--on-primary)">New bar order</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--surface)">Upload event BEOs and total up what to order.</span></span>
+</button>
+<sc-if value="{{ boEmpty }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:6px;padding:18px 16px;background:var(--surface);border:1px dashed var(--line-2);border-radius:14px">
+<div style="font:600 13.5px/1.3 'Public Sans',sans-serif;color:var(--ink)">No bar orders yet</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">Start one, drop in your event BEO PDFs, and the app works out the beverages each event needs and totals them into one order.</p>
+</div>
+</sc-if>
+<sc-for list="{{ boList }}" as="o" hint-placeholder-count="0">
+<div style="flex:none;background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow);overflow:hidden">
+<button onClick="{{ o.open }}" style="display:block;width:100%;text-align:left;padding:14px 14px 10px;background:transparent;border:none;cursor:pointer;font-family:'Public Sans',sans-serif" style-hover="background:var(--surface-2)">
+<div style="font:600 13.5px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ o.title }}</div>
+<div style="margin-top:6px;font:400 10px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ o.meta }}</div>
+</button>
+<div style="display:flex;align-items:center;justify-content:flex-end;padding:0 14px 12px">
+<button onClick="{{ o.del }}" style="flex:none;min-height:30px;padding:6px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--bad)">DELETE</button>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBoView }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<sc-if value="{{ boHere }}" hint-placeholder-val="{{ true }}">
+<div style="padding:12px 16px 12px;background:var(--bg);border-bottom:1px solid var(--line)">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ boViewBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<input value="{{ boTitle }}" onChange="{{ onBoTitle }}" placeholder="Bar order" style="flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface);outline:none;font:600 14px/1.1 'Public Sans',sans-serif;color:var(--ink)" />
+<button onClick="{{ boExport }}" aria-label="Export to Excel" style="flex:none;height:32px;padding:0 11px;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:600 10.5px/1 'Public Sans',sans-serif;color:var(--ink-2)"><span style="font:400 13px/1 'Public Sans',sans-serif">⤓</span>Excel</button>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding:14px 16px 44px;display:flex;flex-direction:column;gap:11px">
+<label style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--primary);border:none;border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif">
+<span style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;font:600 16px/1 'Public Sans',sans-serif;color:var(--ink)">＋</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--on-primary)">Add BEO PDFs</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--surface)">Select one or more event BEOs to read.</span></span>
+<input type="file" accept="application/pdf,.pdf" multiple onChange="{{ onBoFiles }}" style="display:none" />
+</label>
+<sc-if value="{{ boBusy }}" hint-placeholder-val="{{ false }}">
+<div style="padding:11px 13px;background:var(--surface-2);border-radius:10px;font:600 11px/1.3 'Public Sans',sans-serif;color:var(--ink-2)">Reading PDFs…</div>
+</sc-if>
+<sc-if value="{{ boHasErr }}" hint-placeholder-val="{{ false }}">
+<div style="padding:11px 13px;background:var(--surface);border:1px solid var(--bad);border-radius:10px;font:400 10.5px/1.5 'Public Sans',sans-serif;color:var(--bad);text-wrap:pretty">{{ boErr }}</div>
+</sc-if>
+<sc-if value="{{ boBeosEmpty }}" hint-placeholder-val="{{ true }}">
+<div style="padding:16px;background:var(--surface);border:1px dashed var(--line-2);border-radius:13px;font:400 11px/1.6 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">No BEOs added yet. Add one or more BEO PDFs — the app detects each beverage package, pax and tables, and you can adjust any of it before it totals.</div>
+</sc-if>
+
+<sc-for list="{{ boBeos }}" as="beo" hint-placeholder-count="0">
+<div style="background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow);padding:13px 14px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="flex:1;min-width:0;font:600 13px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ beo.title }}</span>
+<button onClick="{{ beo.remove }}" style="flex:none;min-height:26px;padding:5px 9px;border-radius:7px;background:var(--surface);border:1px solid var(--line);cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-3)">REMOVE</button>
+</div>
+<div style="margin-top:4px;font:400 9.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ beo.sub }}</div>
+<div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">EVENT</span>
+<sc-for list="{{ beo.eventChips }}" as="ec" hint-placeholder-count="3">
+<button onClick="{{ ec.pick }}" style="flex:none;padding:6px 11px;border-radius:999px;background:{{ ec.bg }};border:1px solid {{ ec.border }};cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;color:{{ ec.ink }};white-space:nowrap">{{ ec.label }}</button>
+</sc-for>
+<span style="margin-left:auto;display:flex;align-items:center;gap:6px"><span style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">BARS</span><input value="{{ beo.barsVal }}" onChange="{{ beo.onBars }}" type="number" inputmode="numeric" style="width:46px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
+</div>
+
+<sc-for list="{{ beo.blocks }}" as="bl" hint-placeholder-count="0">
+<div style="margin-top:11px;padding:11px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)">
+<div style="font:600 11.5px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ bl.title }}</div>
+<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ bl.tierChips }}" as="tc" hint-placeholder-count="4">
+<button onClick="{{ tc.pick }}" style="flex:none;padding:6px 10px;border-radius:999px;background:{{ tc.bg }};border:1px solid {{ tc.border }};cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;color:{{ tc.ink }};white-space:nowrap">{{ tc.label }}</button>
+</sc-for>
+</div>
+<div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap">
+<span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">PAX</span><input value="{{ bl.pax }}" onChange="{{ bl.onPax }}" type="number" inputmode="numeric" style="width:58px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
+<span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">TABLES</span><input value="{{ bl.tables }}" onChange="{{ bl.onTables }}" type="number" inputmode="numeric" style="width:58px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
+<sc-if value="{{ bl.isCocktail }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">HOURS</span><input value="{{ bl.hours }}" onChange="{{ bl.onHours }}" type="number" inputmode="numeric" style="width:50px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
+</sc-if>
+</div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:1px;border-top:1px solid var(--line)">
+<sc-for list="{{ bl.lines }}" as="ln" hint-placeholder-count="7">
+<div style="display:flex;align-items:baseline;gap:8px;padding:5px 0">
+<span style="flex:none;width:86px;font:500 9px/1.2 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-3)">{{ ln.role }}</span>
+<span style="flex:1;min-width:0;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ln.name }}</span>
+<span style="flex:none;font:700 12px/1 'Public Sans',sans-serif;color:var(--ink)">{{ ln.qty }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+
+<sc-if value="{{ beo.hasExplicit }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:11px;padding:11px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)">
+<div style="font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">LISTED IN BEO (used as-is)</div>
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:1px">
+<sc-for list="{{ beo.explicit }}" as="ex" hint-placeholder-count="0">
+<div style="display:flex;align-items:baseline;gap:8px;padding:4px 0">
+<span style="flex:1;min-width:0;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">{{ ex.name }}</span>
+<span style="flex:none;font:700 12px/1 'Public Sans',sans-serif;color:var(--ink)">{{ ex.qty }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ beo.nothing }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:10px;font:400 10px/1.5 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">No beverage package or bottle list found in this BEO. You can add a count another way, or remove it.</div>
+</sc-if>
+</div>
+</sc-for>
+
+<sc-if value="{{ boHasTotals }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:4px;background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow);overflow:hidden">
+<div style="padding:12px 14px;background:var(--primary)">
+<div style="font:700 12.5px/1 'Public Sans',sans-serif;color:var(--on-primary);letter-spacing:.02em">ORDER TOTAL</div>
+<div style="margin-top:3px;font:400 9.5px/1 'Public Sans',sans-serif;color:var(--surface)">Every BEO combined, per item</div>
+</div>
+<div style="padding:6px 14px 12px">
+<sc-for list="{{ boTotals }}" as="t" hint-placeholder-count="0">
+<div style="display:flex;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--surface-3)">
+<span style="flex:1;min-width:0;font:500 11px/1.3 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ t.name }}</span>
+<span style="flex:none;font:700 13px/1 'Public Sans',sans-serif;color:var(--ink)">{{ t.qty }}</span>
+<span style="flex:none;width:44px;text-align:right;font:400 9px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ t.unit }}</span>
+</div>
+</sc-for>
+<button onClick="{{ boExport }}" style="margin-top:12px;width:100%;min-height:44px;padding:13px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--ink)">⤓ Export order to Excel</button>
+</div>
+</div>
+</sc-if>
+<button onClick="{{ boDel }}" style="margin-top:8px;align-self:flex-start;min-height:30px;padding:7px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--bad)">DELETE ORDER</button>
+</div>
+</sc-if>
+<sc-if value="{{ boGone }}" hint-placeholder-val="{{ false }}">
+<div style="padding:40px 20px;text-align:center">
+<div style="font:600 14px/1.3 'Public Sans',sans-serif;color:var(--ink)">This order was removed.</div>
+<button onClick="{{ boViewBack }}" style="margin-top:14px;padding:10px 18px;border-radius:10px;background:var(--primary);border:none;cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--on-primary)">Back to bar orders</button>
 </div>
 </sc-if>
 </div>
@@ -2086,6 +2245,7 @@ class Component extends DCLogic {
       buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, dupCleared:{}, subOpen:false,
       overwriteWarn:null, overwriteBy:"", overwriteOk:{}, reviewSnap:null, reviewLoc:null, reviewQuery:"",
       followups:[], fuDeleted:[], discView:null, discQuery:"", discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"",
+      barOrders:[], boView:null, boBusy:false, boErr:"",
       discLoc:"", discSheet:null, discRecount:"",
       mQuery:"", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
@@ -2152,6 +2312,7 @@ class Component extends DCLogic {
         org: saved.org||null, orgId: saved.orgId||"",
         removedIds: saved.removedIds||[], resetAt: saved.resetAt||0,
         followups: saved.followups||[], fuDeleted: saved.fuDeleted||[],
+        barOrders: saved.barOrders||[],
         authed: authed, authEmail: (sess&&sess.email)||"",
         screen: gate ? "auth" : (joined ? "home" : "hub"), ready:true
       }, ()=>this.save({}));
@@ -2493,6 +2654,246 @@ class Component extends DCLogic {
     const sheets = await this.xlsxAllSheets(new Uint8Array(await file.arrayBuffer()));
     for(const sh of sheets){ const v=this.parseVarianceRows(sh.rows); if(v) return v; }
     return null;
+  }
+
+  /* ======================= Bar Ordering =======================
+     Reads Crown "EVENT ORDER" (BEO) PDFs, works out the beverages each event
+     needs, totals them across every BEO, and exports an order sheet.
+     Two kinds of BEO are handled (hybrid):
+       • Package BEO  – names a beverage package ("Crown Reserve Package",
+         "Crown Deluxe Package", …) + a pax count; quantities are derived with
+         the Bar Order spreadsheet formulas (Parameters + per-tier wines).
+       • Explicit BEO – lists exact bottle counts ("540 x bottles of X");
+         those are used as-is.
+     Everything the parser guesses (tier, pax, tables, event, bars, hours) is
+     editable per block, because BEO wording/layout varies. */
+  boData(){
+    return {
+      // Parameters sheet – consumption rates
+      params: {
+        beerPremier:{football:5, corporate:3, wedding:3},  // per person
+        beerLight:  {football:3, corporate:2, wedding:2},  // per table
+        redWine:2.5, whiteWine:2.5, sparkling:4,            // per table
+        lemonsKg:3, limesKg:2 },                            // per bar
+      // Crown Reserve tiers -> signature wine names
+      tiers: {
+        cr1:{label:"Crown Reserve", sparkling:"Woodbrook Vineyards NV Brut Cuvee", white:"Brigade Block Semillon Sauvignon Blanc", red:"Abilene Shiraz"},
+        cr2:{label:"Crown Deluxe",  sparkling:"Veuve Tailhan Blanc de Blancs Brut NV", white:"Vasse Felix Filius Sauvignon Blanc Semillon", red:"Vasse Felix Filius Shiraz"},
+        cr3:{label:"Crown Reserve Three", sparkling:"Leeuwin Estate Brut", white:"Leeuwin Estate Art Series Sauv Blanc", red:"Leeuwin Estate Art Series Shiraz"} },
+      // Cocktail sheet parameters: glasses/person, glasses/bottle, assumption
+      cocktail: [
+        {name:"Sparkling Wine", gpp:2, gpb:5, assume:0.3},
+        {name:"Red Wine 1", gpp:2, gpb:5, assume:0.15}, {name:"Red Wine 2", gpp:2, gpb:5, assume:0.1},
+        {name:"White Wine 1", gpp:2, gpb:5, assume:0.2}, {name:"White Wine 2", gpp:2, gpb:5, assume:0.15},
+        {name:"Beer 1", gpp:3, gpb:1, assume:0.3}, {name:"Beer 2", gpp:3, gpb:1, assume:0.25},
+        {name:"Light Beer 1", gpp:2, gpb:1, assume:0.1} ]
+    };
+  }
+  boTierOptions(){ const d=this.boData(); return [
+    {key:"cr1", label:d.tiers.cr1.label}, {key:"cr2", label:d.tiers.cr2.label},
+    {key:"cr3", label:d.tiers.cr3.label}, {key:"cocktail", label:"Cocktail"} ]; }
+  boEventOptions(){ return [ {key:"football", label:"Football"}, {key:"corporate", label:"Corporate"}, {key:"wedding", label:"Wedding"} ]; }
+
+  /* Compute one block's requirement. Returns [{name, role, qty}]. */
+  boCompute(block, beo){
+    const d=this.boData();
+    const pax=+block.pax||0, tables=+block.tables||0, bars=+(beo.bars)||0, hours=+block.hours||0;
+    const ev=beo.event||"corporate";
+    if(block.tier==="cocktail"){
+      const out=d.cocktail.map(c=>({name:c.name, role:c.name, qty:((pax*hours*c.gpp)/c.gpb)*c.assume}));
+      out.push({name:"Lemons (kg)", role:"Lemons", qty:2*bars});
+      out.push({name:"Limes (kg)", role:"Limes", qty:1*bars});
+      return out;
+    }
+    const t=d.tiers[block.tier]||d.tiers.cr1;
+    return [
+      {name:t.sparkling, role:"Sparkling", qty:d.params.sparkling*tables},
+      {name:t.white, role:"White Wine", qty:tables*d.params.whiteWine},
+      {name:t.red, role:"Red Wine", qty:tables*d.params.redWine},
+      {name:"Premier Beer", role:"Premier Beer", qty:pax*d.params.beerPremier[ev]},
+      {name:"Light Beer", role:"Light Beer", qty:tables*d.params.beerLight[ev]},
+      {name:"Lemons (kg)", role:"Lemons", qty:d.params.lemonsKg*bars},
+      {name:"Limes (kg)", role:"Limes", qty:bars*d.params.limesKg} ];
+  }
+  boDetectTier(name, wines){
+    const n=(name||"").toLowerCase(), w=(wines||[]).join(" ").toLowerCase();
+    if(n.includes("cocktail")) return "cocktail";
+    if(w.includes("leeuwin")||n.includes("three")||n.includes("prestige")) return "cr3";
+    if(n.includes("deluxe")||w.includes("vasse felix")||w.includes("veuve tailhan")) return "cr2";
+    return "cr1";
+  }
+  parseBEO(text){
+    const WINEish=/brut|cuvee|shiraz|sauvignon|semillon|sbs|merlot|chardonnay|\bcab\b|tempranillo|rose|blanc|veuve|woodbrook|abilene|vasse|leeuwin/i;
+    const BEERish=/corona|hahn|heineken|asahi|peroni|carlton|crown lager|pirate|great northern|brookvale|good tides|hard rated|pure blonde|little creatures|james squire|rogers|super dry|premium light|soft drink|orange juice|\bpepsi\b|lemonade|\bsolo\b|tonic|ginger ale|soda water|cider|beer/i;
+    const isHeader=(h)=>{
+      if(/corkage/i.test(h)) return false;
+      if(/crown reserve (one|two|three)/i.test(h)) return true;
+      if(/\bpackage\b/i.test(h) && /(reserve|deluxe|prestige|cocktail|beverage|crown)/i.test(h)) return true;
+      if(/cocktail\s+(package|reception)/i.test(h)) return true;
+      return false;
+    };
+    const lines=String(text||"").split(/\r?\n/).map(l=>l.replace(/\s+$/,""));
+    const meta={};
+    const m1=text.match(/BEO#:\s*(\d+)/); if(m1) meta.beo=m1[1];
+    const md=text.match(/\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)[a-z]*\s+\d{1,2}\s+[A-Z][a-z]{2}\s+\d{4}/); if(md) meta.date=md[0];
+    const bn=text.match(/Booking Name:\s*\n?\s*(.+)/); if(bn) meta.booking=bn[1].trim();
+    const low=text.toLowerCase();
+    let event="corporate";
+    if(/football club|football/.test(low)) event="football"; else if(/wedding/.test(low)) event="wedding";
+    let tables=0, tm; const trx=/(\d+)\s*Banquet round/gi; while((tm=trx.exec(text))) tables+=+tm[1];
+    const hm=text.match(/(\d+)\s*Hours/i); const defHours=hm?+hm[1]:0;
+    const explicit=[]; const ex=/(?:^|\n)[>\s]*?(\d+)\s*x\s*bottles?\s+of\s+(.+?)\s*(?=\n|$)/gi;
+    let em; while((em=ex.exec(text))) explicit.push({qty:+em[1], name:em[2].trim()});
+    const blocks=[];
+    for(let i=0;i<lines.length;i++){
+      if(!isHeader(lines[i])) continue;
+      const wines=[], bevs=[]; let pax=0, consumed=i;
+      for(let j=i+1;j<lines.length && j<i+90;j++){
+        const ln=lines[j].trim();
+        const gm=ln.match(/^(\d+)\s*guests?\s*@\s*\$/i);
+        if(gm){ pax=+gm[1]; consumed=j; break; }
+        if(isHeader(ln)) break;
+        if(!ln||/^~+$/.test(ln)) continue;
+        if(WINEish.test(ln)){ wines.push(ln); bevs.push(ln); } else if(BEERish.test(ln)) bevs.push(ln);
+      }
+      if(pax>0){
+        const hh=(lines[i].match(/-\s*(\d+)\s*Hours/i)||[])[1];
+        blocks.push({ rawName:lines[i].trim(), tier:this.boDetectTier(lines[i],wines), pax:pax, hours:hh?+hh:defHours, wines:wines, bevs:bevs });
+        i=consumed;
+      }
+    }
+    return { meta, event, tables, defHours, explicit, blocks };
+  }
+  /* Load pdf.js on demand (text PDFs only). */
+  ensurePdfJs(){
+    if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if(this._pdfP) return this._pdfP;
+    const base="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+    this._pdfP=new Promise((res,rej)=>{
+      const sc=document.createElement("script"); sc.src=base+"pdf.min.js";
+      sc.onload=()=>{ try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc=base+"pdf.worker.min.js"; }catch(e){} res(window.pdfjsLib); };
+      sc.onerror=()=>{ this._pdfP=null; rej(new Error("Couldn’t load the PDF reader. Check your connection and try again.")); };
+      document.head.appendChild(sc);
+    });
+    return this._pdfP;
+  }
+  async boExtractText(file){
+    const lib=await this.ensurePdfJs();
+    const data=new Uint8Array(await file.arrayBuffer());
+    const pdf=await lib.getDocument({data:data}).promise;
+    let out="";
+    for(let p=1;p<=pdf.numPages;p++){
+      const page=await pdf.getPage(p);
+      const tc=await page.getTextContent();
+      for(const it of tc.items){ out+=it.str; out+= it.hasEOL ? "\n" : " "; }
+      out+="\n";
+    }
+    return out;
+  }
+  boSave(list){
+    const l=list||this.state.barOrders||[];
+    this.setState({barOrders:l}, ()=>this.save({}));
+  }
+  boNew(){
+    const now=Date.now();
+    const id="bo"+now.toString(36)+Math.random().toString(36).slice(2,6);
+    const bo={ id:id, ts:now, updatedAt:now, title:"Bar order", beos:[] };
+    const list=(this.state.barOrders||[]).concat([bo]);
+    this.setState({barOrders:list, boView:id, boErr:""}, ()=>this.save({}));
+  }
+  boDelete(id){
+    if(!id){ this.setState({confirm:null, pendingDelete:null}); return; }
+    const list=(this.state.barOrders||[]).filter(b=>b.id!==id);
+    this.setState({barOrders:list, confirm:null, pendingDelete:null, boView:null, screen:"bo"}, ()=>this.save({}));
+  }
+  boPatch(id, patch){
+    const list=(this.state.barOrders||[]).map(b=> b.id===id ? Object.assign({}, b, patch, {updatedAt:Date.now()}) : b);
+    this.boSave(list);
+  }
+  boPatchBeo(id, beoIdx, patch){
+    const list=(this.state.barOrders||[]).map(b=>{
+      if(b.id!==id) return b;
+      const beos=(b.beos||[]).map((e,i)=> i===beoIdx ? Object.assign({}, e, patch) : e);
+      return Object.assign({}, b, {beos:beos, updatedAt:Date.now()});
+    });
+    this.boSave(list);
+  }
+  boPatchBlock(id, beoIdx, blkIdx, patch){
+    const list=(this.state.barOrders||[]).map(b=>{
+      if(b.id!==id) return b;
+      const beos=(b.beos||[]).map((e,i)=>{
+        if(i!==beoIdx) return e;
+        const blocks=(e.blocks||[]).map((bl,k)=> k===blkIdx ? Object.assign({}, bl, patch) : bl);
+        return Object.assign({}, e, {blocks:blocks});
+      });
+      return Object.assign({}, b, {beos:beos, updatedAt:Date.now()});
+    });
+    this.boSave(list);
+  }
+  boRemoveBeo(id, beoIdx){
+    const list=(this.state.barOrders||[]).map(b=>{
+      if(b.id!==id) return b;
+      return Object.assign({}, b, {beos:(b.beos||[]).filter((e,i)=>i!==beoIdx), updatedAt:Date.now()});
+    });
+    this.boSave(list);
+  }
+  /* Parse dropped/selected BEO PDFs and append them to the open order. */
+  boAddFiles(fileList){
+    const id=this.state.boView; if(!id) return;
+    const files=Array.prototype.slice.call(fileList||[]).filter(f=>/\.pdf$/i.test(f.name||""));
+    if(!files.length) return;
+    this.setState({boBusy:true, boErr:""});
+    const run=files.reduce((chain, file)=> chain.then(()=> this.boExtractText(file).then(text=>{
+      const p=this.parseBEO(text);
+      const beo={ id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+        name:file.name, beo:p.meta.beo||"", date:p.meta.date||"", booking:p.meta.booking||"",
+        event:p.event, bars:1,
+        blocks:(p.blocks||[]).map(bl=>({ tier:bl.tier, pax:bl.pax, tables:p.tables||0, hours:bl.hours||p.defHours||0, rawName:bl.rawName, wines:bl.wines, bevs:bl.bevs })),
+        explicit:(p.explicit||[]).map(e=>({name:e.name, qty:e.qty})) };
+      const list=(this.state.barOrders||[]).map(b=> b.id===id ? Object.assign({}, b, {beos:(b.beos||[]).concat([beo]), updatedAt:Date.now()}) : b);
+      return new Promise(res=>this.setState({barOrders:list}, ()=>{ this.save({}); res(); }));
+    })), Promise.resolve());
+    run.then(()=>this.setState({boBusy:false}),
+             err=>this.setState({boBusy:false, boErr:(err&&err.message)||"Couldn’t read that PDF."}));
+  }
+  /* Aggregate an order into per-item totals. Returns {items:[{name,qty,unit}], perBeo:[...]}. */
+  boAggregate(bo){
+    const norm=(s)=>String(s||"").trim().toLowerCase().replace(/\s+/g," ");
+    const tot={}; const order=[];
+    const add=(name, qty, unit)=>{ const k=norm(name); if(!tot[k]){ tot[k]={name:name, qty:0, unit:unit||"bottles"}; order.push(k); } tot[k].qty+=qty; };
+    (bo.beos||[]).forEach(beo=>{
+      (beo.blocks||[]).forEach(bl=>{
+        this.boCompute(bl, beo).forEach(l=>{
+          const unit=/lemon|lime/i.test(l.role)?"kg":"bottles";
+          add(l.name, l.qty, unit);
+        });
+      });
+      (beo.explicit||[]).forEach(e=> add(e.name, e.qty, "bottles"));
+    });
+    const items=order.map(k=>tot[k]).sort((a,b)=>b.qty-a.qty);
+    return { items };
+  }
+  downloadBarOrderXlsx(bo){
+    if(!bo) return false;
+    const agg=this.boAggregate(bo);
+    const head=["Item","Quantity","Unit"];
+    const body=agg.items.map(it=>[ it.name, Math.round(it.qty*100)/100, it.unit ]);
+    const specs=[{ name:"Order Total", head:head, body:body, totals:null }];
+    // per-BEO breakdown sheet
+    const bhead=["BEO","Event / Package","Pax","Item","Quantity","Unit"];
+    const bbody=[];
+    (bo.beos||[]).forEach(beo=>{
+      const tag=(beo.beo?("#"+beo.beo):"")+(beo.booking?(" "+beo.booking):"");
+      (beo.blocks||[]).forEach(bl=>{
+        this.boCompute(bl, beo).forEach(l=> bbody.push([ tag, bl.rawName||bl.tier, bl.pax||0, l.name, Math.round(l.qty*100)/100, /lemon|lime/i.test(l.role)?"kg":"bottles" ]));
+      });
+      (beo.explicit||[]).forEach(e=> bbody.push([ tag, "Listed in BEO", "", e.name, e.qty, "bottles" ]));
+    });
+    if(bbody.length) specs.push({ name:"By BEO", head:bhead, body:bbody, totals:null });
+    const slug=(bo.title||"bar-order").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
+    const d=new Date();
+    const stamp=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    return this.xlsxFromSpecs(specs, (slug||"bar-order")+"-"+stamp+".xlsx");
   }
 
   /* ---------- organisations ----------
@@ -2979,7 +3380,7 @@ class Component extends DCLogic {
       me:s.me, code:s.code, dup:s.dup, dupCleared:s.dupCleared, drive:s.drive, pushed:s.pushed, metaAt:this._metaAt,
       hidden:s.hidden, hideEmpty:s.hideEmpty, org:s.org, orgId:s.orgId,
       admin:s.admin, owner:s.owner, archive:s.archive, archDeleted:s.archDeleted, joined:s.joined, started:s.started, removedIds:s.removedIds, resetAt:s.resetAt,
-      followups:s.followups, fuDeleted:s.fuDeleted
+      followups:s.followups, fuDeleted:s.fuDeleted, barOrders:s.barOrders
     }, patch);
     try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
     this._localWriteAt = Date.now();
@@ -3989,6 +4390,8 @@ class Component extends DCLogic {
       darkSegInk: s.theme!=="light" ? "var(--on-primary)" : "var(--ink-3)",
       isReview: s.screen==="review",
       isDiscList: s.screen==="disc",
+      isBoList: s.screen==="bo",
+      isBoView: s.screen==="boView",
       isDiscNew: s.screen==="discNew",
       isDiscView: s.screen==="discView",
       pastCount: (s.archive||[]).length,
@@ -4091,6 +4494,8 @@ class Component extends DCLogic {
       hubDisc: ()=>this.setState({screen:"disc", discView:null, discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"", discQuery:"", discLoc:"", discSheet:null, discRecount:""}),
       discCount: (s.followups||[]).length,
       discCountLabel: ((s.followups||[]).length)+((s.followups||[]).length===1?" follow-up":" follow-ups"),
+      hubBar: ()=>this.setState({screen:"bo", boView:null, boErr:""}),
+      barCountLabel: ((s.barOrders||[]).length)+((s.barOrders||[]).length===1?" order":" orders"),
       hubOrg: ()=>this.openOrg(),
       hubSignOut: ()=>this.signOut(),
       goHub: ()=>this.goHubNav(),
@@ -4386,6 +4791,8 @@ class Component extends DCLogic {
           this.deletePast(this.state.pendingDelete);
         } else if(c.kind==="deleteFollowup"){
           this.deleteFollowup(this.state.pendingDelete);
+        } else if(c.kind==="deleteBarOrder"){
+          this.boDelete(this.state.pendingDelete);
         } else if(c.kind==="cancel"){
           /* Cancel = discard the stocktake: clear every count, finalise the cloud
              doc so counters lose access, drop the account pointer, and go back to
@@ -5631,6 +6038,75 @@ class Component extends DCLogic {
               vals.discClearCheck = ()=>this.setLocCheck(sh.fid, sh.idx, sh.loc, null, 0);
             }
           }
+        }
+      }
+    }
+
+    /* ---------------- Bar Ordering ---------------- */
+    if(s.screen==="bo" || s.screen==="boView"){
+      vals.boBack = ()=>this.goHubNav();
+      const TIER = this.boTierOptions();
+      const EV = this.boEventOptions();
+      const chip = (label, active, onPick)=>({ label:label,
+        bg: active?"var(--primary)":"var(--surface)", border: active?"var(--primary)":"var(--line)",
+        ink: active?"var(--on-primary)":"var(--ink-2)", pick:onPick });
+
+      if(s.screen==="bo"){
+        const list = (s.barOrders||[]).slice().sort((a,b)=>((b.ts||0)-(a.ts||0)));
+        vals.boEmpty = list.length===0;
+        vals.boNew = ()=>this.boNew();
+        vals.boList = list.map(o=>{
+          const n=(o.beos||[]).length; const agg=this.boAggregate(o);
+          return { id:o.id, title:o.title||"Bar order",
+            meta: n+(n===1?" BEO":" BEOs")+" · "+agg.items.length+(agg.items.length===1?" item":" items"),
+            open: ()=>this.setState({screen:"boView", boView:o.id, boErr:""}),
+            del: ()=>this.setState({ pendingDelete:o.id, confirm:{ kind:"deleteBarOrder",
+              title:"Delete this bar order?", note:"“"+(o.title||"This order")+"” and its uploaded BEOs will be removed from this device.",
+              label:"Delete", cancel:"Keep it" } }) };
+        });
+      }
+
+      if(s.screen==="boView"){
+        const bo = (s.barOrders||[]).find(b=>b.id===s.boView);
+        if(!bo){ vals.boGone=true; vals.boHere=false; vals.boViewBack=()=>this.setState({screen:"bo", boView:null}); }
+        else {
+          vals.boHere=true; vals.boGone=false;
+          vals.boTitle = bo.title||"";
+          vals.onBoTitle = (e)=>this.boPatch(bo.id, {title:e.target.value});
+          vals.boViewBack = ()=>this.setState({screen:"bo", boView:null});
+          vals.boBusy = !!s.boBusy; vals.boErr = s.boErr||""; vals.boHasErr = !!(s.boErr||"").length;
+          vals.onBoFiles = (e)=>{ this.boAddFiles(e.target.files); try{ e.target.value=""; }catch(_){} };
+          vals.boDel = ()=>this.setState({ pendingDelete:bo.id, confirm:{ kind:"deleteBarOrder",
+            title:"Delete this bar order?", note:"“"+(bo.title||"This order")+"” and its uploaded BEOs will be removed from this device.",
+            label:"Delete", cancel:"Keep it" } });
+          vals.boExport = ()=>this.downloadBarOrderXlsx(bo);
+
+          vals.boBeos = (bo.beos||[]).map((beo,bi)=>{
+            const evChips = EV.map(o=>chip(o.label, beo.event===o.key, ()=>this.boPatchBeo(bo.id,bi,{event:o.key})));
+            const blocks = (beo.blocks||[]).map((bl,ki)=>{
+              const isCk = bl.tier==="cocktail";
+              const tChips = TIER.map(o=>chip(o.label, bl.tier===o.key, ()=>this.boPatchBlock(bo.id,bi,ki,{tier:o.key})));
+              const lines = this.boCompute(bl, beo).map(l=>({ role:l.role, qty:this.fmt(Math.round(l.qty*100)/100), name:l.name }));
+              return { title: bl.rawName || (TIER.filter(t=>t.key===bl.tier)[0]||{label:"Package"}).label,
+                tierChips:tChips, isCocktail:isCk,
+                pax:String(bl.pax||0), onPax:(e)=>this.boPatchBlock(bo.id,bi,ki,{pax:parseFloat(e.target.value)||0}),
+                tables:String(bl.tables||0), onTables:(e)=>this.boPatchBlock(bo.id,bi,ki,{tables:parseFloat(e.target.value)||0}),
+                hours:String(bl.hours||0), onHours:(e)=>this.boPatchBlock(bo.id,bi,ki,{hours:parseFloat(e.target.value)||0}),
+                lines:lines };
+            });
+            const explicit = (beo.explicit||[]).map(e=>({ name:e.name, qty:this.fmt(e.qty) }));
+            return { title: (beo.beo?("#"+beo.beo+" "):"")+(beo.booking||beo.name||"BEO"),
+              sub: [beo.date, beo.name].filter(Boolean).join(" · "),
+              barsVal:String(beo.bars||0), onBars:(e)=>this.boPatchBeo(bo.id,bi,{bars:parseFloat(e.target.value)||0}),
+              eventChips:evChips, blocks:blocks, explicit:explicit,
+              hasBlocks:blocks.length>0, hasExplicit:explicit.length>0,
+              nothing: blocks.length===0 && explicit.length===0,
+              remove: ()=>this.boRemoveBeo(bo.id,bi) };
+          });
+          vals.boBeosEmpty = (bo.beos||[]).length===0;
+          const agg = this.boAggregate(bo);
+          vals.boTotals = agg.items.map(it=>({ name:it.name, qty:this.fmt(Math.round(it.qty*100)/100), unit:it.unit }));
+          vals.boHasTotals = agg.items.length>0;
         }
       }
     }
