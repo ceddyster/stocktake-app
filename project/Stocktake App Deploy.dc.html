@@ -1123,9 +1123,20 @@ Sign in with Google
 </div>
 <div style="margin-top:4px;font:400 9.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ beo.sub }}</div>
 <sc-if value="{{ beo.hasManual0 }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+<span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">STYLE</span>
+<sc-for list="{{ beo.styleChips }}" as="sc" hint-placeholder-count="2">
+<button onClick="{{ sc.pick }}" style="flex:none;padding:6px 11px;border-radius:999px;background:{{ sc.bg }};border:1px solid {{ sc.border }};cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;color:{{ sc.ink }};white-space:nowrap">{{ sc.label }}</button>
+</sc-for>
+</div>
 <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">PAX</span><input value="{{ beo.paxVal }}" onChange="{{ beo.onPax }}" type="number" inputmode="numeric" style="width:62px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
+<sc-if value="{{ beo.isCocktailStyle }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">HOURS</span><input value="{{ beo.hoursVal }}" onChange="{{ beo.onHours }}" type="number" inputmode="decimal" style="width:52px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
+</sc-if>
+<sc-if value="{{ beo.notCocktailStyle }}" hint-placeholder-val="{{ true }}">
 <span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">TABLES</span><span style="min-width:34px;padding:6px 8px;border:1px dashed var(--line);border-radius:8px;background:var(--surface-3);font:600 11px/1 'Public Sans',sans-serif;color:var(--ink-2);text-align:center">{{ beo.tablesDerived }}</span><span style="font:400 8px/1 'Public Sans',sans-serif;color:var(--ink-4)">10% of pax</span></span>
+</sc-if>
 </div>
 </sc-if>
 <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -2841,9 +2852,20 @@ class Component extends DCLogic {
      them. Returns an array aligned with beo.manual: [{category, est}]. */
   boConsume(beo, master){
     const d=this.boData();
-    const pax=+beo.pax||0, tables=this.boTables(pax), ev=beo.event||"corporate";
-    const catTotal={ sparkling:d.params.sparkling*tables, white:tables*d.params.whiteWine, red:tables*d.params.redWine,
-      premier:pax*d.params.beerPremier[ev], light:tables*d.params.beerLight[ev] };
+    const pax=+beo.pax||0, ev=beo.event||"corporate";
+    let catTotal;
+    if(beo.style==="cocktail"){
+      /* Cocktail sheet: per-category total = pax x hours x (glasses-per-person
+         ÷ glasses-per-bottle) x assumption(s), summed over that category's
+         cocktail roles (wines gpb 5; beer gpb 1). */
+      const h=+beo.hours||0;
+      catTotal={ sparkling: pax*h*(2/5)*0.3, white: pax*h*(2/5)*(0.2+0.15), red: pax*h*(2/5)*(0.15+0.1),
+        premier: pax*h*3*(0.3+0.25), light: pax*h*2*0.1 };
+    } else {
+      const tables=this.boTables(pax);
+      catTotal={ sparkling:d.params.sparkling*tables, white:tables*d.params.whiteWine, red:tables*d.params.redWine,
+        premier:pax*d.params.beerPremier[ev], light:tables*d.params.beerLight[ev] };
+    }
     const cats=(beo.manual||[]).map(m=>this.boClassify(m.name, master));
     const counts={}; cats.forEach(c=>{ if(c) counts[c]=(counts[c]||0)+1; });
     return cats.map(c=>({ category:c, est: (c && counts[c]) ? (catTotal[c]/counts[c]) : 0 }));
@@ -2873,6 +2895,10 @@ class Component extends DCLogic {
     const low=text.toLowerCase();
     let event="corporate";
     if(/football club|football/.test(low)) event="football"; else if(/wedding/.test(low)) event="wedding";
+    /* Cocktail-style function (stand-up): uses the Cocktail sheet parameters
+       (per person x hours) rather than the per-table seated rates. Detected
+       from typical cocktail event names. */
+    const cocktail=/sundowner|networking drink|welcome reception|cocktail reception|cocktail party/i.test(text);
     let tables=0, tm; const trx=/(\d+)\s*Banquet round/gi; while((tm=trx.exec(text))) tables+=+tm[1];
     const hm=text.match(/(\d+(?:\.\d+)?)\s*Hours/i); const defHours=hm?+hm[1]:0;
     /* Event headcount. Prefer a "GUESTS BREAKDOWN" section and total its guest
@@ -2915,15 +2941,20 @@ class Component extends DCLogic {
           explicit.push({qty:+cm[1], name:cm[2].trim(), unit:"cocktails"});
       }
     }
+    let consHours=0;
     for(let i=0;i<lines.length;i++){
       if(!/beverages?\s+on\s+consumption/i.test(lines[i])) continue;
+      const hM=lines[i].match(/-\s*(\d+(?:\.\d+)?)\s*Hours/i); if(hM && !consHours) consHours=+hM[1];
       for(let j=i+1;j<lines.length && j<i+40;j++){
         const ln=lines[j].trim();
         if(/^\d+\s*@\s*\$.*per event/i.test(ln)) break;
+        if(/^\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}/.test(ln)) break;   // next scheduled item
         if(isHeader(ln)||/^(setup|dietary|technical|health|miscellaneous|billing|beverage notes|beverage supplied|corkage)\b/i.test(ln)) break;
         if(/per cocktail/i.test(ln)) continue;
         const bm=ln.match(/^(.+?)\s*@\s*\$[\d,.]+/);
-        if(bm){ const nmx=bm[1].trim(); if(nmx && !/please note|maximum|estimated|spend/i.test(nmx)) manual.push({name:nmx, qty:0, unit:"bottles"}); }
+        if(bm){ const nmx=bm[1].trim();
+          if(nmx && !/please note|maximum|estimated|spend|coffee|cart|internet|\bstaff\b|cork|barista|per day|per hour|per cart|per quote|per piece|per pass|per line/i.test(ln))
+            manual.push({name:nmx, unit:"bottles"}); }
       }
     }
     const blocks=[];
@@ -2938,15 +2969,15 @@ class Component extends DCLogic {
         if(!ln||/^~+$/.test(ln)) continue;
         if(WINEish.test(ln)){ wines.push(ln); bevs.push(ln); } else if(BEERish.test(ln)) bevs.push(ln);
       }
-      if(pax>0){
-        const hh=(lines[i].match(/-\s*(\d+)\s*Hours/i)||[])[1];
+      if(pax>0 && bevs.length>0){   // a real beverage package lists wines/beers; skip food "Cocktail Reception" etc.
+        const hh=(lines[i].match(/-\s*(\d+(?:\.\d+)?)\s*Hours/i)||[])[1];
         blocks.push({ rawName:lines[i].trim(), tier:this.boDetectTier(lines[i],wines), pax:pax, hours:hh?+hh:defHours, wines:wines, bevs:bevs });
         i=consumed;
       }
     }
     const dedupe=(arr, keyFn)=>{ const seen={}, o=[]; arr.forEach(x=>{ const k=keyFn(x); if(!seen[k]){ seen[k]=1; o.push(x); } }); return o; };
     const nmz=(x)=>String(x||"").trim().toLowerCase().replace(/\s+/g," ");
-    return { meta, event, tables, defHours, pax,
+    return { meta, event, tables, defHours, pax, cocktail, consHours,
       explicit: dedupe(explicit, e=>nmz(e.name)+"|"+e.unit+"|"+e.qty),
       manual: dedupe(manual, m=>nmz(m.name)), blocks };
   }
@@ -3034,6 +3065,7 @@ class Component extends DCLogic {
       const beo={ id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
         name:file.name, beo:p.meta.beo||"", date:p.meta.date||"", booking:p.meta.booking||"",
         event:p.event, bars:1, pax:p.pax||0, tables:p.tables||0,
+        style:(p.cocktail?"cocktail":"seated"), hours:(p.consHours||p.defHours||0),
         blocks:(p.blocks||[]).map(bl=>({ tier:bl.tier, pax:bl.pax, tables:p.tables||0, hours:bl.hours||p.defHours||0, rawName:bl.rawName, wines:bl.wines, bevs:bl.bevs })),
         explicit:(p.explicit||[]).map(e=>({name:e.name, qty:e.qty, unit:e.unit||"bottles"})),
         manual:(p.manual||[]).map(m=>({name:m.name, unit:m.unit||"bottles"})) };
@@ -6321,6 +6353,10 @@ class Component extends DCLogic {
               hasManual0:(beo.manual||[]).length>0,
               paxVal:String(beo.pax||0), onPax:(e)=>this.boPatchBeo(bo.id,bi,{pax:parseFloat(e.target.value)||0}),
               tablesDerived:String(this.boTables(beo.pax)),
+              isCocktailStyle: beo.style==="cocktail", notCocktailStyle: beo.style!=="cocktail",
+              styleChips: [ chip("Seated", beo.style!=="cocktail", ()=>this.boPatchBeo(bo.id,bi,{style:"seated"})),
+                            chip("Cocktail", beo.style==="cocktail", ()=>this.boPatchBeo(bo.id,bi,{style:"cocktail"})) ],
+              hoursVal:String(beo.hours||0), onHours:(e)=>this.boPatchBeo(bo.id,bi,{hours:parseFloat(e.target.value)||0}),
               barsVal:String(beo.bars||0), onBars:(e)=>this.boPatchBeo(bo.id,bi,{bars:parseFloat(e.target.value)||0}),
               eventChips:evChips, blocks:blocks, explicit:explicit, manual:manual,
               hasBlocks:blocks.length>0, hasExplicit:explicit.length>0, hasManual:manual.length>0,
