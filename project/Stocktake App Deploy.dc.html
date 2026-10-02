@@ -2816,20 +2816,26 @@ class Component extends DCLogic {
     return [];
   }
   boCatLabels(){ return { sparkling:"Sparkling", white:"White wine", red:"Red wine", premier:"Premier beer", light:"Light beer", "":"No formula" }; }
+  /* Match a name against the stocktake master list by word overlap and return
+     that product's category (e.g. "RED WINE", "BEER", "SPIRITS"), or "" when
+     nothing matches. Used both to categorise a beverage and to recognise one —
+     a priced line that matches a master product is a beverage even if it hits
+     no keyword, so unfamiliar brands aren't missed. */
+  boMasterCat(name, master){
+    if(!(master && master.length)) return "";
+    const norm=(x)=>String(x||"").trim().toLowerCase().replace(/\s+/g," ");
+    const toks=norm(name).split(" ").filter(x=>x.length>2 && !/^\d/.test(x) && x!=="750ml" && x!=="330ml" && x!=="ml");
+    let best=null, bs=0;
+    master.forEach(p=>{ const pn=norm(p.name); let sc=0; toks.forEach(x=>{ if(pn.indexOf(x)>=0) sc++; }); if(sc>bs){ bs=sc; best=p; } });
+    return (best && bs>=2) ? (best.cat||"").toUpperCase() : "";
+  }
   /* Classify a beverage name into a Bar Order category. Varietal/beer keywords
      are the primary signal; the stocktake master's category confirms and, for
      its non-wine buckets (fortified/dessert, spirits, non-alcoholic), excludes
      the item from the per-table/per-person formulas. */
   boClassify(name, master){
-    const norm=(x)=>String(x||"").trim().toLowerCase().replace(/\s+/g," ");
     const light=/light|zero|ultra|mid|low carb|super crisp|3\.5|crisp/i.test(name);
-    let mc="";
-    if(master && master.length){
-      const toks=norm(name).split(" ").filter(x=>x.length>2 && !/^\d/.test(x) && x!=="750ml" && x!=="330ml" && x!=="ml");
-      let best=null, bs=0;
-      master.forEach(p=>{ const pn=norm(p.name); let sc=0; toks.forEach(x=>{ if(pn.indexOf(x)>=0) sc++; }); if(sc>bs){ bs=sc; best=p; } });
-      if(best && bs>=2) mc=(best.cat||"").toUpperCase();
-    }
+    const mc=this.boMasterCat(name, master);
     if(mc==="FORTIFIED/DESSERT WINE"||mc==="SPIRITS"||mc==="NON ALCOHOLIC") return "";
     if(/sparkling|\bbrut\b|cuvee|prosecco|champagne|blanc\s+de\s+blancs|\bnv\b|methode|cremant|\bcava\b/i.test(name)) return "sparkling";
     if(/\bport\b|tawny|muscat|sherry|fortified|sticky|liqueur|madeira/i.test(name)) return "";
@@ -2877,7 +2883,7 @@ class Component extends DCLogic {
     if(n.includes("deluxe")||w.includes("vasse felix")||w.includes("veuve tailhan")) return "cr2";
     return "cr1";
   }
-  parseBEO(text){
+  parseBEO(text, master){
     const WINEish=/brut|cuvee|shiraz|sauvignon|semillon|sbs|merlot|chardonnay|\bcab\b|tempranillo|rose|blanc|veuve|woodbrook|abilene|vasse|leeuwin/i;
     const BEERish=/corona|hahn|heineken|asahi|peroni|carlton|crown lager|pirate|great northern|brookvale|good tides|hard rated|pure blonde|little creatures|james squire|rogers|super dry|premium light|soft drink|orange juice|\bpepsi\b|lemonade|\bsolo\b|tonic|ginger ale|soda water|cider|beer/i;
     const isHeader=(h)=>{
@@ -2951,13 +2957,19 @@ class Component extends DCLogic {
     if(/beverages?\s+on\s+consumption/i.test(text)){
       const chm=text.match(/beverages?\s+on\s+consumption\s*-\s*(\d+(?:\.\d+)?)\s*Hours/i); if(chm) consHours=+chm[1];
       const NONDRINK=/\bguests?\b|per cocktail|per day|per hour|per cart|per quote|per piece|per pass|per line|per night|per item|coffee|\bcart\b|internet|\bstaff\b|security|\bchair|\btable|linen|stage|backdrop|plinth|\bframe|\bstand\b|cork|barista|pinboard|trestle|lectern|microphone|photo|please note|maximum|estimated|spend/i;
+      const FORTish=/\bport\b|tawny|muscat|moscato|sherry|madeira|liqueur|aperol|campari|vermouth/i;
       for(let i=0;i<lines.length;i++){
         const ln=lines[i].trim();
         if(!/@\s*\$[\d.,]/.test(ln)) continue;
-        if(!(WINEish.test(ln)||BEERish.test(ln)||/\bport\b|tawny|muscat|moscato|sherry|madeira|liqueur|aperol|campari|vermouth/i.test(ln))) continue;
         if(NONDRINK.test(ln)) continue;
         const bm=ln.match(/^(.+?)\s*@\s*\$[\d.,]+/);
-        if(bm && bm[1].trim()) manual.push({name:bm[1].trim(), unit:"bottles"});
+        if(!bm || !bm[1].trim()) continue;
+        const nmx=bm[1].trim();
+        /* Keep the line if it reads like a drink by keyword OR the stocktake
+           master list recognises the product — so a drink with an unfamiliar
+           brand name still gets picked up. */
+        if(WINEish.test(ln)||BEERish.test(ln)||FORTish.test(ln)||this.boMasterCat(nmx, master))
+          manual.push({name:nmx, unit:"bottles"});
       }
     }
     const blocks=[];
@@ -3064,7 +3076,7 @@ class Component extends DCLogic {
     if(!files.length) return;
     this.setState({boBusy:true, boErr:""});
     const run=files.reduce((chain, file)=> chain.then(()=> this.boExtractText(file).then(text=>{
-      const p=this.parseBEO(text);
+      const p=this.parseBEO(text, this.boMaster());
       const beo={ id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
         name:file.name, beo:p.meta.beo||"", date:p.meta.date||"", booking:p.meta.booking||"",
         event:p.event, bars:1, pax:p.pax||0, tables:p.tables||0,
