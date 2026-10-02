@@ -1113,8 +1113,11 @@ Sign in with Google
 <button onClick="{{ beo.remove }}" style="flex:none;min-height:26px;padding:5px 9px;border-radius:7px;background:var(--surface);border:1px solid var(--line);cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-3)">REMOVE</button>
 </div>
 <div style="margin-top:4px;font:400 9.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ beo.sub }}</div>
-<sc-if value="{{ beo.hasPax }}" hint-placeholder-val="{{ false }}">
-<div style="margin-top:4px;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-2)">{{ beo.paxLabel }}</div>
+<sc-if value="{{ beo.hasManual0 }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">PAX</span><input value="{{ beo.paxVal }}" onChange="{{ beo.onPax }}" type="number" inputmode="numeric" style="width:62px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
+<span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">TABLES</span><input value="{{ beo.tablesVal }}" onChange="{{ beo.onTables }}" type="number" inputmode="numeric" style="width:56px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
+</div>
 </sc-if>
 <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
 <span style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">EVENT</span>
@@ -1167,12 +1170,12 @@ Sign in with Google
 </sc-if>
 <sc-if value="{{ beo.hasManual }}" hint-placeholder-val="{{ false }}">
 <div style="margin-top:11px;padding:11px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)">
-<div style="font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">ON CONSUMPTION — SET QTY TO ORDER</div>
+<div style="font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">ON CONSUMPTION — ESTIMATED BY CATEGORY (editable)</div>
 <div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">
 <sc-for list="{{ beo.manual }}" as="mn" hint-placeholder-count="0">
 <div style="display:flex;align-items:center;gap:8px;padding:3px 0">
-<span style="flex:1;min-width:0;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">{{ mn.name }}</span>
-<input value="{{ mn.qtyVal }}" onChange="{{ mn.onQty }}" type="number" inputmode="numeric" style="flex:none;width:56px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" />
+<span style="flex:1;min-width:0"><span style="display:block;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">{{ mn.name }}</span><span style="display:block;margin-top:1px;font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-4)">{{ mn.cat }}</span></span>
+<input value="{{ mn.qtyVal }}" onChange="{{ mn.onQty }}" type="number" inputmode="decimal" style="flex:none;width:56px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" />
 <span style="flex:none;width:44px;text-align:right;font:400 8.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ mn.unit }}</span>
 </div>
 </sc-for>
@@ -2733,6 +2736,56 @@ class Component extends DCLogic {
       {name:"Lemons (kg)", role:"Lemons", qty:d.params.lemonsKg*bars},
       {name:"Limes (kg)", role:"Limes", qty:bars*d.params.limesKg} ];
   }
+  /* Best available product catalogue (with cat/sub) for category matching:
+     the live stocktake master, else the most recent past stocktake snapshot. */
+  boMaster(){
+    const s=this.state;
+    if((s.master||[]).length) return s.master;
+    const a=(s.archive||[]);
+    for(let i=0;i<a.length;i++){ if(a[i] && a[i].snap && (a[i].snap.master||[]).length) return a[i].snap.master; }
+    return [];
+  }
+  boCatLabels(){ return { sparkling:"Sparkling", white:"White wine", red:"Red wine", premier:"Premier beer", light:"Light beer", "":"No formula" }; }
+  /* Classify a beverage name into a Bar Order category. Varietal/beer keywords
+     are the primary signal; the stocktake master's category confirms and, for
+     its non-wine buckets (fortified/dessert, spirits, non-alcoholic), excludes
+     the item from the per-table/per-person formulas. */
+  boClassify(name, master){
+    const norm=(x)=>String(x||"").trim().toLowerCase().replace(/\s+/g," ");
+    const light=/light|zero|ultra|mid|low carb|super crisp|3\.5|crisp/i.test(name);
+    let mc="";
+    if(master && master.length){
+      const toks=norm(name).split(" ").filter(x=>x.length>2 && !/^\d/.test(x) && x!=="750ml" && x!=="330ml" && x!=="ml");
+      let best=null, bs=0;
+      master.forEach(p=>{ const pn=norm(p.name); let sc=0; toks.forEach(x=>{ if(pn.indexOf(x)>=0) sc++; }); if(sc>bs){ bs=sc; best=p; } });
+      if(best && bs>=2) mc=(best.cat||"").toUpperCase();
+    }
+    if(mc==="FORTIFIED/DESSERT WINE"||mc==="SPIRITS"||mc==="NON ALCOHOLIC") return "";
+    if(/sparkling|brut|cuvee|prosecco|champagne|blanc de blancs|\bnv\b/i.test(name)) return "sparkling";
+    if(/sauvignon|semillon|chardonnay|riesling|pinot gris|pinot grigio|\bsbs\b|verdelho|viognier/i.test(name)) return "white";
+    if(/shiraz|syrah|cabernet|\bcab\b|merlot|pinot noir|tempranillo|grenache|malbec|\bgsm\b/i.test(name)) return "red";
+    if(/\bport\b|tawny|muscat|sherry|fortified|sticky|liqueur/i.test(name)) return "";
+    if(light) return "light";
+    if(mc==="SPARKLING") return "sparkling";
+    if(mc==="WHITE WINE") return "white";
+    if(mc==="RED WINE") return "red";
+    if(mc==="BEER") return "premier";
+    if(/corona|peroni|heineken|asahi|lager|draught|pale ale|amber ale|pilsner|stella|crown lager|carlton|hahn|\bbeer\b|cider|pirate|brookvale|good tides|great northern/i.test(name)) return "premier";
+    return "";
+  }
+  /* Estimate "on consumption" open-bar quantities by category. The package
+     parameters give a per-category total (wines/beer by table or pax); where
+     several products share a category, that total is split evenly between
+     them. Returns an array aligned with beo.manual: [{category, est}]. */
+  boConsume(beo, master){
+    const d=this.boData();
+    const pax=+beo.pax||0, tables=+beo.tables||0, ev=beo.event||"corporate";
+    const catTotal={ sparkling:d.params.sparkling*tables, white:tables*d.params.whiteWine, red:tables*d.params.redWine,
+      premier:pax*d.params.beerPremier[ev], light:tables*d.params.beerLight[ev] };
+    const cats=(beo.manual||[]).map(m=>this.boClassify(m.name, master));
+    const counts={}; cats.forEach(c=>{ if(c) counts[c]=(counts[c]||0)+1; });
+    return cats.map(c=>({ category:c, est: (c && counts[c]) ? (catTotal[c]/counts[c]) : 0 }));
+  }
   boDetectTier(name, wines){
     const n=(name||"").toLowerCase(), w=(wines||[]).join(" ").toLowerCase();
     if(n.includes("cocktail")) return "cocktail";
@@ -2918,10 +2971,10 @@ class Component extends DCLogic {
       const p=this.parseBEO(text);
       const beo={ id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
         name:file.name, beo:p.meta.beo||"", date:p.meta.date||"", booking:p.meta.booking||"",
-        event:p.event, bars:1, pax:p.pax||0,
+        event:p.event, bars:1, pax:p.pax||0, tables:p.tables||0,
         blocks:(p.blocks||[]).map(bl=>({ tier:bl.tier, pax:bl.pax, tables:p.tables||0, hours:bl.hours||p.defHours||0, rawName:bl.rawName, wines:bl.wines, bevs:bl.bevs })),
         explicit:(p.explicit||[]).map(e=>({name:e.name, qty:e.qty, unit:e.unit||"bottles"})),
-        manual:(p.manual||[]).map(m=>({name:m.name, qty:m.qty||0, unit:m.unit||"bottles"})) };
+        manual:(p.manual||[]).map(m=>({name:m.name, unit:m.unit||"bottles"})) };
       const list=(this.state.barOrders||[]).map(b=> b.id===id ? Object.assign({}, b, {beos:(b.beos||[]).concat([beo]), updatedAt:Date.now()}) : b);
       return new Promise(res=>this.setState({barOrders:list}, ()=>{ this.save({}); res(); }));
     })), Promise.resolve());
@@ -2933,6 +2986,7 @@ class Component extends DCLogic {
     const norm=(s)=>String(s||"").trim().toLowerCase().replace(/\s+/g," ");
     const tot={}; const order=[];
     const add=(name, qty, unit)=>{ const k=norm(name); if(!tot[k]){ tot[k]={name:name, qty:0, unit:unit||"bottles"}; order.push(k); } tot[k].qty+=qty; };
+    const master=this.boMaster();
     (bo.beos||[]).forEach(beo=>{
       (beo.blocks||[]).forEach(bl=>{
         this.boCompute(bl, beo).forEach(l=>{
@@ -2941,7 +2995,8 @@ class Component extends DCLogic {
         });
       });
       (beo.explicit||[]).forEach(e=> add(e.name, e.qty, e.unit||"bottles"));
-      (beo.manual||[]).forEach(m=> add(m.name, +m.qty||0, m.unit||"bottles"));
+      const cons=this.boConsume(beo, master);
+      (beo.manual||[]).forEach((m,i)=>{ const q = (m.ov!=null ? +m.ov : (cons[i]?cons[i].est:0)); if(q) add(m.name, q, m.unit||"bottles"); });
     });
     const items=order.map(k=>tot[k]).sort((a,b)=>b.qty-a.qty);
     return { items };
@@ -2967,13 +3022,17 @@ class Component extends DCLogic {
     // per-BEO breakdown sheet
     const bhead=["BEO","Event / Package","Pax","Item","Quantity","Unit"];
     const bbody=[];
+    const master=this.boMaster();
     (bo.beos||[]).forEach(beo=>{
       const tag=(beo.beo?("#"+beo.beo):"")+(beo.booking?(" "+beo.booking):"");
       (beo.blocks||[]).forEach(bl=>{
         this.boCompute(bl, beo).forEach(l=> bbody.push([ tag, bl.rawName||bl.tier, bl.pax||0, l.name, Math.round(l.qty*100)/100, /lemon|lime/i.test(l.role)?"kg":"bottles" ]));
       });
       (beo.explicit||[]).forEach(e=> bbody.push([ tag, "Listed in BEO", "", e.name, e.qty, e.unit||"bottles" ]));
-      (beo.manual||[]).forEach(m=> bbody.push([ tag, "On consumption", beo.pax||"", m.name, +m.qty||0, m.unit||"bottles" ]));
+      const cons=this.boConsume(beo, master);
+      const catLab=this.boCatLabels();
+      (beo.manual||[]).forEach((m,i)=>{ const c=cons[i]||{category:"",est:0}; const q=(m.ov!=null?+m.ov:c.est);
+        bbody.push([ tag, "On consumption ("+(catLab[c.category]||"—")+")", beo.pax||"", m.name, Math.round(q*100)/100, m.unit||"bottles" ]); });
     });
     if(bbody.length) specs.push({ name:"By BEO", head:bhead, body:bbody, totals:null });
     const slug=(bo.title||"bar-order").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
@@ -6166,6 +6225,8 @@ class Component extends DCLogic {
             title:"Delete this bar order?", note:"“"+(bo.title||"This order")+"” and its uploaded BEOs will be removed from this device.",
             label:"Delete", cancel:"Keep it" } });
           vals.boExport = ()=>this.downloadBarOrderXlsx(bo);
+          const boMaster = this.boMaster();
+          const catLab = this.boCatLabels();
 
           vals.boBeos = (bo.beos||[]).map((beo,bi)=>{
             const evChips = EV.map(o=>chip(o.label, beo.event===o.key, ()=>this.boPatchBeo(bo.id,bi,{event:o.key})));
@@ -6181,11 +6242,19 @@ class Component extends DCLogic {
                 lines:lines };
             });
             const explicit = (beo.explicit||[]).map(e=>({ name:e.name, qty:this.fmt(e.qty), unit:e.unit||"bottles" }));
-            const manual = (beo.manual||[]).map((m,mi)=>({ name:m.name, unit:m.unit||"bottles",
-              qtyVal:String(m.qty||0), onQty:(e)=>this.boPatchManual(bo.id,bi,mi,{qty:parseFloat(e.target.value)||0}) }));
+            const cons = this.boConsume(beo, boMaster);
+            const manual = (beo.manual||[]).map((m,mi)=>{
+              const c = cons[mi] || {category:"", est:0};
+              const est = Math.round(c.est*100)/100;
+              return { name:m.name, unit:m.unit||"bottles", cat: catLab[c.category]||"—",
+                qtyVal: String(m.ov!=null ? m.ov : est),
+                onQty:(e)=>this.boPatchManual(bo.id,bi,mi,{ ov: (e.target.value===""? null : (parseFloat(e.target.value)||0)) }) };
+            });
             return { title: (beo.beo?("#"+beo.beo+" "):"")+(beo.booking||beo.name||"BEO"),
               sub: [beo.date, beo.name].filter(Boolean).join(" · "),
-              paxLabel: beo.pax?("Event pax: "+this.fmt(beo.pax)):"", hasPax: !!beo.pax,
+              hasManual0:(beo.manual||[]).length>0,
+              paxVal:String(beo.pax||0), onPax:(e)=>this.boPatchBeo(bo.id,bi,{pax:parseFloat(e.target.value)||0}),
+              tablesVal:String(beo.tables||0), onTables:(e)=>this.boPatchBeo(bo.id,bi,{tables:parseFloat(e.target.value)||0}),
               barsVal:String(beo.bars||0), onBars:(e)=>this.boPatchBeo(bo.id,bi,{bars:parseFloat(e.target.value)||0}),
               eventChips:evChips, blocks:blocks, explicit:explicit, manual:manual,
               hasBlocks:blocks.length>0, hasExplicit:explicit.length>0, hasManual:manual.length>0,
