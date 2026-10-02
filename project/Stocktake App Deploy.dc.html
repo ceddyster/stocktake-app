@@ -2760,9 +2760,29 @@ class Component extends DCLogic {
     if(/football club|football/.test(low)) event="football"; else if(/wedding/.test(low)) event="wedding";
     let tables=0, tm; const trx=/(\d+)\s*Banquet round/gi; while((tm=trx.exec(text))) tables+=+tm[1];
     const hm=text.match(/(\d+(?:\.\d+)?)\s*Hours/i); const defHours=hm?+hm[1]:0;
-    // event headcount: largest "NNN guests @ $" (the catering number), used to
-    // confirm pax even when the beverage block carries no count of its own.
-    let pax=0, pm; const prx=/(\d+)\s*guests?\s*@\s*\$/gi; while((pm=prx.exec(text))){ if(+pm[1]>pax) pax=+pm[1]; }
+    /* Event headcount. Prefer a "GUESTS BREAKDOWN" section and total its guest
+       lines (adults + children + …), excluding non-guests (suppliers, staff,
+       crew, band, security) by each line's FIRST word — so "454 Adults
+       (including DJ & MC)" still counts. Then an explicit "total … N guests".
+       Finally fall back to the largest "NNN guests @ $" catering line. */
+    const NONGUEST=/^(supplier|staff|crew|vendor|band|security|contractor|musician|dj|mc|entertainer)/i;
+    let pax=0;
+    for(let i=0;i<lines.length;i++){
+      if(!/guests?\s*breakdown/i.test(lines[i])) continue;
+      let sum=0, found=false;
+      for(let j=i+1;j<lines.length && j<i+16;j++){
+        const ln=lines[j].trim();
+        if(!ln) continue;
+        if(/^(service note|setup|dietary|technical|health|miscellaneous|billing|beverage|program|menu)\b/i.test(ln)) break;
+        const gmx=ln.match(/^>\s*(\d+)\s+([A-Za-z].*)$/);
+        if(!gmx) continue;
+        if(NONGUEST.test(gmx[2].trim())) continue;
+        sum+=+gmx[1]; found=true;
+      }
+      if(found && sum>0){ pax=sum; break; }
+    }
+    if(!pax){ const tex=text.match(/total[^\n]{0,20}?(\d+)\s*(?:guests?|pax)\b/i); if(tex) pax=+tex[1]; }
+    if(!pax){ let pm; const prx=/(\d+)\s*guests?\s*@\s*\$/gi; while((pm=prx.exec(text))){ if(+pm[1]>pax) pax=+pm[1]; } }
     const explicit=[]; const ex=/(?:^|\n)[>\s]*?(\d+)\s*x\s*bottles?\s+of\s+(.+?)\s*(?=\n|$)/gi;
     let em; while((em=ex.exec(text))) explicit.push({qty:+em[1], name:em[2].trim(), unit:"bottles"});
     /* "On consumption" events: cocktails carry planned counts ("100 x
