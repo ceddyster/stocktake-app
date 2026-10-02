@@ -2761,10 +2761,13 @@ class Component extends DCLogic {
       if(best && bs>=2) mc=(best.cat||"").toUpperCase();
     }
     if(mc==="FORTIFIED/DESSERT WINE"||mc==="SPIRITS"||mc==="NON ALCOHOLIC") return "";
-    if(/sparkling|brut|cuvee|prosecco|champagne|blanc de blancs|\bnv\b/i.test(name)) return "sparkling";
-    if(/sauvignon|semillon|chardonnay|riesling|pinot gris|pinot grigio|\bsbs\b|verdelho|viognier/i.test(name)) return "white";
-    if(/shiraz|syrah|cabernet|\bcab\b|merlot|pinot noir|tempranillo|grenache|malbec|\bgsm\b/i.test(name)) return "red";
-    if(/\bport\b|tawny|muscat|sherry|fortified|sticky|liqueur/i.test(name)) return "";
+    if(/sparkling|\bbrut\b|cuvee|prosecco|champagne|blanc\s+de\s+blancs|\bnv\b|methode|cremant|\bcava\b/i.test(name)) return "sparkling";
+    if(/\bport\b|tawny|muscat|sherry|fortified|sticky|liqueur|madeira/i.test(name)) return "";
+    /* reds BEFORE whites so "Cabernet Sauvignon" is red (not caught by a bare
+       "sauvignon"); whites require "Sauvignon Blanc"/Semillon/SBS, not just
+       "sauvignon" — Sauvignon Blanc is white, Cabernet Sauvignon is red. */
+    if(/shiraz|syrah|cabernet|\bcab\s+sauv|\bcab\b|merlot|pinot\s+noir|tempranillo|grenache|mataro|mourvedre|malbec|\bgsm\b|durif|petit\s+verdot|sangiovese|nebbiolo|barbera|\bred\b/i.test(name)) return "red";
+    if(/sauvignon\s+blanc|sauv\s+blanc|\bsbs\b|semillon|chardonnay|riesling|pinot\s+gris|pinot\s+grigio|verdelho|viognier|gewurz|chenin|marsanne|fiano|vermentino|\bwhite\b/i.test(name)) return "white";
     if(light) return "light";
     if(mc==="SPARKLING") return "sparkling";
     if(mc==="WHITE WINE") return "white";
