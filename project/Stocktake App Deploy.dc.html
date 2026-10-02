@@ -1107,6 +1107,15 @@ Sign in with Google
 </sc-if>
 
 <sc-for list="{{ boBeos }}" as="beo" hint-placeholder-count="0">
+<sc-if value="{{ beo.submitted }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--card-shadow)">
+<span style="flex:none;width:22px;height:22px;border-radius:999px;background:var(--ok-bg);display:flex;align-items:center;justify-content:center;font:700 11px/1 'Public Sans',sans-serif;color:var(--ok)">✓</span>
+<span style="flex:1;min-width:0;font:600 11.5px/1.2 'Public Sans',sans-serif;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ beo.title }}</span>
+<span style="flex:none;font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ok)">SUBMITTED</span>
+<button onClick="{{ beo.reopen }}" style="flex:none;min-height:28px;padding:6px 11px;border-radius:8px;background:var(--surface);border:1px solid var(--line);cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-2)">REOPEN</button>
+</div>
+</sc-if>
+<sc-if value="{{ beo.notSubmitted }}" hint-placeholder-val="{{ true }}">
 <div style="background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow);padding:13px 14px">
 <div style="display:flex;align-items:baseline;gap:10px">
 <span style="flex:1;min-width:0;font:600 13px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ beo.title }}</span>
@@ -1185,17 +1194,56 @@ Sign in with Google
 <sc-if value="{{ beo.nothing }}" hint-placeholder-val="{{ false }}">
 <div style="margin-top:10px;font:400 10px/1.5 'Public Sans',sans-serif;color:var(--ink-3);text-wrap:pretty">No beverage package or bottle list found in this BEO. You can add a count another way, or remove it.</div>
 </sc-if>
+<button onClick="{{ beo.submit }}" style="margin-top:12px;width:100%;min-height:44px;padding:13px;border-radius:12px;background:var(--primary);border:none;cursor:pointer;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--on-primary)">✓ Submit BEO — add to totals</button>
 </div>
+</sc-if>
 </sc-for>
 
-<sc-if value="{{ boHasTotals }}" hint-placeholder-val="{{ true }}">
-<div style="margin-top:4px;background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow);overflow:hidden">
+<button onClick="{{ boGoTotals }}" style="margin-top:6px;width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)">
+<span style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:700 15px/1 'Public Sans',sans-serif;color:var(--ink)">∑</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13px/1.2 'Public Sans',sans-serif;color:var(--ink)">View total orders</span><span style="display:block;margin-top:3px;font:400 10px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ boSubmittedLabel }}</span></span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
+</button>
+<button onClick="{{ boDel }}" style="margin-top:8px;align-self:flex-start;min-height:30px;padding:7px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--bad)">DELETE ORDER</button>
+</div>
+</sc-if>
+<sc-if value="{{ boGone }}" hint-placeholder-val="{{ false }}">
+<div style="padding:40px 20px;text-align:center">
+<div style="font:600 14px/1.3 'Public Sans',sans-serif;color:var(--ink)">This order was removed.</div>
+<button onClick="{{ boViewBack }}" style="margin-top:14px;padding:10px 18px;border-radius:10px;background:var(--primary);border:none;cursor:pointer;font:600 12px/1 'Public Sans',sans-serif;color:var(--on-primary)">Back to bar orders</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBoTotals }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<sc-if value="{{ boHere }}" hint-placeholder-val="{{ true }}">
+<div style="padding:12px 16px 12px;background:var(--bg);border-bottom:1px solid var(--line)">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ boTotalsBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Total orders</div>
+<div style="margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ boTotalsTitle }}</div>
+</div>
+<button onClick="{{ boExport }}" aria-label="Export to Excel" style="flex:none;height:32px;padding:0 11px;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:600 10.5px/1 'Public Sans',sans-serif;color:var(--ink-2)"><span style="font:400 13px/1 'Public Sans',sans-serif">⤓</span>Excel</button>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding:14px 16px 44px;display:flex;flex-direction:column;gap:9px">
+<sc-if value="{{ boTotalsEmpty }}" hint-placeholder-val="{{ true }}">
+<div style="padding:18px 16px;background:var(--surface);border:1px dashed var(--line-2);border-radius:14px">
+<div style="font:600 13.5px/1.3 'Public Sans',sans-serif;color:var(--ink)">Nothing submitted yet</div>
+<p style="margin:8px 0 0;font:400 11.5px/1.6 'Public Sans',sans-serif;color:var(--ink-2);text-wrap:pretty">Check a BEO and press “Submit BEO — add to totals”, then its items appear here, combined across every submitted BEO.</p>
+</div>
+</sc-if>
+<sc-if value="{{ boTotalsHas }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow);overflow:hidden">
 <div style="padding:12px 14px;background:var(--primary)">
 <div style="font:700 12.5px/1 'Public Sans',sans-serif;color:var(--on-primary);letter-spacing:.02em">ORDER TOTAL</div>
-<div style="margin-top:3px;font:400 9.5px/1 'Public Sans',sans-serif;color:var(--surface)">Every BEO combined, per item</div>
+<div style="margin-top:3px;font:400 9.5px/1 'Public Sans',sans-serif;color:var(--surface)">{{ boTotalsSub }}</div>
 </div>
 <div style="padding:6px 14px 12px">
-<sc-for list="{{ boTotals }}" as="t" hint-placeholder-count="0">
+<sc-for list="{{ boTotalsRows }}" as="t" hint-placeholder-count="0">
 <div style="display:flex;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--surface-3)">
 <span style="flex:1;min-width:0;font:500 11px/1.3 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ t.name }}</span>
 <span style="flex:none;font:700 13px/1 'Public Sans',sans-serif;color:var(--ink)">{{ t.qty }}</span>
@@ -1206,7 +1254,6 @@ Sign in with Google
 </div>
 </div>
 </sc-if>
-<button onClick="{{ boDel }}" style="margin-top:8px;align-self:flex-start;min-height:30px;padding:7px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--bad);cursor:pointer;font:600 9.5px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--bad)">DELETE ORDER</button>
 </div>
 </sc-if>
 <sc-if value="{{ boGone }}" hint-placeholder-val="{{ false }}">
@@ -2992,7 +3039,7 @@ class Component extends DCLogic {
     const tot={}; const order=[];
     const add=(name, qty, unit)=>{ const k=norm(name); if(!tot[k]){ tot[k]={name:name, qty:0, unit:unit||"bottles"}; order.push(k); } tot[k].qty+=qty; };
     const master=this.boMaster();
-    (bo.beos||[]).forEach(beo=>{
+    (bo.beos||[]).filter(b=>b.submitted).forEach(beo=>{
       (beo.blocks||[]).forEach(bl=>{
         this.boCompute(bl, beo).forEach(l=>{
           const unit=/lemon|lime/i.test(l.role)?"kg":"bottles";
@@ -3028,7 +3075,7 @@ class Component extends DCLogic {
     const bhead=["BEO","Event / Package","Pax","Item","Quantity","Unit"];
     const bbody=[];
     const master=this.boMaster();
-    (bo.beos||[]).forEach(beo=>{
+    (bo.beos||[]).filter(b=>b.submitted).forEach(beo=>{
       const tag=(beo.beo?("#"+beo.beo):"")+(beo.booking?(" "+beo.booking):"");
       (beo.blocks||[]).forEach(bl=>{
         this.boCompute(bl, beo).forEach(l=> bbody.push([ tag, bl.rawName||bl.tier, bl.pax||0, l.name, Math.round(l.qty*100)/100, /lemon|lime/i.test(l.role)?"kg":"bottles" ]));
@@ -4542,6 +4589,7 @@ class Component extends DCLogic {
       isDiscList: s.screen==="disc",
       isBoList: s.screen==="bo",
       isBoView: s.screen==="boView",
+      isBoTotals: s.screen==="boTotals",
       isDiscNew: s.screen==="discNew",
       isDiscView: s.screen==="discView",
       pastCount: (s.archive||[]).length,
@@ -6193,7 +6241,7 @@ class Component extends DCLogic {
     }
 
     /* ---------------- Bar Ordering ---------------- */
-    if(s.screen==="bo" || s.screen==="boView"){
+    if(s.screen==="bo" || s.screen==="boView" || s.screen==="boTotals"){
       vals.boBack = ()=>this.goHubNav();
       const TIER = this.boTierOptions();
       const EV = this.boEventOptions();
@@ -6257,6 +6305,9 @@ class Component extends DCLogic {
             });
             return { title: (beo.beo?("#"+beo.beo+" "):"")+(beo.booking||beo.name||"BEO"),
               sub: [beo.date, beo.name].filter(Boolean).join(" · "),
+              submitted: !!beo.submitted, notSubmitted: !beo.submitted,
+              submit: ()=>this.boPatchBeo(bo.id,bi,{submitted:true}),
+              reopen: ()=>this.boPatchBeo(bo.id,bi,{submitted:false}),
               hasManual0:(beo.manual||[]).length>0,
               paxVal:String(beo.pax||0), onPax:(e)=>this.boPatchBeo(bo.id,bi,{pax:parseFloat(e.target.value)||0}),
               tablesDerived:String(this.boTables(beo.pax)),
@@ -6267,9 +6318,27 @@ class Component extends DCLogic {
               remove: ()=>this.boRemoveBeo(bo.id,bi) };
           });
           vals.boBeosEmpty = (bo.beos||[]).length===0;
+          const subCount = (bo.beos||[]).filter(b=>b.submitted).length;
+          const total = (bo.beos||[]).length;
+          vals.boGoTotals = ()=>this.setState({screen:"boTotals"});
+          vals.boSubmittedLabel = subCount+" of "+total+(total===1?" BEO submitted":" BEOs submitted");
+        }
+      }
+
+      if(s.screen==="boTotals"){
+        const bo = (s.barOrders||[]).find(b=>b.id===s.boView);
+        if(!bo){ vals.boGone=true; vals.boHere=false; vals.boViewBack=()=>this.setState({screen:"bo", boView:null}); }
+        else {
+          vals.boHere=true; vals.boGone=false;
+          vals.boTotalsTitle = bo.title||"Bar order";
+          vals.boTotalsBack = ()=>this.setState({screen:"boView"});
+          vals.boExport = ()=>this.downloadBarOrderXlsx(bo);
           const agg = this.boAggregate(bo);
-          vals.boTotals = agg.items.map(it=>({ name:it.name, qty:this.fmt(Math.round(it.qty*100)/100), unit:it.unit }));
-          vals.boHasTotals = agg.items.length>0;
+          const subCount = (bo.beos||[]).filter(b=>b.submitted).length;
+          vals.boTotalsRows = agg.items.map(it=>({ name:it.name, qty:this.fmt(Math.round(it.qty*100)/100), unit:it.unit }));
+          vals.boTotalsHas = agg.items.length>0;
+          vals.boTotalsEmpty = agg.items.length===0;
+          vals.boTotalsSub = subCount+(subCount===1?" BEO":" BEOs")+" submitted · "+agg.items.length+(agg.items.length===1?" item":" items");
         }
       }
     }
