@@ -1116,7 +1116,7 @@ Sign in with Google
 <sc-if value="{{ beo.hasManual0 }}" hint-placeholder-val="{{ false }}">
 <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">PAX</span><input value="{{ beo.paxVal }}" onChange="{{ beo.onPax }}" type="number" inputmode="numeric" style="width:62px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
-<span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">TABLES</span><input value="{{ beo.tablesVal }}" onChange="{{ beo.onTables }}" type="number" inputmode="numeric" style="width:56px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
+<span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">TABLES</span><span style="min-width:34px;padding:6px 8px;border:1px dashed var(--line);border-radius:8px;background:var(--surface-3);font:600 11px/1 'Public Sans',sans-serif;color:var(--ink-2);text-align:center">{{ beo.tablesDerived }}</span><span style="font:400 8px/1 'Public Sans',sans-serif;color:var(--ink-4)">10% of pax</span></span>
 </div>
 </sc-if>
 <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -1137,7 +1137,7 @@ Sign in with Google
 </div>
 <div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap">
 <span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">PAX</span><input value="{{ bl.pax }}" onChange="{{ bl.onPax }}" type="number" inputmode="numeric" style="width:58px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
-<span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">TABLES</span><input value="{{ bl.tables }}" onChange="{{ bl.onTables }}" type="number" inputmode="numeric" style="width:58px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
+<span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">TABLES</span><span style="min-width:34px;padding:6px 8px;border:1px dashed var(--line);border-radius:8px;background:var(--surface-3);font:600 11px/1 'Public Sans',sans-serif;color:var(--ink-2);text-align:center">{{ bl.tablesDerived }}</span></span>
 <sc-if value="{{ bl.isCocktail }}" hint-placeholder-val="{{ false }}">
 <span style="display:flex;align-items:center;gap:5px"><span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">HOURS</span><input value="{{ bl.hours }}" onChange="{{ bl.onHours }}" type="number" inputmode="numeric" style="width:50px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);outline:none;font:600 11px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" /></span>
 </sc-if>
@@ -2715,10 +2715,12 @@ class Component extends DCLogic {
     {key:"cr3", label:d.tiers.cr3.label}, {key:"cocktail", label:"Cocktail"} ]; }
   boEventOptions(){ return [ {key:"football", label:"Football"}, {key:"corporate", label:"Corporate"}, {key:"wedding", label:"Wedding"} ]; }
 
+  /* Tables are derived as 10% of pax, rounded up (e.g. 483 pax -> 49). */
+  boTables(pax){ return Math.ceil((+pax||0)/10); }
   /* Compute one block's requirement. Returns [{name, role, qty}]. */
   boCompute(block, beo){
     const d=this.boData();
-    const pax=+block.pax||0, tables=+block.tables||0, bars=+(beo.bars)||0, hours=+block.hours||0;
+    const pax=+block.pax||0, tables=this.boTables(pax), bars=+(beo.bars)||0, hours=+block.hours||0;
     const ev=beo.event||"corporate";
     if(block.tier==="cocktail"){
       const out=d.cocktail.map(c=>({name:c.name, role:c.name, qty:((pax*hours*c.gpp)/c.gpb)*c.assume}));
@@ -2782,7 +2784,7 @@ class Component extends DCLogic {
      them. Returns an array aligned with beo.manual: [{category, est}]. */
   boConsume(beo, master){
     const d=this.boData();
-    const pax=+beo.pax||0, tables=+beo.tables||0, ev=beo.event||"corporate";
+    const pax=+beo.pax||0, tables=this.boTables(pax), ev=beo.event||"corporate";
     const catTotal={ sparkling:d.params.sparkling*tables, white:tables*d.params.whiteWine, red:tables*d.params.redWine,
       premier:pax*d.params.beerPremier[ev], light:tables*d.params.beerLight[ev] };
     const cats=(beo.manual||[]).map(m=>this.boClassify(m.name, master));
@@ -6240,7 +6242,7 @@ class Component extends DCLogic {
               return { title: bl.rawName || (TIER.filter(t=>t.key===bl.tier)[0]||{label:"Package"}).label,
                 tierChips:tChips, isCocktail:isCk,
                 pax:String(bl.pax||0), onPax:(e)=>this.boPatchBlock(bo.id,bi,ki,{pax:parseFloat(e.target.value)||0}),
-                tables:String(bl.tables||0), onTables:(e)=>this.boPatchBlock(bo.id,bi,ki,{tables:parseFloat(e.target.value)||0}),
+                tablesDerived:String(this.boTables(bl.pax)),
                 hours:String(bl.hours||0), onHours:(e)=>this.boPatchBlock(bo.id,bi,ki,{hours:parseFloat(e.target.value)||0}),
                 lines:lines };
             });
@@ -6257,7 +6259,7 @@ class Component extends DCLogic {
               sub: [beo.date, beo.name].filter(Boolean).join(" · "),
               hasManual0:(beo.manual||[]).length>0,
               paxVal:String(beo.pax||0), onPax:(e)=>this.boPatchBeo(bo.id,bi,{pax:parseFloat(e.target.value)||0}),
-              tablesVal:String(beo.tables||0), onTables:(e)=>this.boPatchBeo(bo.id,bi,{tables:parseFloat(e.target.value)||0}),
+              tablesDerived:String(this.boTables(beo.pax)),
               barsVal:String(beo.bars||0), onBars:(e)=>this.boPatchBeo(bo.id,bi,{bars:parseFloat(e.target.value)||0}),
               eventChips:evChips, blocks:blocks, explicit:explicit, manual:manual,
               hasBlocks:blocks.length>0, hasExplicit:explicit.length>0, hasManual:manual.length>0,
