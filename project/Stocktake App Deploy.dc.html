@@ -2764,8 +2764,12 @@ class Component extends DCLogic {
 
   /* Tables are derived as 10% of pax, rounded up (e.g. 483 pax -> 49). */
   boTables(pax){ return Math.ceil((+pax||0)/10); }
-  /* Compute one block's requirement. Returns [{name, role, qty}]. */
-  boCompute(block, beo){
+  /* Compute one block's requirement. Returns [{name, role, qty}]. The beers
+     named in the BEO block are classified premier/light and the premier/light
+     totals are split across the matching products, so "Premier Beer" becomes
+     e.g. Corona and "Light Beer" splits across Hahn Premium Light / Hahn Super
+     Dry 3.5 / Heineken Zero. Falls back to a generic line if none are listed. */
+  boCompute(block, beo, master){
     const d=this.boData();
     const pax=+block.pax||0, tables=this.boTables(pax), bars=+(beo.bars)||0, hours=+block.hours||0;
     const ev=beo.event||"corporate";
@@ -2776,14 +2780,20 @@ class Component extends DCLogic {
       return out;
     }
     const t=d.tiers[block.tier]||d.tiers.cr1;
-    return [
+    const out=[
       {name:t.sparkling, role:"Sparkling", qty:d.params.sparkling*tables},
       {name:t.white, role:"White Wine", qty:tables*d.params.whiteWine},
-      {name:t.red, role:"Red Wine", qty:tables*d.params.redWine},
-      {name:"Premier Beer", role:"Premier Beer", qty:pax*d.params.beerPremier[ev]},
-      {name:"Light Beer", role:"Light Beer", qty:tables*d.params.beerLight[ev]},
-      {name:"Lemons (kg)", role:"Lemons", qty:d.params.lemonsKg*bars},
-      {name:"Limes (kg)", role:"Limes", qty:bars*d.params.limesKg} ];
+      {name:t.red, role:"Red Wine", qty:tables*d.params.redWine} ];
+    const beers=(block.bevs||[]).map(b=>({name:b, cat:this.boClassify(b, master)})).filter(b=>b.cat==="premier"||b.cat==="light");
+    const prem=beers.filter(b=>b.cat==="premier"), lite=beers.filter(b=>b.cat==="light");
+    const premTot=pax*d.params.beerPremier[ev], liteTot=tables*d.params.beerLight[ev];
+    if(prem.length) prem.forEach(b=>out.push({name:b.name, role:"Premier Beer", qty:premTot/prem.length}));
+    else out.push({name:"Premier Beer", role:"Premier Beer", qty:premTot});
+    if(lite.length) lite.forEach(b=>out.push({name:b.name, role:"Light Beer", qty:liteTot/lite.length}));
+    else out.push({name:"Light Beer", role:"Light Beer", qty:liteTot});
+    out.push({name:"Lemons (kg)", role:"Lemons", qty:d.params.lemonsKg*bars});
+    out.push({name:"Limes (kg)", role:"Limes", qty:bars*d.params.limesKg});
+    return out;
   }
   /* Best available product catalogue (with cat/sub) for category matching:
      the live stocktake master, else the most recent past stocktake snapshot. */
@@ -3041,7 +3051,7 @@ class Component extends DCLogic {
     const master=this.boMaster();
     (bo.beos||[]).filter(b=>b.submitted).forEach(beo=>{
       (beo.blocks||[]).forEach(bl=>{
-        this.boCompute(bl, beo).forEach(l=>{
+        this.boCompute(bl, beo, master).forEach(l=>{
           const unit=/lemon|lime/i.test(l.role)?"kg":"bottles";
           add(l.name, l.qty, unit);
         });
@@ -3078,7 +3088,7 @@ class Component extends DCLogic {
     (bo.beos||[]).filter(b=>b.submitted).forEach(beo=>{
       const tag=(beo.beo?("#"+beo.beo):"")+(beo.booking?(" "+beo.booking):"");
       (beo.blocks||[]).forEach(bl=>{
-        this.boCompute(bl, beo).forEach(l=> bbody.push([ tag, bl.rawName||bl.tier, bl.pax||0, l.name, Math.round(l.qty*100)/100, /lemon|lime/i.test(l.role)?"kg":"bottles" ]));
+        this.boCompute(bl, beo, master).forEach(l=> bbody.push([ tag, bl.rawName||bl.tier, bl.pax||0, l.name, Math.round(l.qty*100)/100, /lemon|lime/i.test(l.role)?"kg":"bottles" ]));
       });
       (beo.explicit||[]).forEach(e=> bbody.push([ tag, "Listed in BEO", "", e.name, e.qty, e.unit||"bottles" ]));
       const cons=this.boConsume(beo, master);
@@ -6286,7 +6296,7 @@ class Component extends DCLogic {
             const blocks = (beo.blocks||[]).map((bl,ki)=>{
               const isCk = bl.tier==="cocktail";
               const tChips = TIER.map(o=>chip(o.label, bl.tier===o.key, ()=>this.boPatchBlock(bo.id,bi,ki,{tier:o.key})));
-              const lines = this.boCompute(bl, beo).map(l=>({ role:l.role, qty:this.fmt(Math.round(l.qty*100)/100), name:l.name }));
+              const lines = this.boCompute(bl, beo, boMaster).map(l=>({ role:l.role, qty:this.fmt(Math.round(l.qty*100)/100), name:l.name }));
               return { title: bl.rawName || (TIER.filter(t=>t.key===bl.tier)[0]||{label:"Package"}).label,
                 tierChips:tChips, isCocktail:isCk,
                 pax:String(bl.pax||0), onPax:(e)=>this.boPatchBlock(bo.id,bi,ki,{pax:parseFloat(e.target.value)||0}),
