@@ -2324,7 +2324,7 @@ class Component extends DCLogic {
       buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, dupCleared:{}, subOpen:false,
       overwriteWarn:null, overwriteBy:"", overwriteOk:{}, reviewSnap:null, reviewLoc:null, reviewQuery:"",
       followups:[], fuDeleted:[], discView:null, discQuery:"", discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"",
-      barOrders:[], boView:null, boBusy:false, boErr:"",
+      barOrders:[], boDeleted:[], boView:null, boBusy:false, boErr:"",
       discLoc:"", discSheet:null, discRecount:"",
       mQuery:"", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
@@ -2391,7 +2391,7 @@ class Component extends DCLogic {
         org: saved.org||null, orgId: saved.orgId||"",
         removedIds: saved.removedIds||[], resetAt: saved.resetAt||0,
         followups: saved.followups||[], fuDeleted: saved.fuDeleted||[],
-        barOrders: saved.barOrders||[],
+        barOrders: saved.barOrders||[], boDeleted: saved.boDeleted||[],
         authed: authed, authEmail: (sess&&sess.email)||"",
         screen: gate ? "auth" : (joined ? "home" : "hub"), ready:true
       }, ()=>this.save({}));
@@ -3022,21 +3022,53 @@ class Component extends DCLogic {
     }
     return out;
   }
+  /* Bar orders sync per profile (the account's own, keyed bo:<uid>), the same
+     way follow-ups do: merged by id with the newest updatedAt winning, plus a
+     tombstone list so deletes stick across devices. */
+  barKey(uid){ return "bo:"+uid; }
+  mergeBarOrders(a, b, del){
+    a=a||[]; b=b||[]; const tomb={}; (del||[]).forEach(id=>{ if(id) tomb[id]=1; });
+    const map={};
+    a.concat(b).forEach(e=>{ if(!e || !e.id || tomb[e.id]) return; const p=map[e.id];
+      if(!p || (e.updatedAt||0) >= (p.updatedAt||0)) map[e.id]=e; });
+    return Object.keys(map).map(k=>map[k]).sort((x,y)=>((x.ts||0)-(y.ts||0)));
+  }
+  pushBarOrders(uid, list, del){
+    if(!uid || !SB.on()) return;
+    SB.put(this.barKey(uid), {barOrders:list||[], deleted:del||this.state.boDeleted||[], ts:Date.now()})
+      .catch(err=>console.error("[bar orders] cloud sync failed:", err));
+  }
+  syncBarOrders(uid){
+    if(!uid || !SB.on() || this.state.joined) return;
+    SB.get(this.barKey(uid)).then(d=>{
+      const doc={ barOrders:(d&&d.barOrders)||[], deleted:(d&&d.deleted)||[] };
+      const del=this.mergeDeleted(this.state.boDeleted, doc.deleted);
+      const merged=this.mergeBarOrders(this.state.barOrders, doc.barOrders, del);
+      if(JSON.stringify(merged)!==JSON.stringify(this.state.barOrders||[]) || JSON.stringify(del)!==JSON.stringify(this.state.boDeleted||[]))
+        this.setState({barOrders:merged, boDeleted:del}, ()=>this.save({}));
+      if(JSON.stringify(merged)!==JSON.stringify(doc.barOrders||[]) || JSON.stringify(del)!==JSON.stringify(doc.deleted||[]))
+        this.pushBarOrders(uid, merged, del);
+    }, ()=>{});
+  }
   boSave(list){
     const l=list||this.state.barOrders||[];
-    this.setState({barOrders:l}, ()=>this.save({}));
+    const uid=this.state.owner;
+    this.setState({barOrders:l}, ()=>{ this.save({}); if(uid) this.pushBarOrders(uid, l, this.state.boDeleted); });
   }
   boNew(){
     const now=Date.now();
     const id="bo"+now.toString(36)+Math.random().toString(36).slice(2,6);
     const bo={ id:id, ts:now, updatedAt:now, title:"Bar order", beos:[] };
     const list=(this.state.barOrders||[]).concat([bo]);
-    this.setState({barOrders:list, boView:id, boErr:""}, ()=>this.save({}));
+    const uid=this.state.owner;
+    this.setState({barOrders:list, boView:id, boErr:""}, ()=>{ this.save({}); if(uid) this.pushBarOrders(uid, list, this.state.boDeleted); });
   }
   boDelete(id){
     if(!id){ this.setState({confirm:null, pendingDelete:null}); return; }
     const list=(this.state.barOrders||[]).filter(b=>b.id!==id);
-    this.setState({barOrders:list, confirm:null, pendingDelete:null, boView:null, screen:"bo"}, ()=>this.save({}));
+    const del=this.mergeDeleted(this.state.boDeleted, [id]);
+    const uid=this.state.owner;
+    this.setState({barOrders:list, boDeleted:del, confirm:null, pendingDelete:null, boView:null, screen:"bo"}, ()=>{ this.save({}); if(uid) this.pushBarOrders(uid, list, del); });
   }
   boPatch(id, patch){
     const list=(this.state.barOrders||[]).map(b=> b.id===id ? Object.assign({}, b, patch, {updatedAt:Date.now()}) : b);
@@ -3087,7 +3119,7 @@ class Component extends DCLogic {
       const list=(this.state.barOrders||[]).map(b=> b.id===id ? Object.assign({}, b, {beos:(b.beos||[]).concat([beo]), updatedAt:Date.now()}) : b);
       return new Promise(res=>this.setState({barOrders:list}, ()=>{ this.save({}); res(); }));
     })), Promise.resolve());
-    run.then(()=>this.setState({boBusy:false}),
+    run.then(()=>{ this.setState({boBusy:false}); const uid=this.state.owner; if(uid) this.pushBarOrders(uid, this.state.barOrders, this.state.boDeleted); },
              err=>this.setState({boBusy:false, boErr:(err&&err.message)||"Couldn’t read that PDF."}));
   }
   /* Aggregate an order into per-item totals. Returns {items:[{name,qty,unit}], perBeo:[...]}. */
@@ -3429,6 +3461,7 @@ class Component extends DCLogic {
     if(this.state.reviewSnap!=null){ this._recoverPending = false; return; }
     this.syncArchive(uid);
     this.syncFollowups(uid);
+    this.syncBarOrders(uid);
     if(!SB.on()){ this._recoverPending = false; return; }
     const localOwn = ()=>{ const st=this.state; return !!(st.owner===uid && !st.joined && st.started && (st.locNames||[]).length && st.code); };
     SB.get(this.ownCodeKey(uid)).then(rec=>{
@@ -3563,7 +3596,7 @@ class Component extends DCLogic {
         authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
         me: nm, admin: "", owner: uid,
         title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
-        archive:[], archDeleted:[], followups:[], fuDeleted:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
+        archive:[], archDeleted:[], followups:[], fuDeleted:[], barOrders:[], boDeleted:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
         cParts:[], sParts:[],
         org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgMsg:"", orgRename:"", pendingOrgUid:"", pendingOrgName:"",
         screen: newSignup ? "profile" : "hub", setupStep:1, menuOpen:false
@@ -3584,7 +3617,7 @@ class Component extends DCLogic {
       authErr:"", authPwInput:"", authEmailInput:"",
       owner:"", me:"", admin:"", joined:false, started:false,
       org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgMsg:"", orgRename:"", pendingOrgUid:"", pendingOrgName:"",
-      archive:[], archDeleted:[], followups:[], fuDeleted:[],
+      archive:[], archDeleted:[], followups:[], fuDeleted:[], barOrders:[], boDeleted:[],
       title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{},
       hidden:{}, hideEmpty:{}, pushed:{}, removedIds:[], resetAt:0, code:this.makeCode(),
       cParts:[], sParts:[], stkFrom:"hub", navFrom:"", sheet:null, loc:null, screen:"auth"
@@ -3596,7 +3629,7 @@ class Component extends DCLogic {
     this.setState({
       joined:false, viewAs:"admin", menuOpen:false, started:false,
       title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
-      archive:[], followups:[], fuDeleted:[], removedIds:[], resetAt:0, admin:"", me:"", code:this.makeCode(),
+      archive:[], followups:[], fuDeleted:[], barOrders:[], boDeleted:[], removedIds:[], resetAt:0, admin:"", me:"", code:this.makeCode(),
       joinCode:"", joinName:"", joinNote:"", authView:"join", screen:"auth"
     });
   }
@@ -3634,7 +3667,7 @@ class Component extends DCLogic {
       me:s.me, code:s.code, dup:s.dup, dupCleared:s.dupCleared, drive:s.drive, pushed:s.pushed, metaAt:this._metaAt,
       hidden:s.hidden, hideEmpty:s.hideEmpty, org:s.org, orgId:s.orgId,
       admin:s.admin, owner:s.owner, archive:s.archive, archDeleted:s.archDeleted, joined:s.joined, started:s.started, removedIds:s.removedIds, resetAt:s.resetAt,
-      followups:s.followups, fuDeleted:s.fuDeleted, barOrders:s.barOrders
+      followups:s.followups, fuDeleted:s.fuDeleted, barOrders:s.barOrders, boDeleted:s.boDeleted
     }, patch);
     try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
     this._localWriteAt = Date.now();
@@ -3656,6 +3689,7 @@ class Component extends DCLogic {
     if(!SB.on() || !s.ready || !s.owner || s.joined || this._recoverPending) return;
     this.syncArchive(s.owner);
     this.syncFollowups(s.owner);
+    this.syncBarOrders(s.owner);
   }
   /* Keep the signed-in user's access token fresh so owner-only (RLS-protected)
      rows — profile, personal archive, active-stocktake pointer — stay reachable
