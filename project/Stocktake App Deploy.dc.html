@@ -1360,7 +1360,7 @@ Sign in with Google
 
 <div style="margin-top:16px;font:500 9px/1 'Public Sans',sans-serif;letter-spacing:.12em;color:var(--ink-3)">MANAGE</div>
 <div style="margin-top:9px;display:flex;flex-direction:column;gap:7px">
-<sc-if value="{{ authed }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ canHub }}" hint-placeholder-val="{{ false }}">
 <button onClick="{{ goHub }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--line-2)">
 <span style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;font:600 15px/1 'Public Sans',sans-serif;color:var(--ink-2)">⌂</span>
 <span style="flex:1;min-width:0">
@@ -2513,6 +2513,10 @@ class Component extends DCLogic {
      refreshes their in-progress stocktake (so "Continue" is accurate) but never
      drops a counter, who has no launcher. */
   goHubNav(){
+    /* A counter is scoped to the one active stocktake they joined. The hub holds
+       organiser-only areas (past stocktakes, discrepancies, bar ordering), so any
+       "back" or hub navigation keeps a counter on the counting screen instead. */
+    if(this.state.joined){ this.setState({screen:"home", menuOpen:false}); return; }
     this.setState({screen:"hub", menuOpen:false}, ()=>{ const st=this.state; if(st.owner && !st.joined) this.resumeOwn(st.owner); });
   }
   /* Return from a screen that can be opened from several places (Past, Account) to
@@ -4711,6 +4715,7 @@ class Component extends DCLogic {
     const vals = {
       W: 402, H: 874,
       amAdmin: amAdmin, notAdmin: !amAdmin,
+      canHub: s.authed && !s.joined,
       adminName: adminName,
       roleLabel: amAdmin ? "ADMIN" : "COUNTER",
       roleInk: amAdmin ? "var(--ink)" : "var(--ink-2)",
@@ -4906,7 +4911,7 @@ class Component extends DCLogic {
         ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
         : (()=>this.goHubNav()),
       isAuth: s.screen==="auth",
-      buildStamp: "Build 2026-10-07b · session-safe",
+      buildStamp: "Build 2026-10-07c · session-safe",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
       authIsSignup: s.authMode==="up",
