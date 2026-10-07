@@ -101,6 +101,7 @@ Sign in with Google
 <button onClick="{{ showAdminAuth }}" style="width:100%;padding:12px;background:transparent;border:none;cursor:pointer;font:500 12px/1.4 'Public Sans',sans-serif;color:var(--ink-2)">‹ Organiser sign in</button>
 </div>
 </sc-if>
+<div style="margin-top:26px;text-align:center;font:500 9px/1.4 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-4)">{{ buildStamp }}</div>
 </div>
 </div>
 </sc-if>
@@ -4906,6 +4907,7 @@ class Component extends DCLogic {
         ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
         : (()=>this.goHubNav()),
       isAuth: s.screen==="auth",
+      buildStamp: "Build 2026-10-07 · session-safe",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
       authIsSignup: s.authMode==="up",
