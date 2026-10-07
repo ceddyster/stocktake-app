@@ -2507,7 +2507,7 @@ class Component extends DCLogic {
       } else {
         this.setState({screen:"profile", menuOpen:false});
       }
-    }, ()=>this.flagSessionStale());
+    }, ()=>this.resumeOwn(uid));
   }
   /* The launcher / home screen an organiser lands on after login. Going here
      refreshes their in-progress stocktake (so "Continue" is accurate) but never
@@ -3569,13 +3569,14 @@ class Component extends DCLogic {
       this.setState({authEmail:ns.email});
       this.ensureProfile(ns.uid);
     }, ()=>{
+      /* The stored access token didn't validate. Try to renew it via the shared
+         single-flight refresh; only if that genuinely fails is the session dead,
+         and we show the sign-in prompt. */
       if(sess.refresh_token){
-        AUTH.refresh(sess.refresh_token).then(t=>{
-          const ns = {access_token:t.access_token, refresh_token:t.refresh_token, email:(t.user&&t.user.email)||sess.email||"", uid:(t.user&&t.user.id)||sess.uid||""};
-          try{ localStorage.setItem(AUTHKEY, JSON.stringify(ns)); }catch(e){}
-          this.setState({authEmail:ns.email});
-          this.ensureProfile(ns.uid);
-        }, ()=>this.flagSessionStale());
+        this.refreshNow().then(ok=>{
+          if(ok){ const ns=this._sess(); this.setState({authEmail:(ns&&ns.email)||sess.email||""}); this.ensureProfile((ns&&ns.uid)||sess.uid); }
+          else { this.flagSessionStale(); }
+        });
       } else { this.flagSessionStale(); }
     });
   }
@@ -3756,19 +3757,17 @@ class Component extends DCLogic {
       authEmail: em || this.state.authEmail, screen:"auth" });
   }
   maybeRefreshToken(){
-    if(this._refreshing) return;
     let s=null; try{ s=JSON.parse(localStorage.getItem(AUTHKEY)||"null"); }catch(e){}
     if(!s || !s.access_token || !s.refresh_token) return;
     let exp=0; try{ exp=(JSON.parse(atob(s.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))).exp||0)*1000; }catch(e){ return; }
-    if(exp && (exp - Date.now()) > 10*60*1000) return;
-    this._refreshing = true;
-    AUTH.refresh(s.refresh_token).then(t=>{
-      this._refreshing = false;
-      if(t && t.access_token){
-        const ns = {access_token:t.access_token, refresh_token:(t.refresh_token||s.refresh_token), email:((t.user&&t.user.email)||s.email||""), uid:((t.user&&t.user.id)||s.uid||"")};
-        try{ localStorage.setItem(AUTHKEY, JSON.stringify(ns)); }catch(e){}
-      }
-    }, ()=>{ this._refreshing = false; });
+    /* Refresh only when the token is genuinely close to expiring: exp in the
+       FUTURE and within 10 minutes. If exp looks already past, the device clock
+       is most likely wrong — the token is still valid server-side, so leave it to
+       the reactive 401 retry instead of churning (and invalidating) the refresh
+       token on every 3-second tick. Shares the single-flight guard in refreshNow
+       so this and a 401-driven refresh can never race the same token. */
+    if(!(exp > Date.now() && (exp - Date.now()) < 10*60*1000)) return;
+    this.refreshNow();
   }
 
   applyThemeBg(){ try{ document.body.style.background = this.state.theme==="light" ? "#EDE3D2" : "#12193A"; }catch(e){} }
@@ -4907,7 +4906,7 @@ class Component extends DCLogic {
         ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
         : (()=>this.goHubNav()),
       isAuth: s.screen==="auth",
-      buildStamp: "Build 2026-10-07 · session-safe",
+      buildStamp: "Build 2026-10-07b · session-safe",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
       authIsSignup: s.authMode==="up",
