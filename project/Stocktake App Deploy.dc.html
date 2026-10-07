@@ -2259,21 +2259,42 @@ const SB = {
       return null;
     }catch(e){ return null; }
   },
+  /* The raw stored access token, WITHOUT the local expiry check token() does.
+     Personal-row requests send this so the SERVER decides whether it is still
+     valid — a device whose clock is wrong would otherwise wrongly judge a good
+     token "expired", silently fall back to the anon key, and get an empty result
+     (RLS hides the row), which looks exactly like a lost profile / empty archive. */
+  rawToken(){ try{ const s=JSON.parse(localStorage.getItem("stocktake.auth.v1")||"null"); return (s&&s.access_token)||null; }catch(e){ return null; } },
+  /* Set by the app to a function that refreshes the access token and resolves
+     true/false. _sbFetch calls it to recover from a 401/403 on a personal row. */
+  _refresh:null,
   head(code){
     let bearer = this.key;
-    if(this.personal(code)){ const t = this.token(); if(t) bearer = t; }
+    if(this.personal(code)){ bearer = this.rawToken() || this.key; }
     return {apikey:this.key, Authorization:"Bearer "+bearer, "Content-Type":"application/json"};
   },
+  /* Issue a request; if a personal row comes back 401/403 (token expired or
+     missing), refresh the session once and re-issue before giving up. */
+  _sbFetch(go, code){
+    return go().then(r=>{
+      if((r.status===401 || r.status===403) && this.personal(code) && typeof this._refresh==="function"){
+        return Promise.resolve(this._refresh()).then(ok=> ok ? go() : r, ()=>r);
+      }
+      return r;
+    });
+  },
   get(code){
-    return fetch(this.url+"/rest/v1/stocktakes?code=eq."+encodeURIComponent(code)+"&select=doc",
-      {headers:this.head(code)})
+    const go = ()=> fetch(this.url+"/rest/v1/stocktakes?code=eq."+encodeURIComponent(code)+"&select=doc",
+      {headers:this.head(code)});
+    return this._sbFetch(go, code)
       .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
       .then(rows=>(rows && rows[0] && rows[0].doc) || null);
   },
   put(code, doc){
-    return fetch(this.url+"/rest/v1/stocktakes",
+    const go = ()=> fetch(this.url+"/rest/v1/stocktakes",
       {method:"POST", headers:Object.assign({Prefer:"resolution=merge-duplicates"}, this.head(code)),
-       body:JSON.stringify({code:code, doc:doc})})
+       body:JSON.stringify({code:code, doc:doc})});
+    return this._sbFetch(go, code)
       .then(r=>{ if(!r.ok) throw new Error(r.status); return true; });
   }
 };
@@ -2333,13 +2354,16 @@ class Component extends DCLogic {
       pwCur:"", pwNew:"", pwBusy:false, pwMsg:"", accountMsg:"",
       org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgBusy:false, orgMsg:"",
       orgRename:"", pendingOrgUid:"", pendingOrgName:"",
-      authed:false, authEmail:"", authView:"admin", authMode:"in", authEmailInput:"", authPwInput:"", authBusy:false, authErr:"", googleConfirm:null,
+      authed:false, authEmail:"", authView:"admin", authMode:"in", authEmailInput:"", authPwInput:"", authBusy:false, authErr:"", sessionStale:false, googleConfirm:null,
       theme: (()=>{ try{ return localStorage.getItem("stocktake.theme")==="light" ? "light" : "dark"; }catch(e){ return "dark"; } })()
     };
   }
 
   componentDidMount(){
     this.applyThemeBg();
+    /* Let the Supabase layer recover a 401 on a personal row by refreshing the
+       session token once, instead of silently returning an empty (RLS-hidden) result. */
+    SB._refresh = ()=>this.refreshNow();
     this._recoverPending = false;
     const hashSess = this.readHashTokens();
     let sess = null;
@@ -2460,7 +2484,9 @@ class Component extends DCLogic {
   profileKey(uid){ return "p:"+uid; }
   fetchProfile(uid){
     if(!uid || !SB.on()) return Promise.resolve(null);
-    return SB.get(this.profileKey(uid)).then(d=>d||null, ()=>null);
+    /* Let a read ERROR reject (so ensureProfile can tell "session can't read this"
+       apart from a genuine 200-with-no-row "this account has no profile yet"). */
+    return SB.get(this.profileKey(uid)).then(d=>d||null);
   }
   saveProfile(uid, name){
     if(!uid || !SB.on()) return;
@@ -2480,7 +2506,7 @@ class Component extends DCLogic {
       } else {
         this.setState({screen:"profile", menuOpen:false});
       }
-    }, ()=>this.resumeOwn(uid));
+    }, ()=>this.flagSessionStale());
   }
   /* The launcher / home screen an organiser lands on after login. Going here
      refreshes their in-progress stocktake (so "Continue" is accurate) but never
@@ -3548,8 +3574,8 @@ class Component extends DCLogic {
           try{ localStorage.setItem(AUTHKEY, JSON.stringify(ns)); }catch(e){}
           this.setState({authEmail:ns.email});
           this.ensureProfile(ns.uid);
-        }, ()=>this.signOut());
-      } else { this.signOut(); }
+        }, ()=>this.flagSessionStale());
+      } else { this.flagSessionStale(); }
     });
   }
   doAuth(){
@@ -3583,7 +3609,7 @@ class Component extends DCLogic {
     if(sameUser){
       const nm = (s.me && s.me.trim()) ? s.me : em.split("@")[0];
       this.setState({
-        authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
+        authed:true, authEmail:em, authBusy:false, authErr:"", sessionStale:false, authPwInput:"", authEmailInput:"",
         me: nm, admin: s.admin || nm, owner: uid,
         screen: "hub", menuOpen:false
       }, ()=>{ this.save({}); this.ensureProfile(uid); });
@@ -3593,7 +3619,7 @@ class Component extends DCLogic {
       // signing in on a new device skips it and pulls its saved profile name.
       const nm = newSignup ? "" : em.split("@")[0];
       this.setState({
-        authed:true, authEmail:em, authBusy:false, authErr:"", authPwInput:"", authEmailInput:"",
+        authed:true, authEmail:em, authBusy:false, authErr:"", sessionStale:false, authPwInput:"", authEmailInput:"",
         me: nm, admin: "", owner: uid,
         title:"", locNames:[], master:[], counts:{}, submitted:{}, subAt:{}, dup:{}, dupCleared:{}, pushed:{},
         archive:[], archDeleted:[], followups:[], fuDeleted:[], barOrders:[], boDeleted:[], removedIds:[], joined:false, started:false, resetAt:0, code:this.makeCode(),
@@ -3614,7 +3640,7 @@ class Component extends DCLogic {
     this._recoverPending = false;
     this.setState({
       authed:false, authEmail:"", menuOpen:false, viewAs:"admin", authView:"admin", authMode:"in",
-      authErr:"", authPwInput:"", authEmailInput:"",
+      authErr:"", sessionStale:false, authPwInput:"", authEmailInput:"",
       owner:"", me:"", admin:"", joined:false, started:false,
       org:null, orgId:"", orgActive:[], orgNameInput:"", orgJoinCode:"", orgMsg:"", orgRename:"", pendingOrgUid:"", pendingOrgName:"",
       archive:[], archDeleted:[], followups:[], fuDeleted:[], barOrders:[], boDeleted:[],
@@ -3695,6 +3721,39 @@ class Component extends DCLogic {
      rows — profile, personal archive, active-stocktake pointer — stay reachable
      during long sessions. Refreshes only when the token is within 10 minutes of
      expiring; the counting/sync path uses the anon key and is unaffected either way. */
+  /* Force a token refresh on demand (used by SB._refresh after a 401 on a personal
+     row). Resolves true if a fresh token was stored, false if the session can't be
+     renewed — the refresh token itself is the source of truth, so this works even
+     when the device clock is wrong. Coalesces concurrent calls. */
+  refreshNow(){
+    if(this._refreshingNow) return this._refreshingNow;
+    const s = this._sess();
+    if(!s || !s.refresh_token) return Promise.resolve(false);
+    this._refreshingNow = AUTH.refresh(s.refresh_token).then(t=>{
+      this._refreshingNow = null;
+      if(t && t.access_token){
+        const ns = {access_token:t.access_token, refresh_token:(t.refresh_token||s.refresh_token), email:((t.user&&t.user.email)||s.email||""), uid:((t.user&&t.user.id)||s.uid||"")};
+        try{ localStorage.setItem(AUTHKEY, JSON.stringify(ns)); }catch(e){}
+        if(this.state.sessionStale) this.setState({sessionStale:false});
+        return true;
+      }
+      return false;
+    }, ()=>{ this._refreshingNow = null; return false; });
+    return this._refreshingNow;
+  }
+  /* The session can no longer be renewed: show the sign-in screen with a clear
+     "session expired" message instead of a blank profile / empty archive. The
+     local stocktake data is left untouched (it may hold unsynced work), and the
+     email is prefilled so signing back in is one tap + password. Counters have no
+     account session, so they're never bounced here. */
+  flagSessionStale(){
+    if(this.state.joined) return;
+    const s = this._sess();
+    const em = this.state.authEmail || (s && s.email) || "";
+    this.setState({ sessionStale:true, authed:true, authView:"admin", authMode:"in",
+      authBusy:false, menuOpen:false, authEmailInput: this.state.authEmailInput || em,
+      authEmail: em || this.state.authEmail, screen:"auth" });
+  }
   maybeRefreshToken(){
     if(this._refreshing) return;
     let s=null; try{ s=JSON.parse(localStorage.getItem(AUTHKEY)||"null"); }catch(e){}
@@ -4853,7 +4912,7 @@ class Component extends DCLogic {
       authHeadline: s.authView==="join" ? "Join a stocktake" : (s.authMode==="up" ? "Create your account" : "Sign in"),
       authSub: s.authView==="join"
         ? "Enter the code your organiser shared. Your name goes on every line you count."
-        : "",
+        : (s.sessionStale ? "Your session timed out. Sign in again to reload your profile and past stocktakes — your data is safe in the cloud." : ""),
       authEmailValue: s.authEmailInput,
       onAuthEmail: (e)=>this.setState({authEmailInput:e.target.value}),
       authPwValue: s.authPwInput,
