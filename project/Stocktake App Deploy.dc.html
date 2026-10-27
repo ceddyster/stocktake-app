@@ -4221,13 +4221,71 @@ class Component extends DCLogic {
         totals: ["TOTAL","","","","",fmt(sumC),fmt(sumS),fmt(sumT)]
       });
     });
+    // Scan Sheet: a scannable Code 39 barcode (of the item code) next to each
+    // product's counted total units, for scanning the export like the venue's
+    // physical scan sheet. Inserted as the second tab, after Grand Totals.
+    const scanRows = [], scanImgs = [];
+    counted.forEach(i=>{
+      const code = (i.code!=null ? String(i.code) : "").trim();
+      const total = fmt(locNames.reduce((a,n)=>{ const e=s.counts[this.ck(n,i.id)]; return a + (e ? this.units(i,e) : 0); }, 0));
+      const ri = scanRows.length;                 // 0-based data row
+      const bc = code ? this.barcodePng(code) : null;
+      if(bc) scanImgs.push({data:bc.data, col:0, row:ri+1, wPx:bc.w, hPx:bc.h}); // row+1: header is row 0
+      scanRows.push(["", code, i.name, total]);
+    });
+    specs.splice(1, 0, {
+      name: "Scan Sheet",
+      head: ["Barcode","Item","Description","Total Units"],
+      body: scanRows,
+      totals: null,
+      images: scanImgs,
+      rowHt: 44,
+      colW: {0: 42}
+    });
 
     return this.xlsxFromSpecs(specs, this.exportName("xlsx", s));
+  }
+  /* Generate a scannable Code 39 barcode of `code` as a PNG, returned as
+     {data:Uint8Array, w, h}. The venue's scan sheet prints Code 39 of the
+     product's item code, so regenerating from the item code gives a barcode that
+     scans identically. Returns null when the code is empty or has a character
+     Code 39 can't carry (item codes are numeric, so this is just a guard). */
+  barcodePng(code){
+    code = String(code==null?"":code).trim().toUpperCase();
+    if(!code) return null;
+    const MAP = {"0":"000110100","1":"100100001","2":"001100001","3":"101100000","4":"000110001","5":"100110000","6":"001110000","7":"000100101","8":"100100100","9":"001100100","A":"110100001","B":"011100001","C":"111100000","D":"010110001","E":"110110000","F":"011110000","G":"010100101","H":"110100100","I":"011100100","J":"010110100","K":"110000011","L":"011000011","M":"111000010","N":"010010011","O":"110010010","P":"011010010","Q":"010000111","R":"110000110","S":"011000110","T":"010010110","U":"100001011","V":"001001011","W":"101001010","X":"000011011","Y":"100011010","Z":"001011010","-":"000001111","*":"010010100"};
+    const NAR=2, WID=6, H=46, PAD=6, QUIET=20;
+    const seq=[];
+    const chars = ("*"+code+"*").split("");
+    for(let ci=0; ci<chars.length; ci++){
+      const p = MAP[chars[ci]];
+      if(!p) return null;
+      for(let i=0;i<9;i++) seq.push({b:(i%2===0), w:(p[i]==="1"?WID:NAR)});
+      if(ci<chars.length-1) seq.push({b:false, w:NAR}); // inter-character narrow gap
+    }
+    const W = seq.reduce((a,s)=>a+s.w,0) + QUIET*2;
+    const totalH = H + PAD*2;
+    let cv;
+    try{ cv = document.createElement("canvas"); cv.width=W; cv.height=totalH; }catch(e){ return null; }
+    const ctx = cv.getContext("2d");
+    if(!ctx) return null;
+    ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,W,totalH);
+    ctx.fillStyle="#000000";
+    let x=QUIET;
+    seq.forEach(s=>{ if(s.b) ctx.fillRect(x, PAD, s.w, H); x+=s.w; });
+    let bytes;
+    try{
+      const b64 = cv.toDataURL("image/png").split(",")[1];
+      const bin = atob(b64); bytes = new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+    }catch(e){ return null; }
+    return {data:bytes, w:W, h:totalH};
   }
   /* Render an array of sheet specs ({name, head[], body[][], totals[]|null})
      to a store-only .xlsx and download it. Shared by the stocktake export and
      the discrepancy follow-up export. Each body/totals cell is a number
-     (right-aligned, numeric) or a string. */
+     (right-aligned, numeric) or a string. A spec may also carry images (barcode
+     PNGs) anchored to cells; those sheets get the OOXML drawing parts added. */
   xlsxFromSpecs(specs, filename){
     const colLetter = c=>{ let r=""; c++; while(c>0){ const m=(c-1)%26; r=String.fromCharCode(65+m)+r; c=(c-m-1)/26; } return r; };
     const xmlEsc = v=>String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -4241,7 +4299,9 @@ class Component extends DCLogic {
       usedNames[n.toLowerCase()] = 1;
       return n;
     };
-    const files = {}, wbSheets = [], wbRels = [], ctOverrides = [];
+    const EMU = 9525; // English Metric Units per pixel (96 dpi)
+    const files = {}, wbSheets = [], wbRels = [], ctOverrides = [], ctDraw = [];
+    let imgN = 0, anyImg = false;
     specs.forEach((sp, idx)=>{
       const nCols = sp.head.length;
       const bodyLen = sp.body.length;
@@ -4249,8 +4309,11 @@ class Component extends DCLogic {
         let max = String(h).length;
         sp.body.forEach(r=>{ const v=r[c]; const t=typeof v==="number"?fmt(v)+"":String(v==null?"":v); if(t.length>max) max=t.length; });
         if(sp.totals){ const v=sp.totals[c]; const t=typeof v==="number"?fmt(v)+"":String(v==null?"":v); if(t.length>max) max=t.length; }
-        return Math.min(Math.max(max+2,8),60);
+        let w = Math.min(Math.max(max+2,8),60);
+        if(sp.colW && sp.colW[c]!=null) w = sp.colW[c]; // explicit override (e.g. wide barcode column)
+        return w;
       });
+      const rowAttr = sp.rowHt ? (' ht="'+sp.rowHt+'" customHeight="1"') : '';
       let ws = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
         '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
         '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'+
@@ -4258,7 +4321,7 @@ class Component extends DCLogic {
       ws += '<row r="1">'+sp.head.map((h,c)=>'<c r="'+colLetter(c)+'1" s="1" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(String(h).toUpperCase())+'</t></is></c>').join("")+'</row>';
       sp.body.forEach((r,ri)=>{
         const rn = ri+2;
-        ws += '<row r="'+rn+'">'+r.map((v,c)=>{
+        ws += '<row r="'+rn+'"'+rowAttr+'>'+r.map((v,c)=>{
           const ref = colLetter(c)+rn;
           if(typeof v==="number") return '<c r="'+ref+'" s="2"><v>'+v+'</v></c>';
           return '<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(v==null?"":v)+'</t></is></c>';
@@ -4277,12 +4340,36 @@ class Component extends DCLogic {
       // filter over header + body only (sortable/filterable; totals row sits below it).
       // A sheet-level autoFilter avoids the fragile table parts that Excel repairs.
       const tRef = 'A1:'+colLetter(nCols-1)+(bodyLen+1);
-      ws += '</sheetData><autoFilter ref="'+tRef+'"/></worksheet>';
       const n = idx+1;
+      const imgs = (sp.images && sp.images.length) ? sp.images : null;
+      ws += '</sheetData><autoFilter ref="'+tRef+'"/>'+(imgs?'<drawing r:id="rId1"/>':'')+'</worksheet>';
       files["xl/worksheets/sheet"+n+".xml"] = ws;
       wbSheets.push('<sheet name="'+xmlEsc(sheetName(sp.name))+'" sheetId="'+n+'" r:id="rId'+n+'"/>');
       wbRels.push('<Relationship Id="rId'+n+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+n+'.xml"/>');
       ctOverrides.push('<Override PartName="/xl/worksheets/sheet'+n+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>');
+      if(imgs){
+        // One drawing per image-bearing sheet; each picture anchored to its cell.
+        anyImg = true;
+        let dxml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+          '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">';
+        let drels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
+        imgs.forEach((im, k)=>{
+          imgN++;
+          files["xl/media/image"+imgN+".png"] = im.data;
+          const cx = (im.wPx||100)*EMU, cy = (im.hPx||40)*EMU, rid = "rId"+(k+1);
+          dxml += '<xdr:oneCellAnchor><xdr:from><xdr:col>'+(im.col||0)+'</xdr:col><xdr:colOff>'+(4*EMU)+'</xdr:colOff><xdr:row>'+(im.row||0)+'</xdr:row><xdr:rowOff>'+(3*EMU)+'</xdr:rowOff></xdr:from>'+
+            '<xdr:ext cx="'+cx+'" cy="'+cy+'"/>'+
+            '<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="'+(k+1)+'" name="bc'+imgN+'"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>'+
+            '<xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="'+rid+'"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'+
+            '<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>';
+          drels += '<Relationship Id="'+rid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image'+imgN+'.png"/>';
+        });
+        dxml += '</xdr:wsDr>'; drels += '</Relationships>';
+        files["xl/drawings/drawing"+n+".xml"] = dxml;
+        files["xl/drawings/_rels/drawing"+n+".xml.rels"] = drels;
+        files["xl/worksheets/_rels/sheet"+n+".xml.rels"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing'+n+'.xml"/></Relationships>';
+        ctDraw.push('<Override PartName="/xl/drawings/drawing'+n+'.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>');
+      }
     });
     const stylesRid = specs.length+1;
     const styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
@@ -4299,7 +4386,7 @@ class Component extends DCLogic {
       '<xf numFmtId="164" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1"/>'+
       '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
     files["xl/styles.xml"] = styles;
-    files["[Content_Types].xml"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+ctOverrides.join("")+'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
+    files["[Content_Types].xml"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>'+(anyImg?'<Default Extension="png" ContentType="image/png"/>':'')+'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+ctOverrides.join("")+ctDraw.join("")+'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
     files["_rels/.rels"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
     files["xl/workbook.xml"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+wbSheets.join("")+'</sheets></workbook>';
     files["xl/_rels/workbook.xml.rels"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+wbRels.join("")+'<Relationship Id="rId'+stylesRid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
@@ -4314,7 +4401,7 @@ class Component extends DCLogic {
     const parts = [], central = []; let offset = 0;
     const u16=n=>[n&255,(n>>8)&255], u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255];
     Object.keys(files).forEach(name=>{
-      const nameB = enc.encode(name), data = enc.encode(files[name]), crc = crc32(data);
+      const nameB = enc.encode(name), data = (files[name] instanceof Uint8Array) ? files[name] : enc.encode(files[name]), crc = crc32(data);
       const local = [].concat(u32(0x04034b50),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(nameB.length),u16(0));
       parts.push(new Uint8Array(local), nameB, data);
       central.push([].concat(u32(0x02014b50),u16(20),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(nameB.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset)));
@@ -4911,7 +4998,7 @@ class Component extends DCLogic {
         ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
         : (()=>this.goHubNav()),
       isAuth: s.screen==="auth",
-      buildStamp: "Build 2026-10-07c · session-safe",
+      buildStamp: "Build 2026-10-27 · scan-sheet",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
       authIsSignup: s.authMode==="up",
