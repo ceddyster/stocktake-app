@@ -2466,6 +2466,26 @@ class Component extends DCLogic {
       if(s.authed || s.joined){ e.preventDefault(); e.returnValue = ""; return ""; }
     };
     try{ window.addEventListener("beforeunload", this._beforeUnload); }catch(e){}
+    /* Let a desktop counter type counts on their physical keyboard. Only while a
+       product's count sheet is open, map the keyboard to the on-screen keypad:
+       digits and "." enter into whichever field (Cartons / Singles) is selected,
+       Backspace deletes, Enter / "+" banks the current spot, Escape closes. We
+       ignore it when a real text field is focused so search/name boxes still type
+       normally. The field is still chosen on screen — this only adds the numbers. */
+    this._countKeys = (ev)=>{
+      const s = this.state;
+      if(!s.sheet || !s.loc || s.reviewSnap!=null) return;
+      const t = ev.target;
+      if(t && (t.tagName==="INPUT" || t.tagName==="TEXTAREA" || t.isContentEditable)) return;
+      if(ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      const k = ev.key;
+      if(/^[0-9]$/.test(k)){ ev.preventDefault(); this.press(k)(); }
+      else if(k==="."){ ev.preventDefault(); this.press(".")(); }
+      else if(k==="Backspace"){ ev.preventDefault(); this.press("del")(); }
+      else if(k==="Enter" || k==="+"){ ev.preventDefault(); this.addChip(); }
+      else if(k==="Escape"){ ev.preventDefault(); this.setState({sheet:null, buf:null, cParts:[], sParts:[]}); }
+    };
+    try{ window.addEventListener("keydown", this._countKeys); }catch(e){}
     const joined = !!(saved && saved.joined);
     const gate = !authed && !joined;
     // A doc belongs to the account that owns it. If a different account is
@@ -3858,7 +3878,7 @@ class Component extends DCLogic {
     this.publish();
   }
 
-  componentWillUnmount(){ if(this.timer) clearInterval(this.timer); if(this._archTimer) clearInterval(this._archTimer); try{ if(this._beforeUnload) window.removeEventListener("beforeunload", this._beforeUnload); }catch(e){} }
+  componentWillUnmount(){ if(this.timer) clearInterval(this.timer); if(this._archTimer) clearInterval(this._archTimer); try{ if(this._beforeUnload) window.removeEventListener("beforeunload", this._beforeUnload); if(this._countKeys) window.removeEventListener("keydown", this._countKeys); }catch(e){} }
   /* Periodic shared-archive sync (see the interval in componentDidMount). Only
      the organiser owns an archive, so counters (joined) are skipped; syncArchive
      itself only writes/setState when something actually changed. */
@@ -5168,7 +5188,7 @@ class Component extends DCLogic {
         ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
         : (()=>this.goHubNav()),
       isAuth: s.screen==="auth",
-      buildStamp: "Build 2026-10-28 · leave-guard",
+      buildStamp: "Build 2026-10-28 · keyboard",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
       authIsSignup: s.authMode==="up",
