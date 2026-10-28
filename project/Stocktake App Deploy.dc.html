@@ -2053,6 +2053,11 @@ Sign in with Google
 <button onClick="{{ openImport }}" style="flex:1;padding:9px;border-radius:9px;cursor:pointer;background:var(--surface);border:1px solid var(--line);font:600 10.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink-2)">ATTACH EXCEL</button>
 </sc-if>
 </div>
+<sc-if value="{{ amAdmin }}" hint-placeholder-val="{{ true }}">
+<label style="margin-top:6px;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px;border-radius:9px;cursor:pointer;background:var(--surface);border:1px solid var(--line);font:600 10.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink-2)">▦ CHECK SCAN SHEET
+<input type="file" accept="application/pdf,.pdf" onChange="{{ onScanFile }}" style="display:none" />
+</label>
+</sc-if>
 <sc-if value="{{ notAdmin }}" hint-placeholder-val="{{ false }}">
 <div style="margin-top:8px;padding:9px 11px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font:400 10.5px/1.45 'Public Sans',sans-serif;color:var(--ink-2);box-shadow:var(--card-shadow)">You can add products. Changing one that is already on the list is up to {{ adminName }}.</div>
 </sc-if>
@@ -2078,6 +2083,70 @@ Sign in with Google
 </div>
 </sc-for>
 <div style="padding:20px 16px;text-align:center;font:400 11px/1.5 'Public Sans',sans-serif;color:var(--ink-3)">{{ masterFootnote }}</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMCheck }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 12px;background:var(--bg);border-bottom:1px solid var(--line)">
+<div style="display:flex;align-items:center;gap:10px">
+<button onClick="{{ mcheckBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink)">Scan sheet check</div>
+<div style="margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3)">Barcodes on the sheet vs the Master List</div>
+</div>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding:14px 16px 44px">
+<sc-if value="{{ mcheckBusy }}" hint-placeholder-val="{{ true }}">
+<div style="padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;font:600 12px/1.4 'Public Sans',sans-serif;color:var(--ink-2);box-shadow:var(--card-shadow)">{{ mcheckNote }}</div>
+<div style="margin-top:8px;font:400 10.5px/1.5 'Public Sans',sans-serif;color:var(--ink-3)">Reading the barcodes can take a few seconds per page.</div>
+</sc-if>
+<sc-if value="{{ mcheckHasErr }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px 14px;background:var(--bad-bg2);border:1px solid var(--bad-bg);border-radius:12px;font:400 11.5px/1.5 'Public Sans',sans-serif;color:var(--bad);text-wrap:pretty">{{ mcheckErr }}</div>
+</sc-if>
+<sc-if value="{{ mcheckHasResult }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px 14px;background:var(--surface-2);border-radius:11px;font:500 11px/1.5 'Public Sans',sans-serif;color:var(--ink-2)">{{ mcheckSummary }}</div>
+<sc-if value="{{ mcheckClean }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:12px;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;font:600 12.5px/1.45 'Public Sans',sans-serif;color:var(--ink);box-shadow:var(--card-shadow)">Everything matches — every barcode on the sheet is in the Master List, and nothing is left over.</div>
+</sc-if>
+<div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between">
+<span style="font:600 10px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">MISSING FROM MASTER LIST</span>
+<span style="font:700 10px/1 'Public Sans',sans-serif;color:var(--bad)">{{ mcheckMissingCount }}</span>
+</div>
+<sc-if value="{{ mcheckMissingHas }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:8px;font:400 10px/1.5 'Public Sans',sans-serif;color:var(--ink-3)">These barcodes are on the sheet but not in the Master List. Barcodes carry only the item code, so look the name up on the sheet by its code.</div>
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ mcheckMissing }}" as="mm" hint-placeholder-count="3">
+<div style="padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--card-shadow)">
+<span style="font:600 12.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">Item {{ mm.code }}</span>
+<span style="font:400 9.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">add to Master List</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ mcheckMissingNone }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:8px;padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font:400 11px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">None — every barcode on the sheet is in the Master List.</div>
+</sc-if>
+<div style="margin-top:18px;display:flex;align-items:center;justify-content:space-between">
+<span style="font:600 10px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">IN MASTER LIST, NOT ON SHEET</span>
+<span style="font:700 10px/1 'Public Sans',sans-serif;color:var(--ink-2)">{{ mcheckExtraCount }}</span>
+</div>
+<sc-if value="{{ mcheckExtraHas }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ mcheckExtra }}" as="me" hint-placeholder-count="3">
+<div style="padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--card-shadow)">
+<span style="display:block;font:600 12px/1.3 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ me.name }}</span>
+<span style="display:block;margin-top:3px;font:400 9.5px/1 'Public Sans',sans-serif;color:var(--ink-3)">Item {{ me.code }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ mcheckExtraNone }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:8px;padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font:400 11px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">None — every Master List product is on the sheet.</div>
+</sc-if>
+</sc-if>
 </div>
 </div>
 </sc-if>
@@ -2345,6 +2414,7 @@ class Component extends DCLogic {
       submitted:{}, subAt:{}, totalsMode:"cat", expanded:{}, groupMode:"sub", sortMode:"none", sortOpen:false,
       buf:null, historyOpen:false, submitOpen:false, clashOpen:false, doneLoc:null, dup:{}, dupCleared:{}, subOpen:false,
       overwriteWarn:null, overwriteBy:"", overwriteOk:{}, reviewSnap:null, reviewLoc:null, reviewQuery:"",
+      mcheckBusy:false, mcheckErr:"", mcheckNote:"", mcheckResult:null,
       followups:[], fuDeleted:[], discView:null, discQuery:"", discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"",
       barOrders:[], boDeleted:[], boView:null, boBusy:false, boErr:"",
       discLoc:"", discSheet:null, discRecount:"",
@@ -3052,6 +3122,71 @@ class Component extends DCLogic {
       out+="\n";
     }
     return out;
+  }
+  /* Load the ZXing (zxing-cpp/WebAssembly) barcode reader on demand — same
+     script-tag pattern as pdf.js. The IIFE build exposes window.ZXingWASM and
+     fetches its own .wasm from the CDN, so there's nothing else to wire up. Used
+     only by the scan-sheet check, so it never loads unless that's run. */
+  ensureZxing(){
+    if(window.ZXingWASM && window.ZXingWASM.readBarcodes) return Promise.resolve(window.ZXingWASM);
+    if(this._zxP) return this._zxP;
+    const url="https://cdn.jsdelivr.net/npm/zxing-wasm@2.2.4/dist/iife/reader/index.js";
+    this._zxP=new Promise((res,rej)=>{
+      const sc=document.createElement("script"); sc.src=url;
+      sc.onload=()=>{ if(window.ZXingWASM && window.ZXingWASM.readBarcodes) res(window.ZXingWASM); else { this._zxP=null; rej(new Error("Couldn’t load the barcode reader. Check your connection and try again.")); } };
+      sc.onerror=()=>{ this._zxP=null; rej(new Error("Couldn’t load the barcode reader. Check your connection and try again.")); };
+      document.head.appendChild(sc);
+    });
+    return this._zxP;
+  }
+  /* Check a scanned barcode sheet (PDF) against the Master List: render each page
+     with pdf.js, read every Code 39 barcode (= the venue's item codes) with
+     ZXing, then diff those codes against the current Master List. Reports two
+     lists — items on the sheet that are missing from the Master List, and Master
+     List items that aren't on the sheet. Barcodes carry only the item code, so a
+     missing item shows as its code (its name is a scanned image, not data). */
+  async checkScanSheet(file){
+    try{
+      const lib=await this.ensurePdfJs();
+      const zx=await this.ensureZxing();
+      const data=new Uint8Array(await file.arrayBuffer());
+      const pdf=await lib.getDocument({data:data}).promise;
+      const codes=new Set();
+      /* Render at ~350 DPI (scale 5) so the small Code 39 bars are crisp enough to
+         read, but in overlapping vertical strips (≤2000px tall, 400px overlap) so
+         no single canvas exceeds older mobile Safari's size limits and memory stays
+         low — the overlap is far bigger than a barcode, so none is split. */
+      const SCALE=5, MAXTILE=2000, OVERLAP=400;
+      for(let p=1;p<=pdf.numPages;p++){
+        this.setState({mcheckNote:"Scanning page "+p+" of "+pdf.numPages+"…"});
+        const page=await pdf.getPage(p);
+        const vp=page.getViewport({scale:SCALE});
+        const W=Math.ceil(vp.width), H=Math.ceil(vp.height);
+        let y0=0;
+        while(y0<H){
+          const th=Math.min(MAXTILE, H-y0);
+          const cv=document.createElement("canvas"); cv.width=W; cv.height=th;
+          const ctx=cv.getContext("2d");
+          await page.render({canvasContext:ctx, viewport:vp, transform:[1,0,0,1,0,-y0]}).promise;
+          const img=ctx.getImageData(0,0,W,th);
+          let res=[];
+          try{ res=await zx.readBarcodes(img, {formats:["Code39"], maxNumberOfSymbols:255, tryHarder:true}); }catch(e){ res=[]; }
+          res.forEach(r=>{ const t=((r&&r.text)||"").trim(); if(/^\d+$/.test(t)) codes.add(t); });
+          try{ cv.width=cv.height=0; }catch(e){}
+          if(y0+th>=H) break;
+          y0 += (MAXTILE-OVERLAP);
+        }
+      }
+      if(!codes.size){ this.setState({mcheckBusy:false, mcheckNote:"", mcheckErr:"No barcodes could be read from that PDF. Make sure it's the scan sheet with barcodes."}); return; }
+      const master=this.state.master||[];
+      const mByCode={}; master.forEach(it=>{ if(it && it.code!=null && it.code!=="") mByCode[String(it.code)]=it; });
+      const sheet=[...codes];
+      const missing=sheet.filter(c=>!mByCode[c]).sort((a,b)=>a.localeCompare(b)).map(c=>({code:c}));
+      const extra=Object.keys(mByCode).filter(c=>!codes.has(c)).map(c=>({code:c, name:mByCode[c].name})).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+      this.setState({ mcheckBusy:false, mcheckNote:"", mcheckErr:"", mcheckResult:{ sheetCount:sheet.length, masterCount:Object.keys(mByCode).length, missing:missing, extra:extra } });
+    }catch(e){
+      this.setState({ mcheckBusy:false, mcheckNote:"", mcheckErr:(e&&e.message)||"Couldn’t read that PDF." });
+    }
   }
   /* Bar orders sync per profile (the account's own, keyed bo:<uid>), the same
      way follow-ups do: merged by id with the newest updatedAt winning, plus a
@@ -4905,7 +5040,7 @@ class Component extends DCLogic {
       finishXlsxLabel: "Close & export Excel",
       finishCsvLabel: "Close & export CSV",
       isHome: s.screen==="home", isCount: s.screen==="count", isDone: s.screen==="done",
-      isTotals: s.screen==="totals", isMaster: s.screen==="master",
+      isTotals: s.screen==="totals", isMaster: s.screen==="master", isMCheck: s.screen==="mcheck",
       isProfile: s.screen==="profile", isAccount: s.screen==="account", isHub: s.screen==="hub", isOrg: s.screen==="org",
       /* ---- launcher / home screen ---- */
       hubGreeting: "Hi, "+(((s.me||"").trim().split(/\s+/)[0])||"there"),
@@ -4998,7 +5133,7 @@ class Component extends DCLogic {
         ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
         : (()=>this.goHubNav()),
       isAuth: s.screen==="auth",
-      buildStamp: "Build 2026-10-27 · scan-sheet",
+      buildStamp: "Build 2026-10-28 · scan-check",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
       authIsSignup: s.authMode==="up",
@@ -6588,6 +6723,33 @@ class Component extends DCLogic {
           vals.boTotalsSub = subCount+(subCount===1?" BEO":" BEOs")+" submitted · "+agg.items.length+(agg.items.length===1?" item":" items");
         }
       }
+    }
+
+    // ---- Master List: check a scanned barcode sheet (PDF) against the Master List ----
+    vals.onScanFile = (e)=>{
+      const f = e.target && e.target.files && e.target.files[0];
+      try{ e.target.value=""; }catch(_){}
+      if(!f) return;
+      this.setState({ screen:"mcheck", mcheckBusy:true, mcheckErr:"", mcheckNote:"Loading the PDF…", mcheckResult:null }, ()=>this.checkScanSheet(f));
+    };
+    vals.mcheckBack = ()=>this.setState({ screen:"master", mcheckBusy:false, mcheckNote:"", mcheckErr:"", mcheckResult:null });
+    vals.mcheckBusy = s.mcheckBusy;
+    vals.mcheckNote = s.mcheckNote;
+    vals.mcheckHasErr = !!s.mcheckErr;
+    vals.mcheckErr = s.mcheckErr;
+    {
+      const mr = s.mcheckResult;
+      vals.mcheckHasResult = !!mr;
+      vals.mcheckSummary = mr ? ("Read "+mr.sheetCount+" barcodes · Master List has "+mr.masterCount+" products") : "";
+      vals.mcheckMissing = mr ? mr.missing : [];
+      vals.mcheckMissingCount = mr ? mr.missing.length : 0;
+      vals.mcheckMissingHas = !!(mr && mr.missing.length);
+      vals.mcheckMissingNone = !!(mr && !mr.missing.length);
+      vals.mcheckExtra = mr ? mr.extra : [];
+      vals.mcheckExtraCount = mr ? mr.extra.length : 0;
+      vals.mcheckExtraHas = !!(mr && mr.extra.length);
+      vals.mcheckExtraNone = !!(mr && !mr.extra.length);
+      vals.mcheckClean = !!(mr && !mr.missing.length && !mr.extra.length);
     }
 
     return vals;
