@@ -4620,13 +4620,22 @@ class Component extends DCLogic {
       const counts = Object.assign({}, s.counts);
       const prev = counts[key];
       let dup = s.dup;
+      let dupCleared = s.dupCleared;
+      /* Was this line's clash already settled? If a resolution tombstone covers
+         the current count (dupCleared[key] >= its timestamp), a new entry is a
+         correction to the settled count, not a fresh rival — so don't warn and
+         don't re-raise the clash, otherwise the corrected number can never be
+         typed in cleanly. A genuinely newer rival (ts beyond the tombstone) still
+         clashes. */
+      const _tomb = (s.dupCleared||{})[key] || 0;
+      const resolved = _tomb > 0 && _tomb >= ((prev && prev.ts) || 0);
       /* someone else already counted this line: warn once before letting
          this person write a rival count that the admin will have to judge */
-      if(prev && prev.by && prev.by!==me && !dup[key] && s.buf===null && !(s.overwriteOk||{})[key]){
+      if(prev && prev.by && prev.by!==me && !dup[key] && s.buf===null && !(s.overwriteOk||{})[key] && !resolved){
         this.setState({overwriteWarn:key, overwriteBy:prev.by});
         return;
       }
-      if(prev && prev.by && prev.by!==me && !dup[key] && s.buf===null){
+      if(prev && prev.by && prev.by!==me && !dup[key] && s.buf===null && !resolved){
         dup = Object.assign({}, dup);
         dup[key] = { theirs:{c:prev.c||0, s:prev.s||0, by:prev.by}, mine:{c:0, s:0, by:me}, ts:Date.now() };
       }
@@ -4649,6 +4658,10 @@ class Component extends DCLogic {
       e.ts = Date.now();
       counts[key] = e;
       if(dup[key]) dup = Object.assign({}, dup, {[key]: Object.assign({}, dup[key], {mine:{c:e.c, s:e.s, by:me}})});
+      /* Keep the resolution tombstone ahead of this corrected count so a stale
+         rival count still sitting on another device can't re-raise the clash
+         after it syncs and merges. */
+      if(resolved) dupCleared = Object.assign({}, dupCleared||{}, {[key]: e.ts});
       /* counting a line proves it's stocked here — reveal just that line (not
          the rest of its hidden cat/sub) so it surfaces under its group header */
       let revealed = s.revealed;
@@ -4658,7 +4671,7 @@ class Component extends DCLogic {
         rl[it.id] = true;
         revealed = Object.assign({}, s.revealed, {[s.loc]: rl});
       }
-      this.setState({counts:counts, dup:dup, buf:next, revealed:revealed}, ()=>this.save({}));
+      this.setState({counts:counts, dup:dup, dupCleared:dupCleared, buf:next, revealed:revealed}, ()=>this.save({}));
     };
   }
 
@@ -4676,12 +4689,18 @@ class Component extends DCLogic {
     const v = parts.reduce((a,b)=>a+b,0) + entry;
     const counts=Object.assign({}, s.counts);
     let dup=s.dup;
-    const e=Object.assign({c:0,s:0,by:me}, counts[key]||{});
+    const prev=counts[key];
+    const e=Object.assign({c:0,s:0,by:me}, prev||{});
     if(s.field==="c") e.c=Math.round(v); else e.s=Math.round(v*100)/100;
     e.by=me; e.ts=Date.now();
     counts[key]=e;
     if(dup[key]) dup=Object.assign({}, dup, {[key]:Object.assign({}, dup[key], {mine:{c:e.c, s:e.s, by:me}})});
-    this.setState({counts:counts, dup:dup}, ()=>this.save({}));
+    /* If this line's clash was already settled, keep the tombstone ahead of the
+       corrected count so a stale rival on another device can't re-raise it. */
+    let dupCleared=s.dupCleared;
+    const _tomb=(s.dupCleared||{})[key]||0;
+    if(_tomb>0 && _tomb >= ((prev && prev.ts)||0)) dupCleared=Object.assign({}, dupCleared||{}, {[key]:e.ts});
+    this.setState({counts:counts, dup:dup, dupCleared:dupCleared}, ()=>this.save({}));
   }
   addChip(){
     const s=this.state;
@@ -5133,7 +5152,7 @@ class Component extends DCLogic {
         ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
         : (()=>this.goHubNav()),
       isAuth: s.screen==="auth",
-      buildStamp: "Build 2026-10-28 · scan-check",
+      buildStamp: "Build 2026-10-28 · count-fix",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
       authIsSignup: s.authMode==="up",
