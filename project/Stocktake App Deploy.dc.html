@@ -2455,6 +2455,17 @@ class Component extends DCLogic {
        delete or a newly-closed stocktake on one device shows on the others
        without a manual refresh. */
     this._archTimer = setInterval(()=>{ this.maybeSyncArchive(); this.maybeRefreshToken(); this.maybeRefreshOrg(); }, 3000);
+    /* Guard against accidentally leaving the app mid-stocktake — e.g. Backspace
+       navigating back, the browser Back button, a tab close or a refresh. While
+       signed in or counting, ask the browser to show its native "Leave site?"
+       confirmation so the person can stay put. Nothing prompts on the login
+       screen (nothing to lose there). The dialog text is set by the browser and
+       can't be customised. */
+    this._beforeUnload = (e)=>{
+      const s = this.state;
+      if(s.authed || s.joined){ e.preventDefault(); e.returnValue = ""; return ""; }
+    };
+    try{ window.addEventListener("beforeunload", this._beforeUnload); }catch(e){}
     const joined = !!(saved && saved.joined);
     const gate = !authed && !joined;
     // A doc belongs to the account that owns it. If a different account is
@@ -3847,7 +3858,7 @@ class Component extends DCLogic {
     this.publish();
   }
 
-  componentWillUnmount(){ if(this.timer) clearInterval(this.timer); if(this._archTimer) clearInterval(this._archTimer); }
+  componentWillUnmount(){ if(this.timer) clearInterval(this.timer); if(this._archTimer) clearInterval(this._archTimer); try{ if(this._beforeUnload) window.removeEventListener("beforeunload", this._beforeUnload); }catch(e){} }
   /* Periodic shared-archive sync (see the interval in componentDidMount). Only
      the organiser owns an archive, so counters (joined) are skipped; syncArchive
      itself only writes/setState when something actually changed. */
@@ -5157,7 +5168,7 @@ class Component extends DCLogic {
         ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
         : (()=>this.goHubNav()),
       isAuth: s.screen==="auth",
-      buildStamp: "Build 2026-10-28 · count-fix2",
+      buildStamp: "Build 2026-10-28 · leave-guard",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
       authIsSignup: s.authMode==="up",
