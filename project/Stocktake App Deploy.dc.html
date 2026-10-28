@@ -4639,7 +4639,12 @@ class Component extends DCLogic {
         dup = Object.assign({}, dup);
         dup[key] = { theirs:{c:prev.c||0, s:prev.s||0, by:prev.by}, mine:{c:0, s:0, by:me}, ts:Date.now() };
       }
-      const e = Object.assign({c:0,s:0,by:me}, (dup[key] && s.buf===null) ? {c:0,s:0} : (counts[key]||{}));
+      /* On a clashed line, start a fresh rival count from zero only when the
+         current count belongs to someone ELSE. Once it's mine, keep it so moving
+         between Cartons and Singles (each of which clears buf) doesn't wipe the
+         field I already entered. */
+      const freshRival = dup[key] && s.buf===null && ((counts[key]||{}).by !== me);
+      const e = Object.assign({c:0,s:0,by:me}, freshRival ? {c:0,s:0} : (counts[key]||{}));
       const cur = s.buf===null ? "" : s.buf;
       let next;
       if(k==="del") next = cur.length>1 ? cur.slice(0,-1) : "";
@@ -5152,7 +5157,7 @@ class Component extends DCLogic {
         ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
         : (()=>this.goHubNav()),
       isAuth: s.screen==="auth",
-      buildStamp: "Build 2026-10-28 · count-fix",
+      buildStamp: "Build 2026-10-28 · count-fix2",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
       authIsSignup: s.authMode==="up",
