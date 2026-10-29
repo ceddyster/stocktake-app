@@ -2072,6 +2072,11 @@ Sign in with Google
 <sc-if value="{{ notAdmin }}" hint-placeholder-val="{{ false }}">
 <div style="margin-top:8px;padding:9px 11px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font:400 10.5px/1.45 'Public Sans',sans-serif;color:var(--ink-2);box-shadow:var(--card-shadow)">You can add products. Changing one that is already on the list is up to {{ adminName }}.</div>
 </sc-if>
+<div style="margin-top:8px;display:flex;gap:5px">
+<sc-for list="{{ sortTabs }}" as="st" hint-placeholder-count="4">
+<button onClick="{{ st.pick }}" style="flex:1;padding:8px 4px;border-radius:9px;cursor:pointer;background:{{ st.tabBg }};border:1px solid {{ st.tabBorder }};font:600 10px/1 'Public Sans',sans-serif;letter-spacing:.03em;color:{{ st.tabInk }}">{{ st.label }}</button>
+</sc-for>
+</div>
 </div>
 <div style="flex:1;overflow:auto;padding-bottom:44px">
 <sc-for list="{{ masterGroups }}" as="mg" hint-placeholder-count="4">
@@ -2149,6 +2154,11 @@ Sign in with Google
 <div style="margin-top:8px;display:flex;gap:6px">
 <button onClick="{{ openAdd }}" style="flex:1;padding:11px;border-radius:9px;cursor:pointer;background:var(--primary);border:none;font:600 10.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--on-primary)">+ ADD PRODUCT</button>
 <button onClick="{{ openImport }}" style="flex:1;padding:11px;border-radius:9px;cursor:pointer;background:var(--surface);border:1px solid var(--line);font:600 10.5px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink-2)">ATTACH EXCEL</button>
+</div>
+<div style="margin-top:8px;display:flex;gap:5px">
+<sc-for list="{{ sortTabs }}" as="st" hint-placeholder-count="4">
+<button onClick="{{ st.pick }}" style="flex:1;padding:8px 4px;border-radius:9px;cursor:pointer;background:{{ st.tabBg }};border:1px solid {{ st.tabBorder }};font:600 10px/1 'Public Sans',sans-serif;letter-spacing:.03em;color:{{ st.tabInk }}">{{ st.label }}</button>
+</sc-for>
 </div>
 <div style="margin-top:12px;display:flex;flex-direction:column;gap:14px">
 <sc-for list="{{ masterGroups }}" as="mg" hint-placeholder-count="4">
@@ -2509,7 +2519,7 @@ class Component extends DCLogic {
       followups:[], fuDeleted:[], discView:null, discQuery:"", discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"",
       barOrders:[], boDeleted:[], boView:null, boBusy:false, boErr:"",
       discLoc:"", discSheet:null, discRecount:"",
-      mQuery:"", addOpen:false, importOpen:false,
+      mQuery:"", mSort:"cat", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
       imported:null, importName:"",
       menuOpen:false, confirm:null, resetAt:0, started:false,
@@ -5983,17 +5993,41 @@ class Component extends DCLogic {
       vals.onMQuery = (e)=>this.setState({mQuery:e.target.value});
       vals.mQueryHas = !!(s.mQuery||"").length;
       vals.clearMQuery = ()=>this.setState({mQuery:""});
-      vals.masterGroups = cats.map(c=>({
-        cat:c, count: buckets[c].length+(buckets[c].length===1?" product":" products"),
-        items: buckets[c].map(i=>({
-          name: i.name,
-          meta: (i.code ? i.code+" · " : "")+i.sub+" · ctn "+i.carton,
-          edit: amAdmin
-            ? ()=>this.setState({addOpen:true, editId:i.id, confirmNoCat:false,
-                nf:{name:i.name, cat:i.cat, sub:i.sub, carton:String(i.carton), code:i.code||"", frac:!!i.frac, subNew:false, catNew:false}})
-            : lock("Only "+adminName+" can change a product that is already on the list. You can still add new ones."),
-          chev: amAdmin ? "›" : "🔒"
-        }))
+      /* Sort control: "cat" keeps the category grouping (default), while az/za/code
+         render one flat sorted list with no category headers. View-only — it never
+         changes the stored order of the list. */
+      const mSort = s.mSort || "cat";
+      const itemMap = (i)=>({
+        name: i.name,
+        meta: (i.code ? i.code+" · " : "")+i.sub+" · ctn "+i.carton,
+        edit: amAdmin
+          ? ()=>this.setState({addOpen:true, editId:i.id, confirmNoCat:false,
+              nf:{name:i.name, cat:i.cat, sub:i.sub, carton:String(i.carton), code:i.code||"", frac:!!i.frac, subNew:false, catNew:false}})
+          : lock("Only "+adminName+" can change a product that is already on the list. You can still add new ones."),
+        chev: amAdmin ? "›" : "🔒"
+      });
+      const plural = (n)=>n+(n===1?" product":" products");
+      if(mSort==="cat"){
+        vals.masterGroups = cats.map(c=>({ cat:c, count: plural(buckets[c].length), items: buckets[c].map(itemMap) }));
+      } else {
+        const nm=(x)=>String(x.name||"").toLowerCase();
+        const flat = list.slice();
+        if(mSort==="code"){
+          flat.sort((a,b)=>{ const ca=String(a.code==null?"":a.code), cb=String(b.code==null?"":b.code);
+            if(!ca && cb) return 1; if(ca && !cb) return -1; /* products without a code sort to the end */
+            const d=ca.localeCompare(cb, undefined, {numeric:true, sensitivity:"base"}); return d!==0?d : (nm(a)<nm(b)?-1:nm(a)>nm(b)?1:0); });
+        } else {
+          flat.sort((a,b)=>{ const r = nm(a)<nm(b)?-1:nm(a)>nm(b)?1:0; return mSort==="za" ? -r : r; });
+        }
+        const hdr = mSort==="code" ? "BY CODE" : (mSort==="za" ? "NAME Z–A" : "NAME A–Z");
+        vals.masterGroups = [{ cat:hdr, count: plural(flat.length), items: flat.map(itemMap) }];
+      }
+      vals.sortTabs = [["cat","Category"],["az","A–Z"],["za","Z–A"],["code","Code"]].map(pair=>({
+        label: pair[1],
+        pick: ((k)=>()=>this.setState({mSort:k}))(pair[0]),
+        tabBg: mSort===pair[0] ? "var(--primary)" : "var(--surface)",
+        tabInk: mSort===pair[0] ? "var(--on-primary)" : "var(--ink-2)",
+        tabBorder: mSort===pair[0] ? "var(--primary)" : "var(--line)"
       }));
       const allCats=[]; master.forEach(i=>{ if(allCats.indexOf(i.cat)<0) allCats.push(i.cat); });
       const allCatsFirst = allCats[0] || "";
