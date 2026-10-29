@@ -960,7 +960,10 @@ Sign in with Google
 <div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ discViewTitle }}</div>
 <div style="margin-top:3px;font:400 10px/1 'Public Sans',sans-serif;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ discViewSub }}</div>
 </div>
-<button onClick="{{ discExport }}" aria-label="Export to Excel" style="flex:none;height:32px;padding:0 11px;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:600 10.5px/1 'Public Sans',sans-serif;color:var(--ink-2)"><span style="font:400 13px/1 'Public Sans',sans-serif">⤓</span>Excel</button>
+<button onClick="{{ discExport }}" aria-label="Export discrepancies to Excel" style="flex:none;height:32px;padding:0 11px;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:600 10.5px/1 'Public Sans',sans-serif;color:var(--ink-2)"><span style="font:400 13px/1 'Public Sans',sans-serif">⤓</span>Excel</button>
+<sc-if value="{{ discFinalCan }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ discFinalExport }}" aria-label="Download finalised stocktake" style="flex:none;height:32px;padding:0 11px;display:flex;align-items:center;gap:5px;border:1px solid var(--primary);background:var(--surface);border-radius:9px;cursor:pointer;font:600 10.5px/1 'Public Sans',sans-serif;color:var(--ink)"><span style="font:400 13px/1 'Public Sans',sans-serif">⤓</span>Finalised</button>
+</sc-if>
 </div>
 <div style="margin-top:12px;display:flex;gap:8px">
 <div style="flex:1;padding:11px 12px;background:var(--surface-2);border-radius:11px;box-shadow:var(--inset-shadow)"><div style="font:500 8.5px/1 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">ITEMS</div><div style="margin-top:6px;font:700 17px/1 'Public Sans',sans-serif;color:var(--ink)">{{ discViewItems }}</div></div>
@@ -4621,6 +4624,42 @@ class Component extends DCLogic {
     const filename = "discrepancies-"+(slug?slug+"-":"")+stamp+".xlsx";
     return this.xlsxFromSpecs(specs, filename);
   }
+  /* Download a FINALISED stocktake workbook that folds the Discrepancies recounts
+     back into the original stocktake: start from the linked snapshot and, for each
+     follow-up row, replace the count in every recounted area with the recounted
+     total (a count added for a missed area simply appears in that area). Products
+     and areas nobody changed keep their original counts. The result is then run
+     through the normal stocktake export, so it has the same Grand Totals, per-area
+     and Scan Sheet tabs — just with the corrected numbers. */
+  downloadFinalisedXlsx(fu){
+    if(!fu) return false;
+    const entry = (this.state.archive||[]).find(a=>this.entryId(a)===fu.stocktakeId);
+    const snap = entry && entry.snap ? entry.snap : null;
+    if(!snap || !((snap.master||[]).length)) return false;
+    const normNm = (x)=>String(x||"").trim().toUpperCase().replace(/\s+/g," ");
+    const byCode = {}, byName = {};
+    (snap.master||[]).forEach(it=>{ if(!it) return;
+      if(it.code!=null && it.code!=="") byCode[String(it.code)]=it;
+      const nm=normNm(it.name); if(nm && !byName[nm]) byName[nm]=it; });
+    const findProd = (r)=> byCode[String(r.code)] || byName[normNm(r.name)] || null;
+    const effCounts = Object.assign({}, snap.counts||{});
+    (fu.rows||[]).forEach(r=>{
+      const it = findProd(r); if(!it) return;
+      const checks = r.checks || {};
+      Object.keys(checks).forEach(L=>{
+        const c = checks[L];
+        if(c && c.s==="recount"){
+          const v = +c.v || 0;
+          const carton = Math.max(1, +it.carton || 1);
+          const cc = Math.floor(v/carton);
+          const ss = Math.round((v - cc*carton)*100)/100;   // cartons + loose that total v units
+          effCounts[this.ck(L, it.id)] = {c:cc, s:ss, by:"Recount", ts:(c.at||Date.now())};
+        }
+      });
+    });
+    const title = (snap.title || fu.title || "Stocktake") + " — Finalised";
+    return this.downloadXlsx({ master:snap.master, locNames:snap.locNames, counts:effCounts, title:title });
+  }
 
   downloadCsv(src){
     const s = src || this.state;
@@ -5188,7 +5227,7 @@ class Component extends DCLogic {
         ? (()=>this.setState({screen: s.me.trim() ? "home" : "setup", sheet:null, submitOpen:false, mQuery:""}))
         : (()=>this.goHubNav()),
       isAuth: s.screen==="auth",
-      buildStamp: "Build 2026-10-28 · keyboard",
+      buildStamp: "Build 2026-10-29 · finalised-export",
       authIsJoin: s.authView==="join",
       authIsAdmin: s.authView!=="join",
       authIsSignup: s.authMode==="up",
@@ -6533,6 +6572,8 @@ class Component extends DCLogic {
           vals.discViewMissing = !snap;
           vals.discViewBack = ()=>this.setState({screen:"disc", discView:null});
           vals.discExport = ()=>this.downloadFollowupXlsx(fu);
+          vals.discFinalExport = ()=>this.downloadFinalisedXlsx(fu);
+          vals.discFinalCan = !!snap;
           const q = (s.discQuery||"").trim().toLowerCase();
           vals.discQuery = s.discQuery||"";
           vals.onDiscQuery = (e)=>this.setState({discQuery:e.target.value});
