@@ -1105,9 +1105,12 @@ Sign in with Google
 <div style="flex:1;overflow:auto;padding:14px 16px 44px;display:flex;flex-direction:column;gap:11px">
 <label style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--primary);border:none;border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif">
 <span style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;font:600 16px/1 'Public Sans',sans-serif;color:var(--ink)">＋</span>
-<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--on-primary)">Add BEO PDFs</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--surface)">Pick several at once — on a computer hold Ctrl or ⌘ (or Shift) to select multiple; on a phone tap “Select” first.</span></span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--on-primary)">Add BEO PDFs</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--surface)">Add several at once — drag your BEO PDFs here, or in the picker hold Ctrl/⌘ (Shift for a range) to select multiple.</span></span>
 <input type="file" accept="application/pdf,.pdf" multiple onChange="{{ onBoFiles }}" style="display:none" />
 </label>
+<sc-if value="{{ boDragActive }}" hint-placeholder-val="{{ false }}">
+<div style="padding:18px;background:var(--surface-2);border:2px dashed var(--primary);border-radius:13px;text-align:center;font:600 12.5px/1.4 'Public Sans',sans-serif;color:var(--ink)">Drop your BEO PDFs to add them all</div>
+</sc-if>
 <sc-if value="{{ boBusy }}" hint-placeholder-val="{{ false }}">
 <div style="padding:11px 13px;background:var(--surface-2);border-radius:10px;font:600 11px/1.3 'Public Sans',sans-serif;color:var(--ink-2)">Reading PDFs…</div>
 </sc-if>
@@ -2517,7 +2520,7 @@ class Component extends DCLogic {
       overwriteWarn:null, overwriteBy:"", overwriteOk:{}, reviewSnap:null, reviewLoc:null, reviewQuery:"",
       mcheckBusy:false, mcheckErr:"", mcheckNote:"", mcheckResult:null,
       followups:[], fuDeleted:[], discView:null, discQuery:"", discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"",
-      barOrders:[], boDeleted:[], boView:null, boBusy:false, boErr:"",
+      barOrders:[], boDeleted:[], boView:null, boBusy:false, boErr:"", boDrag:false,
       discLoc:"", discSheet:null, discRecount:"",
       mQuery:"", mSort:"cat", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
@@ -2587,6 +2590,28 @@ class Component extends DCLogic {
       else if(k==="Escape"){ ev.preventDefault(); this.setState({sheet:null, buf:null, cParts:[], sParts:[]}); }
     };
     try{ window.addEventListener("keydown", this._countKeys); }catch(e){}
+    /* Desktop: drag a whole selection of BEO PDFs onto the Bar Ordering order
+       view and add them all at once, instead of picking them one at a time in the
+       file dialog. Active only on that screen; dragover must preventDefault for the
+       browser to allow a drop. boAddFiles already reads a whole FileList. */
+    this._boDragOver = (e)=>{
+      const s=this.state; if(s.screen!=="boView" || !s.boView) return;
+      if(e.dataTransfer){ try{ e.dataTransfer.dropEffect="copy"; }catch(_){} }
+      e.preventDefault();
+      if(!s.boDrag) this.setState({boDrag:true});
+    };
+    this._boDragLeave = (e)=>{
+      if(!this.state.boDrag) return;
+      if(e && e.relatedTarget) return; /* still inside the window */
+      this.setState({boDrag:false});
+    };
+    this._boDrop = (e)=>{
+      const s=this.state; if(s.screen!=="boView" || !s.boView) return;
+      e.preventDefault();
+      if(s.boDrag) this.setState({boDrag:false});
+      const dt=e.dataTransfer; if(dt && dt.files && dt.files.length) this.boAddFiles(dt.files);
+    };
+    try{ window.addEventListener("dragover", this._boDragOver); window.addEventListener("dragleave", this._boDragLeave); window.addEventListener("drop", this._boDrop); }catch(e){}
     const joined = !!(saved && saved.joined);
     const gate = !authed && !joined;
     // A doc belongs to the account that owns it. If a different account is
@@ -4043,7 +4068,7 @@ class Component extends DCLogic {
     this.publish();
   }
 
-  componentWillUnmount(){ if(this.timer) clearInterval(this.timer); if(this._archTimer) clearInterval(this._archTimer); try{ if(this._beforeUnload) window.removeEventListener("beforeunload", this._beforeUnload); if(this._countKeys) window.removeEventListener("keydown", this._countKeys); }catch(e){} }
+  componentWillUnmount(){ if(this.timer) clearInterval(this.timer); if(this._archTimer) clearInterval(this._archTimer); try{ if(this._beforeUnload) window.removeEventListener("beforeunload", this._beforeUnload); if(this._countKeys) window.removeEventListener("keydown", this._countKeys); if(this._boDragOver) window.removeEventListener("dragover", this._boDragOver); if(this._boDragLeave) window.removeEventListener("dragleave", this._boDragLeave); if(this._boDrop) window.removeEventListener("drop", this._boDrop); }catch(e){} }
   /* Periodic shared-archive sync (see the interval in componentDidMount). Only
      the organiser owns an archive, so counters (joined) are skipped; syncArchive
      itself only writes/setState when something actually changed. */
@@ -5223,6 +5248,7 @@ class Component extends DCLogic {
       isDiscList: s.screen==="disc",
       isBoList: s.screen==="bo",
       isBoView: s.screen==="boView",
+      boDragActive: !!(s.boDrag && s.screen==="boView"),
       isBoTotals: s.screen==="boTotals",
       isDiscNew: s.screen==="discNew",
       isDiscView: s.screen==="discView",
