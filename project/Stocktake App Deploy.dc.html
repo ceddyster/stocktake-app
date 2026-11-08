@@ -1071,6 +1071,11 @@ Sign in with Google
 <span style="width:32px;height:32px;flex:none;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;font:600 16px/1 'Public Sans',sans-serif;color:var(--ink)">＋</span>
 <span style="flex:1;min-width:0"><span style="display:block;font:600 13.5px/1.2 'Public Sans',sans-serif;color:var(--on-primary)">New bar order</span><span style="display:block;margin-top:3px;font:400 10.5px/1.3 'Public Sans',sans-serif;color:var(--surface)">Upload event BEOs and total up what to order.</span></span>
 </button>
+<button onClick="{{ boGoSettings }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif;box-shadow:var(--card-shadow)" style-hover="border-color:var(--ink-4)">
+<span style="width:30px;height:30px;flex:none;border-radius:9px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">⚙</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 12.5px/1.2 'Public Sans',sans-serif;color:var(--ink)">Calculation settings</span><span style="display:block;margin-top:2px;font:400 10px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">Adjust the rates used to work out quantities</span></span>
+<span style="flex:none;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-3)">›</span>
+</button>
 <sc-if value="{{ boEmpty }}" hint-placeholder-val="{{ true }}">
 <div style="margin-top:6px;padding:18px 16px;background:var(--surface);border:1px dashed var(--line-2);border-radius:14px">
 <div style="font:600 13.5px/1.3 'Public Sans',sans-serif;color:var(--ink)">No bar orders yet</div>
@@ -1092,6 +1097,58 @@ Sign in with Google
 </div>
 </sc-if>
 
+<sc-if value="{{ isBoSettings }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;display:flex;flex-direction:column">
+<div style="padding:12px 16px 12px;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">
+<button onClick="{{ boSetBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
+<div style="flex:1;min-width:0">
+<div style="font:600 15px/1.1 'Public Sans',sans-serif;color:var(--ink)">{{ boSetTitle }}</div>
+<div style="margin-top:3px;font:400 10px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ boSetSub }}</div>
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding:14px 16px 40px;display:flex;flex-direction:column;gap:16px">
+<sc-for list="{{ boSetGroups }}" as="g" hint-placeholder-count="6">
+<div>
+<div style="font:600 9px/1.2 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">{{ g.title }}</div>
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ g.fields }}" as="f" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--line);border-radius:11px;box-shadow:var(--card-shadow)">
+<span style="flex:1;min-width:0;font:500 12px/1.2 'Public Sans',sans-serif;color:var(--ink)">{{ f.label }}</span>
+<input value="{{ f.value }}" onChange="{{ f.onInput }}" type="text" inputmode="decimal" style="flex:none;width:70px;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);outline:none;font:600 12.5px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" />
+<span style="flex:none;min-width:26px;font:400 9px/1 'Public Sans',sans-serif;color:var(--ink-3)">{{ f.suffix }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+
+<div>
+<div style="font:600 9px/1.2 'Public Sans',sans-serif;letter-spacing:.1em;color:var(--ink-3)">COCKTAIL ROLES</div>
+<div style="margin-top:4px;font:400 10px/1.4 'Public Sans',sans-serif;color:var(--ink-3)">Per person × event hours. Glasses per person, glasses per bottle, and the share of guests assumed to choose each.</div>
+<div style="margin-top:9px;display:flex;align-items:center;gap:8px;padding:0 12px">
+<span style="flex:1"></span>
+<span style="flex:none;width:58px;text-align:center;font:600 8px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink-3)">GL/PERSON</span>
+<span style="flex:none;width:58px;text-align:center;font:600 8px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink-3)">GL/BOTTLE</span>
+<span style="flex:none;width:58px;text-align:center;font:600 8px/1 'Public Sans',sans-serif;letter-spacing:.06em;color:var(--ink-3)">ASSUME</span>
+</div>
+<div style="margin-top:6px;display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ boSetCocktail }}" as="c" hint-placeholder-count="8">
+<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface);border:1px solid var(--line);border-radius:11px;box-shadow:var(--card-shadow)">
+<span style="flex:1;min-width:0;font:500 11.5px/1.2 'Public Sans',sans-serif;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.name }}</span>
+<input value="{{ c.gpp }}" onChange="{{ c.onGpp }}" type="text" inputmode="decimal" style="flex:none;width:58px;padding:7px 6px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);outline:none;font:600 12px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" />
+<input value="{{ c.gpb }}" onChange="{{ c.onGpb }}" type="text" inputmode="decimal" style="flex:none;width:58px;padding:7px 6px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);outline:none;font:600 12px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" />
+<input value="{{ c.assume }}" onChange="{{ c.onAssume }}" type="text" inputmode="decimal" style="flex:none;width:58px;padding:7px 6px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);outline:none;font:600 12px/1 'Public Sans',sans-serif;color:var(--ink);text-align:center" />
+</div>
+</sc-for>
+</div>
+</div>
+
+<button onClick="{{ boSetReset }}" style="width:100%;padding:12px;border-radius:11px;background:var(--surface);border:1px solid var(--line-2);cursor:pointer;font:600 11px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-2)">{{ boSetResetLabel }}</button>
+<button onClick="{{ boSetSave }}" style="width:100%;padding:15px;border-radius:12px;background:var(--primary);border:none;cursor:pointer;font:600 13.5px/1 'Public Sans',sans-serif;color:var(--on-primary)">Save settings</button>
+</div>
+</div>
+</sc-if>
+
 <sc-if value="{{ isBoView }}" hint-placeholder-val="{{ false }}">
 <div style="height:100%;display:flex;flex-direction:column">
 <sc-if value="{{ boHere }}" hint-placeholder-val="{{ true }}">
@@ -1099,8 +1156,12 @@ Sign in with Google
 <div style="display:flex;align-items:center;gap:10px">
 <button onClick="{{ boViewBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
 <input value="{{ boTitle }}" onChange="{{ onBoTitle }}" placeholder="Bar order" style="flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface);outline:none;font:600 14px/1.1 'Public Sans',sans-serif;color:var(--ink)" />
+<button onClick="{{ boOpenSettings }}" aria-label="Rates for this order" style="flex:none;height:32px;width:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-2)">⚙</button>
 <button onClick="{{ boExport }}" aria-label="Export to Excel" style="flex:none;height:32px;padding:0 11px;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:600 10.5px/1 'Public Sans',sans-serif;color:var(--ink-2)"><span style="font:400 13px/1 'Public Sans',sans-serif">⤓</span>Excel</button>
 </div>
+<sc-if value="{{ boHasOverride }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:8px;padding:7px 11px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;font:500 9.5px/1.3 'Public Sans',sans-serif;color:var(--ink-2)">⚙ This order uses its own custom rates. Tap the gear to review or reset them.</div>
+</sc-if>
 </div>
 <div style="flex:1;overflow:auto;padding:14px 16px 44px;display:flex;flex-direction:column;gap:11px">
 <button onClick="{{ boPick }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--primary);border:none;border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif">
@@ -2520,6 +2581,7 @@ class Component extends DCLogic {
       mcheckBusy:false, mcheckErr:"", mcheckNote:"", mcheckResult:null,
       followups:[], fuDeleted:[], discView:null, discQuery:"", discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"",
       barOrders:[], boDeleted:[], boView:null, boBusy:false, boErr:"", boDrag:false,
+      boParams:null, boParamsAt:0, boSet:null, boSetTarget:"",
       discLoc:"", discSheet:null, discRecount:"",
       mQuery:"", mSort:"cat", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
@@ -2643,6 +2705,7 @@ class Component extends DCLogic {
         removedIds: saved.removedIds||[], resetAt: saved.resetAt||0,
         followups: saved.followups||[], fuDeleted: saved.fuDeleted||[],
         barOrders: saved.barOrders||[], boDeleted: saved.boDeleted||[],
+        boParams: saved.boParams||null, boParamsAt: saved.boParamsAt||0,
         authed: authed, authEmail: (sess&&sess.email)||"",
         screen: gate ? "auth" : (joined ? "home" : "hub"), ready:true
       }, ()=>this.save({}));
@@ -3003,14 +3066,21 @@ class Component extends DCLogic {
          those are used as-is.
      Everything the parser guesses (tier, pax, tables, event, bars, hours) is
      editable per block, because BEO wording/layout varies. */
-  boData(){
+  /* Built-in default consumption rates. boData(order) returns these overlaid
+     with the user's saved global settings (state.boParams) and then any
+     per-order override (order.params), so a change to the global rates re-totals
+     every order while a single event can still be tuned on its own. */
+  boDefaults(){
     return {
+      // how many pax make one table (seated rates are per table)
+      paxPerTable: 10,
       // Parameters sheet – consumption rates
       params: {
         beerPremier:{football:5, corporate:3, wedding:3},  // per person
         beerLight:  {football:3, corporate:2, wedding:2},  // per table
         redWine:2.5, whiteWine:2.5, sparkling:4,            // per table
-        lemonsKg:3, limesKg:2 },                            // per bar
+        lemonsKg:3, limesKg:2 },                            // per bar (seated)
+      cocktailGarnish:{lemons:2, limes:1},                  // kg per bar (cocktail)
       // Crown Reserve tiers -> signature wine names
       tiers: {
         cr1:{label:"Crown Reserve", sparkling:"Woodbrook Vineyards NV Brut Cuvee", white:"Brigade Block Semillon Sauvignon Blanc", red:"Abilene Shiraz"},
@@ -3025,26 +3095,55 @@ class Component extends DCLogic {
         {name:"Light Beer 1", gpp:2, gpb:1, assume:0.1} ]
     };
   }
+  /* Recursively overlay ov onto base: objects merge key-by-key, arrays merge
+     element-by-element, and any present leaf in ov replaces base. Missing keys
+     fall back to base, so a saved override stays forward-compatible if new
+     default fields are added later. */
+  boMergeParams(base, ov){
+    if(ov===undefined || ov===null) return base;
+    if(Array.isArray(base)){
+      if(!Array.isArray(ov)) return base;
+      return base.map((b,i)=> i<ov.length ? this.boMergeParams(b, ov[i]) : b)
+        .concat(ov.slice(base.length));
+    }
+    if(base && typeof base==="object"){
+      const out=Object.assign({}, base);
+      Object.keys(ov).forEach(k=>{ out[k]=this.boMergeParams(base[k], ov[k]); });
+      return out;
+    }
+    return ov;
+  }
+  /* Effective rates for an order: defaults <- global settings <- this order's
+     own override (if it has one). */
+  boEffParams(order){
+    let d=this.boDefaults();
+    if(this.state.boParams) d=this.boMergeParams(d, this.state.boParams);
+    if(order && order.params) d=this.boMergeParams(d, order.params);
+    return d;
+  }
+  boData(order){ return this.boEffParams(order); }
   boTierOptions(){ const d=this.boData(); return [
     {key:"cr1", label:d.tiers.cr1.label}, {key:"cr2", label:d.tiers.cr2.label},
     {key:"cr3", label:d.tiers.cr3.label}, {key:"cocktail", label:"Cocktail"} ]; }
   boEventOptions(){ return [ {key:"football", label:"Football"}, {key:"corporate", label:"Corporate"}, {key:"wedding", label:"Wedding"} ]; }
 
-  /* Tables are derived as 10% of pax, rounded up (e.g. 483 pax -> 49). */
-  boTables(pax){ return Math.ceil((+pax||0)/10); }
+  /* Tables are derived from pax, rounded up (default 1 table per 10 pax). The
+     pax-per-table basis is adjustable in the Bar Ordering calculation settings. */
+  boTables(pax, order){ const ppt=(+this.boEffParams(order).paxPerTable)||10; return Math.ceil((+pax||0)/ppt); }
   /* Compute one block's requirement. Returns [{name, role, qty}]. The beers
      named in the BEO block are classified premier/light and the premier/light
      totals are split across the matching products, so "Premier Beer" becomes
      e.g. Corona and "Light Beer" splits across Hahn Premium Light / Hahn Super
      Dry 3.5 / Heineken Zero. Falls back to a generic line if none are listed. */
-  boCompute(block, beo, master){
-    const d=this.boData();
-    const pax=+block.pax||0, tables=this.boTables(pax), bars=+(beo.bars)||0, hours=+block.hours||0;
+  boCompute(block, beo, master, order){
+    const d=this.boData(order);
+    const pax=+block.pax||0, tables=this.boTables(pax, order), bars=+(beo.bars)||0, hours=+block.hours||0;
     const ev=beo.event||"corporate";
     if(block.tier==="cocktail"){
+      const g=d.cocktailGarnish||{lemons:2, limes:1};
       const out=d.cocktail.map(c=>({name:c.name, role:c.name, qty:((pax*hours*c.gpp)/c.gpb)*c.assume}));
-      out.push({name:"Lemons (kg)", role:"Lemons", qty:2*bars});
-      out.push({name:"Limes (kg)", role:"Limes", qty:1*bars});
+      out.push({name:"Lemons (kg)", role:"Lemons", qty:(+g.lemons||0)*bars});
+      out.push({name:"Limes (kg)", role:"Limes", qty:(+g.limes||0)*bars});
       return out;
     }
     const t=d.tiers[block.tier]||d.tiers.cr1;
@@ -3113,19 +3212,21 @@ class Component extends DCLogic {
      parameters give a per-category total (wines/beer by table or pax); where
      several products share a category, that total is split evenly between
      them. Returns an array aligned with beo.manual: [{category, est}]. */
-  boConsume(beo, master){
-    const d=this.boData();
+  boConsume(beo, master, order){
+    const d=this.boData(order);
     const pax=+beo.pax||0, ev=beo.event||"corporate";
     let catTotal;
     if(beo.style==="cocktail"){
       /* Cocktail sheet: per-category total = pax x hours x (glasses-per-person
          ÷ glasses-per-bottle) x assumption(s), summed over that category's
-         cocktail roles (wines gpb 5; beer gpb 1). */
+         cocktail roles. Rates come from the editable cocktail settings, matched
+         to each role by name (Sparkling / Red / White / Beer / Light Beer). */
       const h=+beo.hours||0;
-      catTotal={ sparkling: pax*h*(2/5)*0.3, white: pax*h*(2/5)*(0.2+0.15), red: pax*h*(2/5)*(0.15+0.1),
-        premier: pax*h*3*(0.3+0.25), light: pax*h*2*0.1 };
+      const roleTotal=(re)=>{ let t=0; (d.cocktail||[]).forEach(c=>{ if(re.test(c.name)) t+=pax*h*((+c.gpp||0)/((+c.gpb)||1))*(+c.assume||0); }); return t; };
+      catTotal={ sparkling: roleTotal(/sparkling/i), white: roleTotal(/^white|white wine/i), red: roleTotal(/^red|red wine/i),
+        premier: roleTotal(/^beer/i), light: roleTotal(/light/i) };
     } else {
-      const tables=this.boTables(pax);
+      const tables=this.boTables(pax, order);
       catTotal={ sparkling:d.params.sparkling*tables, white:tables*d.params.whiteWine, red:tables*d.params.redWine,
         premier:pax*d.params.beerPremier[ev], light:tables*d.params.beerLight[ev] };
     }
@@ -3357,7 +3458,7 @@ class Component extends DCLogic {
   }
   pushBarOrders(uid, list, del){
     if(!uid || !SB.on()) return;
-    SB.put(this.barKey(uid), {barOrders:list||[], deleted:del||this.state.boDeleted||[], ts:Date.now()})
+    SB.put(this.barKey(uid), {barOrders:list||[], deleted:del||this.state.boDeleted||[], params:this.state.boParams||null, paramsAt:this.state.boParamsAt||0, ts:Date.now()})
       .catch(err=>console.error("[bar orders] cloud sync failed:", err));
   }
   syncBarOrders(uid){
@@ -3366,9 +3467,13 @@ class Component extends DCLogic {
       const doc={ barOrders:(d&&d.barOrders)||[], deleted:(d&&d.deleted)||[] };
       const del=this.mergeDeleted(this.state.boDeleted, doc.deleted);
       const merged=this.mergeBarOrders(this.state.barOrders, doc.barOrders, del);
+      /* Global calculation settings travel in the same per-user doc; adopt the
+         remote copy only when it is newer (last-writer-wins by timestamp). */
+      if(d && (+d.paramsAt||0) > (+this.state.boParamsAt||0))
+        this.setState({boParams:d.params||null, boParamsAt:+d.paramsAt||0}, ()=>this.save({}));
       if(JSON.stringify(merged)!==JSON.stringify(this.state.barOrders||[]) || JSON.stringify(del)!==JSON.stringify(this.state.boDeleted||[]))
         this.setState({barOrders:merged, boDeleted:del}, ()=>this.save({}));
-      if(JSON.stringify(merged)!==JSON.stringify(doc.barOrders||[]) || JSON.stringify(del)!==JSON.stringify(doc.deleted||[]))
+      if(JSON.stringify(merged)!==JSON.stringify(doc.barOrders||[]) || JSON.stringify(del)!==JSON.stringify(doc.deleted||[]) || (+this.state.boParamsAt||0) > (+d.paramsAt||0))
         this.pushBarOrders(uid, merged, del);
     }, ()=>{});
   }
@@ -3376,6 +3481,77 @@ class Component extends DCLogic {
     const l=list||this.state.barOrders||[];
     const uid=this.state.owner;
     this.setState({barOrders:l}, ()=>{ this.save({}); if(uid) this.pushBarOrders(uid, l, this.state.boDeleted); });
+  }
+
+  /* ---- Bar Ordering calculation settings ----
+     The editor edits a string-valued draft (so decimals type naturally); on save
+     it is parsed into a numeric override stored either globally (state.boParams)
+     or on a single order (order.params). boEffParams layers order over global
+     over the built-in defaults. */
+  boSetFromEff(eff){
+    const S=(n)=>String(n==null?"":n);
+    const p=eff.params||{}, bp=p.beerPremier||{}, bl=p.beerLight||{}, cg=eff.cocktailGarnish||{};
+    return {
+      paxPerTable:S(eff.paxPerTable),
+      params:{ sparkling:S(p.sparkling), whiteWine:S(p.whiteWine), redWine:S(p.redWine),
+        beerPremier:{football:S(bp.football), corporate:S(bp.corporate), wedding:S(bp.wedding)},
+        beerLight:{football:S(bl.football), corporate:S(bl.corporate), wedding:S(bl.wedding)},
+        lemonsKg:S(p.lemonsKg), limesKg:S(p.limesKg) },
+      cocktailGarnish:{lemons:S(cg.lemons), limes:S(cg.limes)},
+      cocktail:(eff.cocktail||[]).map(c=>({name:c.name, gpp:S(c.gpp), gpb:S(c.gpb), assume:S(c.assume)}))
+    };
+  }
+  boSetToNum(d){
+    const N=(v)=>{ const n=parseFloat(v); return isFinite(n)?n:0; };
+    const p=d.params||{}, bp=p.beerPremier||{}, bl=p.beerLight||{}, cg=d.cocktailGarnish||{};
+    return {
+      paxPerTable: Math.max(1, N(d.paxPerTable)||10),
+      params:{ sparkling:N(p.sparkling), whiteWine:N(p.whiteWine), redWine:N(p.redWine),
+        beerPremier:{football:N(bp.football), corporate:N(bp.corporate), wedding:N(bp.wedding)},
+        beerLight:{football:N(bl.football), corporate:N(bl.corporate), wedding:N(bl.wedding)},
+        lemonsKg:N(p.lemonsKg), limesKg:N(p.limesKg) },
+      cocktailGarnish:{lemons:N(cg.lemons), limes:N(cg.limes)},
+      cocktail:(d.cocktail||[]).map(c=>{ const gpb=N(c.gpb); return {name:c.name, gpp:N(c.gpp), gpb:gpb>0?gpb:1, assume:N(c.assume)}; })
+    };
+  }
+  openBoSettings(){ this.setState({ screen:"boSettings", boSetTarget:"global", boSet:this.boSetFromEff(this.boEffParams(null)), menuOpen:false }); }
+  openBoSettingsFor(orderId){
+    const order=(this.state.barOrders||[]).find(b=>b.id===orderId);
+    this.setState({ screen:"boSettings", boSetTarget:orderId, boSet:this.boSetFromEff(this.boEffParams(order)), menuOpen:false });
+  }
+  boSetField(path, raw){
+    const d=JSON.parse(JSON.stringify(this.state.boSet||{}));
+    let o=d; for(let i=0;i<path.length-1;i++){ if(o[path[i]]==null) o[path[i]]={}; o=o[path[i]]; }
+    o[path[path.length-1]]=raw;
+    this.setState({boSet:d});
+  }
+  boSettingsSave(){
+    const num=this.boSetToNum(this.state.boSet||{});
+    if(this.state.boSetTarget==="global"){
+      this.setState({ boParams:num, boParamsAt:Date.now(), screen:"bo", boSet:null, boSetTarget:"" }, ()=>{
+        this.save({}); const uid=this.state.owner; if(uid) this.pushBarOrders(uid, this.state.barOrders, this.state.boDeleted);
+      });
+    } else {
+      const id=this.state.boSetTarget;
+      const list=(this.state.barOrders||[]).map(b=> b.id===id ? Object.assign({}, b, {params:num, updatedAt:Date.now()}) : b);
+      this.setState({ screen:"boView", boView:id, boSet:null, boSetTarget:"" }, ()=>this.boSave(list));
+    }
+  }
+  boSettingsReset(){
+    if(this.state.boSetTarget==="global"){
+      this.setState({ boParams:null, boParamsAt:Date.now(), boSet:this.boSetFromEff(this.boDefaults()) }, ()=>{
+        this.save({}); const uid=this.state.owner; if(uid) this.pushBarOrders(uid, this.state.barOrders, this.state.boDeleted);
+      });
+    } else {
+      const id=this.state.boSetTarget;
+      const list=(this.state.barOrders||[]).map(b=>{ if(b.id!==id) return b; const nb=Object.assign({}, b, {updatedAt:Date.now()}); delete nb.params; return nb; });
+      this.setState({ boSet:this.boSetFromEff(this.boEffParams(null)) }, ()=>this.boSave(list));
+    }
+  }
+  closeBoSettings(){
+    const id=this.state.boSetTarget;
+    if(id && id!=="global") this.setState({screen:"boView", boView:id, boSet:null, boSetTarget:""});
+    else this.setState({screen:"bo", boSet:null, boSetTarget:""});
   }
   boNew(){
     const now=Date.now();
@@ -3468,13 +3644,13 @@ class Component extends DCLogic {
     const master=this.boMaster();
     (bo.beos||[]).filter(b=>b.submitted).forEach(beo=>{
       (beo.blocks||[]).forEach(bl=>{
-        this.boCompute(bl, beo, master).forEach(l=>{
+        this.boCompute(bl, beo, master, bo).forEach(l=>{
           const unit=/lemon|lime/i.test(l.role)?"kg":"bottles";
           add(l.name, l.qty, unit);
         });
       });
       (beo.explicit||[]).forEach(e=> add(e.name, e.qty, e.unit||"bottles"));
-      const cons=this.boConsume(beo, master);
+      const cons=this.boConsume(beo, master, bo);
       (beo.manual||[]).forEach((m,i)=>{ const q = (m.ov!=null ? +m.ov : (cons[i]?cons[i].est:0)); if(q) add(m.name, q, m.unit||"bottles"); });
     });
     const items=order.map(k=>tot[k]).sort((a,b)=>b.qty-a.qty);
@@ -3505,10 +3681,10 @@ class Component extends DCLogic {
     (bo.beos||[]).filter(b=>b.submitted).forEach(beo=>{
       const tag=(beo.beo?("#"+beo.beo):"")+(beo.booking?(" "+beo.booking):"");
       (beo.blocks||[]).forEach(bl=>{
-        this.boCompute(bl, beo, master).forEach(l=> bbody.push([ tag, bl.rawName||bl.tier, bl.pax||0, l.name, Math.round(l.qty*100)/100, /lemon|lime/i.test(l.role)?"kg":"bottles" ]));
+        this.boCompute(bl, beo, master, bo).forEach(l=> bbody.push([ tag, bl.rawName||bl.tier, bl.pax||0, l.name, Math.round(l.qty*100)/100, /lemon|lime/i.test(l.role)?"kg":"bottles" ]));
       });
       (beo.explicit||[]).forEach(e=> bbody.push([ tag, "Listed in BEO", "", e.name, e.qty, e.unit||"bottles" ]));
-      const cons=this.boConsume(beo, master);
+      const cons=this.boConsume(beo, master, bo);
       const catLab=this.boCatLabels();
       (beo.manual||[]).forEach((m,i)=>{ const c=cons[i]||{category:"",est:0}; const q=(m.ov!=null?+m.ov:c.est);
         bbody.push([ tag, "On consumption ("+(catLab[c.category]||"—")+")", beo.pax||"", m.name, Math.round(q*100)/100, m.unit||"bottles" ]); });
@@ -4070,7 +4246,8 @@ class Component extends DCLogic {
       me:s.me, code:s.code, dup:s.dup, dupCleared:s.dupCleared, drive:s.drive, pushed:s.pushed, metaAt:this._metaAt,
       hidden:s.hidden, hideEmpty:s.hideEmpty, org:s.org, orgId:s.orgId, orgTpl:s.orgTpl,
       admin:s.admin, owner:s.owner, archive:s.archive, archDeleted:s.archDeleted, joined:s.joined, started:s.started, removedIds:s.removedIds, resetAt:s.resetAt,
-      followups:s.followups, fuDeleted:s.fuDeleted, barOrders:s.barOrders, boDeleted:s.boDeleted
+      followups:s.followups, fuDeleted:s.fuDeleted, barOrders:s.barOrders, boDeleted:s.boDeleted,
+      boParams:s.boParams, boParamsAt:s.boParamsAt
     }, patch);
     try{ localStorage.setItem(STORE, JSON.stringify(body)); }catch(e){}
     this._localWriteAt = Date.now();
@@ -5265,6 +5442,7 @@ class Component extends DCLogic {
       isBoView: s.screen==="boView",
       boDragActive: !!(s.boDrag && s.screen==="boView"),
       isBoTotals: s.screen==="boTotals",
+      isBoSettings: s.screen==="boSettings",
       isDiscNew: s.screen==="discNew",
       isDiscView: s.screen==="discView",
       pastCount: (s.archive||[]).length,
@@ -6950,7 +7128,7 @@ class Component extends DCLogic {
     }
 
     /* ---------------- Bar Ordering ---------------- */
-    if(s.screen==="bo" || s.screen==="boView" || s.screen==="boTotals"){
+    if(s.screen==="bo" || s.screen==="boView" || s.screen==="boTotals" || s.screen==="boSettings"){
       vals.boBack = ()=>this.goHubNav();
       const TIER = this.boTierOptions();
       const EV = this.boEventOptions();
@@ -6958,10 +7136,38 @@ class Component extends DCLogic {
         bg: active?"var(--primary)":"var(--surface)", border: active?"var(--primary)":"var(--line)",
         ink: active?"var(--on-primary)":"var(--ink-2)", pick:onPick });
 
+      if(s.screen==="boSettings"){
+        const bs = s.boSet || {};
+        const gp=(o,p)=>{ let x=o; for(let i=0;i<p.length;i++){ if(x==null) return ""; x=x[p[i]]; } return x==null?"":String(x); };
+        const field=(label, path, suffix)=>({ label:label, suffix:suffix||"", value:gp(bs,path), onInput:((pp)=>(e)=>this.boSetField(pp, e.target.value))(path) });
+        vals.boSetIsOrder = s.boSetTarget!=="global";
+        vals.boSetTitle = s.boSetTarget==="global" ? "Calculation settings" : "Event rates";
+        vals.boSetSub = s.boSetTarget==="global"
+          ? "These rates are the default for every bar order."
+          : "Rates for this order only — they override the global default.";
+        vals.boSetGroups = [
+          {title:"TABLES", note:"How many guests make one table", fields:[ field("Pax per table", ["paxPerTable"], "pax") ]},
+          {title:"WINE · bottles per table", fields:[ field("Sparkling",["params","sparkling"]), field("White",["params","whiteWine"]), field("Red",["params","redWine"]) ]},
+          {title:"PREMIER BEER · bottles per person", fields:[ field("Football",["params","beerPremier","football"]), field("Corporate",["params","beerPremier","corporate"]), field("Wedding",["params","beerPremier","wedding"]) ]},
+          {title:"LIGHT BEER · bottles per table", fields:[ field("Football",["params","beerLight","football"]), field("Corporate",["params","beerLight","corporate"]), field("Wedding",["params","beerLight","wedding"]) ]},
+          {title:"GARNISH · kg per bar (seated)", fields:[ field("Lemons",["params","lemonsKg"],"kg"), field("Limes",["params","limesKg"],"kg") ]},
+          {title:"GARNISH · kg per bar (cocktail)", fields:[ field("Lemons",["cocktailGarnish","lemons"],"kg"), field("Limes",["cocktailGarnish","limes"],"kg") ]}
+        ];
+        vals.boSetCocktail = (bs.cocktail||[]).map((c,i)=>({ name:c.name,
+          gpp:gp(bs,["cocktail",i,"gpp"]), onGpp:((ii)=>(e)=>this.boSetField(["cocktail",ii,"gpp"], e.target.value))(i),
+          gpb:gp(bs,["cocktail",i,"gpb"]), onGpb:((ii)=>(e)=>this.boSetField(["cocktail",ii,"gpb"], e.target.value))(i),
+          assume:gp(bs,["cocktail",i,"assume"]), onAssume:((ii)=>(e)=>this.boSetField(["cocktail",ii,"assume"], e.target.value))(i) }));
+        vals.boSetSave = ()=>this.boSettingsSave();
+        vals.boSetBack = ()=>this.closeBoSettings();
+        vals.boSetReset = ()=>this.boSettingsReset();
+        vals.boSetResetLabel = s.boSetTarget==="global" ? "Reset to built-in defaults" : "Reset to global settings";
+      }
+
       if(s.screen==="bo"){
         const list = (s.barOrders||[]).slice().sort((a,b)=>((b.ts||0)-(a.ts||0)));
         vals.boEmpty = list.length===0;
         vals.boNew = ()=>this.boNew();
+        vals.boGoSettings = ()=>this.openBoSettings();
         vals.boList = list.map(o=>{
           const n=(o.beos||[]).length; const agg=this.boAggregate(o);
           return { id:o.id, title:o.title||"Bar order",
@@ -6988,6 +7194,8 @@ class Component extends DCLogic {
             title:"Delete this bar order?", note:"“"+(bo.title||"This order")+"” and its uploaded BEOs will be removed from this device.",
             label:"Delete", cancel:"Keep it" } });
           vals.boExport = ()=>this.downloadBarOrderXlsx(bo);
+          vals.boOpenSettings = ()=>this.openBoSettingsFor(bo.id);
+          vals.boHasOverride = !!bo.params;
           const boMaster = this.boMaster();
           const catLab = this.boCatLabels();
 
@@ -6996,16 +7204,16 @@ class Component extends DCLogic {
             const blocks = (beo.blocks||[]).map((bl,ki)=>{
               const isCk = bl.tier==="cocktail";
               const tChips = TIER.map(o=>chip(o.label, bl.tier===o.key, ()=>this.boPatchBlock(bo.id,bi,ki,{tier:o.key})));
-              const lines = this.boCompute(bl, beo, boMaster).map(l=>({ role:l.role, qty:this.fmt(Math.round(l.qty*100)/100), name:l.name }));
+              const lines = this.boCompute(bl, beo, boMaster, bo).map(l=>({ role:l.role, qty:this.fmt(Math.round(l.qty*100)/100), name:l.name }));
               return { title: bl.rawName || (TIER.filter(t=>t.key===bl.tier)[0]||{label:"Package"}).label,
                 tierChips:tChips, isCocktail:isCk,
                 pax:String(bl.pax||0), onPax:(e)=>this.boPatchBlock(bo.id,bi,ki,{pax:parseFloat(e.target.value)||0}),
-                tablesDerived:String(this.boTables(bl.pax)),
+                tablesDerived:String(this.boTables(bl.pax, bo)),
                 hours:String(bl.hours||0), onHours:(e)=>this.boPatchBlock(bo.id,bi,ki,{hours:parseFloat(e.target.value)||0}),
                 lines:lines };
             });
             const explicit = (beo.explicit||[]).map(e=>({ name:e.name, qty:this.fmt(e.qty), unit:e.unit||"bottles" }));
-            const cons = this.boConsume(beo, boMaster);
+            const cons = this.boConsume(beo, boMaster, bo);
             const manual = (beo.manual||[]).map((m,mi)=>{
               const c = cons[mi] || {category:"", est:0};
               const est = Math.round(c.est*100)/100;
@@ -7020,7 +7228,7 @@ class Component extends DCLogic {
               reopen: ()=>this.boPatchBeo(bo.id,bi,{submitted:false}),
               hasManual0:(beo.manual||[]).length>0,
               paxVal:String(beo.pax||0), onPax:(e)=>this.boPatchBeo(bo.id,bi,{pax:parseFloat(e.target.value)||0}),
-              tablesDerived:String(this.boTables(beo.pax)),
+              tablesDerived:String(this.boTables(beo.pax, bo)),
               isCocktailStyle: beo.style==="cocktail", notCocktailStyle: beo.style!=="cocktail",
               styleChips: [ chip("Seated", beo.style!=="cocktail", ()=>this.boPatchBeo(bo.id,bi,{style:"seated"})),
                             chip("Cocktail", beo.style==="cocktail", ()=>this.boPatchBeo(bo.id,bi,{style:"cocktail"})) ],
