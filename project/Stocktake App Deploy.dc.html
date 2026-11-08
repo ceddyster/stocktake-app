@@ -1156,12 +1156,8 @@ Sign in with Google
 <div style="display:flex;align-items:center;gap:10px">
 <button onClick="{{ boViewBack }}" style="width:32px;height:32px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink)">‹</button>
 <input value="{{ boTitle }}" onChange="{{ onBoTitle }}" placeholder="Bar order" style="flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface);outline:none;font:600 14px/1.1 'Public Sans',sans-serif;color:var(--ink)" />
-<button onClick="{{ boOpenSettings }}" aria-label="Rates for this order" style="flex:none;height:32px;width:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:400 15px/1 'Public Sans',sans-serif;color:var(--ink-2)">⚙</button>
 <button onClick="{{ boExport }}" aria-label="Export to Excel" style="flex:none;height:32px;padding:0 11px;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;font:600 10.5px/1 'Public Sans',sans-serif;color:var(--ink-2)"><span style="font:400 13px/1 'Public Sans',sans-serif">⤓</span>Excel</button>
 </div>
-<sc-if value="{{ boHasOverride }}" hint-placeholder-val="{{ false }}">
-<div style="margin-top:8px;padding:7px 11px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;font:500 9.5px/1.3 'Public Sans',sans-serif;color:var(--ink-2)">⚙ This order uses its own custom rates. Tap the gear to review or reset them.</div>
-</sc-if>
 </div>
 <div style="flex:1;overflow:auto;padding:14px 16px 44px;display:flex;flex-direction:column;gap:11px">
 <button onClick="{{ boPick }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;background:var(--primary);border:none;border-radius:13px;cursor:pointer;text-align:left;font-family:'Public Sans',sans-serif">
@@ -1192,11 +1188,15 @@ Sign in with Google
 </sc-if>
 <sc-if value="{{ beo.notSubmitted }}" hint-placeholder-val="{{ true }}">
 <div style="background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--card-shadow);padding:13px 14px">
-<div style="display:flex;align-items:baseline;gap:10px">
+<div style="display:flex;align-items:center;gap:8px">
 <span style="flex:1;min-width:0;font:600 13px/1.25 'Public Sans',sans-serif;color:var(--ink);text-wrap:pretty">{{ beo.title }}</span>
+<button onClick="{{ beo.openRates }}" aria-label="Rates for this BEO" style="flex:none;min-height:26px;width:30px;display:flex;align-items:center;justify-content:center;border-radius:7px;background:var(--surface);border:1px solid var(--line);cursor:pointer;font:400 13px/1 'Public Sans',sans-serif;color:var(--ink-2)">⚙</button>
 <button onClick="{{ beo.remove }}" style="flex:none;min-height:26px;padding:5px 9px;border-radius:7px;background:var(--surface);border:1px solid var(--line);cursor:pointer;font:600 9px/1 'Public Sans',sans-serif;letter-spacing:.04em;color:var(--ink-3)">REMOVE</button>
 </div>
 <div style="margin-top:4px;font:400 9.5px/1.3 'Public Sans',sans-serif;color:var(--ink-3)">{{ beo.sub }}</div>
+<sc-if value="{{ beo.hasOverride }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:7px;padding:6px 10px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;font:500 9px/1.3 'Public Sans',sans-serif;color:var(--ink-2)">⚙ Custom rates for this BEO. Tap the gear to review or reset.</div>
+</sc-if>
 <sc-if value="{{ beo.hasManual0 }}" hint-placeholder-val="{{ false }}">
 <div style="margin-top:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
 <span style="font:500 8px/1 'Public Sans',sans-serif;letter-spacing:.08em;color:var(--ink-3)">STYLE</span>
@@ -2581,7 +2581,7 @@ class Component extends DCLogic {
       mcheckBusy:false, mcheckErr:"", mcheckNote:"", mcheckResult:null,
       followups:[], fuDeleted:[], discView:null, discQuery:"", discNewFor:null, discNewFile:"", discNewRecs:null, discNewErr:"",
       barOrders:[], boDeleted:[], boView:null, boBusy:false, boErr:"", boDrag:false,
-      boParams:null, boParamsAt:0, boSet:null, boSetTarget:"",
+      boParams:null, boParamsAt:0, boSet:null, boSetTarget:"", boSetOrderId:"", boSetBeoIdx:-1,
       discLoc:"", discSheet:null, discRecount:"",
       mQuery:"", mSort:"cat", addOpen:false, importOpen:false,
       nf:{name:"", cat:"", sub:"", carton:"24", code:"", frac:false, subNew:true}, editId:null, confirmNoCat:false,
@@ -3113,15 +3113,15 @@ class Component extends DCLogic {
     }
     return ov;
   }
-  /* Effective rates for an order: defaults <- global settings <- this order's
-     own override (if it has one). */
-  boEffParams(order){
+  /* Effective rates: defaults <- global settings <- this BEO's own override
+     (override is a params object, e.g. beo.params, or null for global only). */
+  boEffParams(override){
     let d=this.boDefaults();
     if(this.state.boParams) d=this.boMergeParams(d, this.state.boParams);
-    if(order && order.params) d=this.boMergeParams(d, order.params);
+    if(override) d=this.boMergeParams(d, override);
     return d;
   }
-  boData(order){ return this.boEffParams(order); }
+  boData(override){ return this.boEffParams(override); }
   boTierOptions(){ const d=this.boData(); return [
     {key:"cr1", label:d.tiers.cr1.label}, {key:"cr2", label:d.tiers.cr2.label},
     {key:"cr3", label:d.tiers.cr3.label}, {key:"cocktail", label:"Cocktail"} ]; }
@@ -3129,15 +3129,16 @@ class Component extends DCLogic {
 
   /* Tables are derived from pax, rounded up (default 1 table per 10 pax). The
      pax-per-table basis is adjustable in the Bar Ordering calculation settings. */
-  boTables(pax, order){ const ppt=(+this.boEffParams(order).paxPerTable)||10; return Math.ceil((+pax||0)/ppt); }
+  boTables(pax, override){ const ppt=(+this.boEffParams(override).paxPerTable)||10; return Math.ceil((+pax||0)/ppt); }
   /* Compute one block's requirement. Returns [{name, role, qty}]. The beers
      named in the BEO block are classified premier/light and the premier/light
      totals are split across the matching products, so "Premier Beer" becomes
      e.g. Corona and "Light Beer" splits across Hahn Premium Light / Hahn Super
      Dry 3.5 / Heineken Zero. Falls back to a generic line if none are listed. */
-  boCompute(block, beo, master, order){
-    const d=this.boData(order);
-    const pax=+block.pax||0, tables=this.boTables(pax, order), bars=+(beo.bars)||0, hours=+block.hours||0;
+  boCompute(block, beo, master){
+    const ov=beo&&beo.params;
+    const d=this.boData(ov);
+    const pax=+block.pax||0, tables=this.boTables(pax, ov), bars=+(beo.bars)||0, hours=+block.hours||0;
     const ev=beo.event||"corporate";
     if(block.tier==="cocktail"){
       const g=d.cocktailGarnish||{lemons:2, limes:1};
@@ -3212,8 +3213,9 @@ class Component extends DCLogic {
      parameters give a per-category total (wines/beer by table or pax); where
      several products share a category, that total is split evenly between
      them. Returns an array aligned with beo.manual: [{category, est}]. */
-  boConsume(beo, master, order){
-    const d=this.boData(order);
+  boConsume(beo, master){
+    const ov=beo&&beo.params;
+    const d=this.boData(ov);
     const pax=+beo.pax||0, ev=beo.event||"corporate";
     let catTotal;
     if(beo.style==="cocktail"){
@@ -3226,7 +3228,7 @@ class Component extends DCLogic {
       catTotal={ sparkling: roleTotal(/sparkling/i), white: roleTotal(/^white|white wine/i), red: roleTotal(/^red|red wine/i),
         premier: roleTotal(/^beer/i), light: roleTotal(/light/i) };
     } else {
-      const tables=this.boTables(pax, order);
+      const tables=this.boTables(pax, ov);
       catTotal={ sparkling:d.params.sparkling*tables, white:tables*d.params.whiteWine, red:tables*d.params.redWine,
         premier:pax*d.params.beerPremier[ev], light:tables*d.params.beerLight[ev] };
     }
@@ -3514,16 +3516,28 @@ class Component extends DCLogic {
       cocktail:(d.cocktail||[]).map(c=>{ const gpb=N(c.gpb); return {name:c.name, gpp:N(c.gpp), gpb:gpb>0?gpb:1, assume:N(c.assume)}; })
     };
   }
-  openBoSettings(){ this.setState({ screen:"boSettings", boSetTarget:"global", boSet:this.boSetFromEff(this.boEffParams(null)), menuOpen:false }); }
-  openBoSettingsFor(orderId){
+  openBoSettings(){ this.setState({ screen:"boSettings", boSetTarget:"global", boSetOrderId:"", boSetBeoIdx:-1, boSet:this.boSetFromEff(this.boEffParams(null)), menuOpen:false }); }
+  /* Edit the rates for one BEO (event) inside an order. */
+  openBoSettingsForBeo(orderId, beoIdx){
     const order=(this.state.barOrders||[]).find(b=>b.id===orderId);
-    this.setState({ screen:"boSettings", boSetTarget:orderId, boSet:this.boSetFromEff(this.boEffParams(order)), menuOpen:false });
+    const beo=order && (order.beos||[])[beoIdx];
+    this.setState({ screen:"boSettings", boSetTarget:"beo", boSetOrderId:orderId, boSetBeoIdx:beoIdx,
+      boSet:this.boSetFromEff(this.boEffParams(beo&&beo.params)), menuOpen:false });
   }
   boSetField(path, raw){
     const d=JSON.parse(JSON.stringify(this.state.boSet||{}));
     let o=d; for(let i=0;i<path.length-1;i++){ if(o[path[i]]==null) o[path[i]]={}; o=o[path[i]]; }
     o[path[path.length-1]]=raw;
     this.setState({boSet:d});
+  }
+  /* Apply a change to one BEO's params (patch=null removes the override). */
+  boPatchBeoParams(orderId, beoIdx, patch){
+    const list=(this.state.barOrders||[]).map(b=>{
+      if(b.id!==orderId) return b;
+      const beos=(b.beos||[]).map((e,i)=>{ if(i!==beoIdx) return e; const ne=Object.assign({}, e); if(patch) ne.params=patch; else delete ne.params; return ne; });
+      return Object.assign({}, b, {beos:beos, updatedAt:Date.now()});
+    });
+    return list;
   }
   boSettingsSave(){
     const num=this.boSetToNum(this.state.boSet||{});
@@ -3532,9 +3546,9 @@ class Component extends DCLogic {
         this.save({}); const uid=this.state.owner; if(uid) this.pushBarOrders(uid, this.state.barOrders, this.state.boDeleted);
       });
     } else {
-      const id=this.state.boSetTarget;
-      const list=(this.state.barOrders||[]).map(b=> b.id===id ? Object.assign({}, b, {params:num, updatedAt:Date.now()}) : b);
-      this.setState({ screen:"boView", boView:id, boSet:null, boSetTarget:"" }, ()=>this.boSave(list));
+      const oid=this.state.boSetOrderId;
+      const list=this.boPatchBeoParams(oid, this.state.boSetBeoIdx, num);
+      this.setState({ screen:"boView", boView:oid, boSet:null, boSetTarget:"", boSetBeoIdx:-1 }, ()=>this.boSave(list));
     }
   }
   boSettingsReset(){
@@ -3543,14 +3557,12 @@ class Component extends DCLogic {
         this.save({}); const uid=this.state.owner; if(uid) this.pushBarOrders(uid, this.state.barOrders, this.state.boDeleted);
       });
     } else {
-      const id=this.state.boSetTarget;
-      const list=(this.state.barOrders||[]).map(b=>{ if(b.id!==id) return b; const nb=Object.assign({}, b, {updatedAt:Date.now()}); delete nb.params; return nb; });
+      const list=this.boPatchBeoParams(this.state.boSetOrderId, this.state.boSetBeoIdx, null);
       this.setState({ boSet:this.boSetFromEff(this.boEffParams(null)) }, ()=>this.boSave(list));
     }
   }
   closeBoSettings(){
-    const id=this.state.boSetTarget;
-    if(id && id!=="global") this.setState({screen:"boView", boView:id, boSet:null, boSetTarget:""});
+    if(this.state.boSetTarget==="beo") this.setState({screen:"boView", boView:this.state.boSetOrderId, boSet:null, boSetTarget:"", boSetBeoIdx:-1});
     else this.setState({screen:"bo", boSet:null, boSetTarget:""});
   }
   boNew(){
@@ -3644,13 +3656,13 @@ class Component extends DCLogic {
     const master=this.boMaster();
     (bo.beos||[]).filter(b=>b.submitted).forEach(beo=>{
       (beo.blocks||[]).forEach(bl=>{
-        this.boCompute(bl, beo, master, bo).forEach(l=>{
+        this.boCompute(bl, beo, master).forEach(l=>{
           const unit=/lemon|lime/i.test(l.role)?"kg":"bottles";
           add(l.name, l.qty, unit);
         });
       });
       (beo.explicit||[]).forEach(e=> add(e.name, e.qty, e.unit||"bottles"));
-      const cons=this.boConsume(beo, master, bo);
+      const cons=this.boConsume(beo, master);
       (beo.manual||[]).forEach((m,i)=>{ const q = (m.ov!=null ? +m.ov : (cons[i]?cons[i].est:0)); if(q) add(m.name, q, m.unit||"bottles"); });
     });
     const items=order.map(k=>tot[k]).sort((a,b)=>b.qty-a.qty);
@@ -3681,10 +3693,10 @@ class Component extends DCLogic {
     (bo.beos||[]).filter(b=>b.submitted).forEach(beo=>{
       const tag=(beo.beo?("#"+beo.beo):"")+(beo.booking?(" "+beo.booking):"");
       (beo.blocks||[]).forEach(bl=>{
-        this.boCompute(bl, beo, master, bo).forEach(l=> bbody.push([ tag, bl.rawName||bl.tier, bl.pax||0, l.name, Math.round(l.qty*100)/100, /lemon|lime/i.test(l.role)?"kg":"bottles" ]));
+        this.boCompute(bl, beo, master).forEach(l=> bbody.push([ tag, bl.rawName||bl.tier, bl.pax||0, l.name, Math.round(l.qty*100)/100, /lemon|lime/i.test(l.role)?"kg":"bottles" ]));
       });
       (beo.explicit||[]).forEach(e=> bbody.push([ tag, "Listed in BEO", "", e.name, e.qty, e.unit||"bottles" ]));
-      const cons=this.boConsume(beo, master, bo);
+      const cons=this.boConsume(beo, master);
       const catLab=this.boCatLabels();
       (beo.manual||[]).forEach((m,i)=>{ const c=cons[i]||{category:"",est:0}; const q=(m.ov!=null?+m.ov:c.est);
         bbody.push([ tag, "On consumption ("+(catLab[c.category]||"—")+")", beo.pax||"", m.name, Math.round(q*100)/100, m.unit||"bottles" ]); });
@@ -7140,11 +7152,10 @@ class Component extends DCLogic {
         const bs = s.boSet || {};
         const gp=(o,p)=>{ let x=o; for(let i=0;i<p.length;i++){ if(x==null) return ""; x=x[p[i]]; } return x==null?"":String(x); };
         const field=(label, path, suffix)=>({ label:label, suffix:suffix||"", value:gp(bs,path), onInput:((pp)=>(e)=>this.boSetField(pp, e.target.value))(path) });
-        vals.boSetIsOrder = s.boSetTarget!=="global";
         vals.boSetTitle = s.boSetTarget==="global" ? "Calculation settings" : "Event rates";
         vals.boSetSub = s.boSetTarget==="global"
-          ? "These rates are the default for every bar order."
-          : "Rates for this order only — they override the global default.";
+          ? "These rates are the default for every event."
+          : "Rates for this BEO only — they override the global default.";
         vals.boSetGroups = [
           {title:"TABLES", note:"How many guests make one table", fields:[ field("Pax per table", ["paxPerTable"], "pax") ]},
           {title:"WINE · bottles per table", fields:[ field("Sparkling",["params","sparkling"]), field("White",["params","whiteWine"]), field("Red",["params","redWine"]) ]},
@@ -7160,7 +7171,7 @@ class Component extends DCLogic {
         vals.boSetSave = ()=>this.boSettingsSave();
         vals.boSetBack = ()=>this.closeBoSettings();
         vals.boSetReset = ()=>this.boSettingsReset();
-        vals.boSetResetLabel = s.boSetTarget==="global" ? "Reset to built-in defaults" : "Reset to global settings";
+        vals.boSetResetLabel = s.boSetTarget==="global" ? "Reset to built-in defaults" : "Reset to global settings for this BEO";
       }
 
       if(s.screen==="bo"){
@@ -7194,8 +7205,6 @@ class Component extends DCLogic {
             title:"Delete this bar order?", note:"“"+(bo.title||"This order")+"” and its uploaded BEOs will be removed from this device.",
             label:"Delete", cancel:"Keep it" } });
           vals.boExport = ()=>this.downloadBarOrderXlsx(bo);
-          vals.boOpenSettings = ()=>this.openBoSettingsFor(bo.id);
-          vals.boHasOverride = !!bo.params;
           const boMaster = this.boMaster();
           const catLab = this.boCatLabels();
 
@@ -7204,16 +7213,16 @@ class Component extends DCLogic {
             const blocks = (beo.blocks||[]).map((bl,ki)=>{
               const isCk = bl.tier==="cocktail";
               const tChips = TIER.map(o=>chip(o.label, bl.tier===o.key, ()=>this.boPatchBlock(bo.id,bi,ki,{tier:o.key})));
-              const lines = this.boCompute(bl, beo, boMaster, bo).map(l=>({ role:l.role, qty:this.fmt(Math.round(l.qty*100)/100), name:l.name }));
+              const lines = this.boCompute(bl, beo, boMaster).map(l=>({ role:l.role, qty:this.fmt(Math.round(l.qty*100)/100), name:l.name }));
               return { title: bl.rawName || (TIER.filter(t=>t.key===bl.tier)[0]||{label:"Package"}).label,
                 tierChips:tChips, isCocktail:isCk,
                 pax:String(bl.pax||0), onPax:(e)=>this.boPatchBlock(bo.id,bi,ki,{pax:parseFloat(e.target.value)||0}),
-                tablesDerived:String(this.boTables(bl.pax, bo)),
+                tablesDerived:String(this.boTables(bl.pax, beo.params)),
                 hours:String(bl.hours||0), onHours:(e)=>this.boPatchBlock(bo.id,bi,ki,{hours:parseFloat(e.target.value)||0}),
                 lines:lines };
             });
             const explicit = (beo.explicit||[]).map(e=>({ name:e.name, qty:this.fmt(e.qty), unit:e.unit||"bottles" }));
-            const cons = this.boConsume(beo, boMaster, bo);
+            const cons = this.boConsume(beo, boMaster);
             const manual = (beo.manual||[]).map((m,mi)=>{
               const c = cons[mi] || {category:"", est:0};
               const est = Math.round(c.est*100)/100;
@@ -7228,7 +7237,7 @@ class Component extends DCLogic {
               reopen: ()=>this.boPatchBeo(bo.id,bi,{submitted:false}),
               hasManual0:(beo.manual||[]).length>0,
               paxVal:String(beo.pax||0), onPax:(e)=>this.boPatchBeo(bo.id,bi,{pax:parseFloat(e.target.value)||0}),
-              tablesDerived:String(this.boTables(beo.pax, bo)),
+              tablesDerived:String(this.boTables(beo.pax, beo.params)),
               isCocktailStyle: beo.style==="cocktail", notCocktailStyle: beo.style!=="cocktail",
               styleChips: [ chip("Seated", beo.style!=="cocktail", ()=>this.boPatchBeo(bo.id,bi,{style:"seated"})),
                             chip("Cocktail", beo.style==="cocktail", ()=>this.boPatchBeo(bo.id,bi,{style:"cocktail"})) ],
@@ -7237,6 +7246,8 @@ class Component extends DCLogic {
               eventChips:evChips, blocks:blocks, explicit:explicit, manual:manual,
               hasBlocks:blocks.length>0, hasExplicit:explicit.length>0, hasManual:manual.length>0,
               nothing: blocks.length===0 && explicit.length===0 && manual.length===0,
+              openRates: ((ii)=>()=>this.openBoSettingsForBeo(bo.id, ii))(bi),
+              hasOverride: !!beo.params,
               remove: ()=>this.boRemoveBeo(bo.id,bi) };
           });
           vals.boBeosEmpty = (bo.beos||[]).length===0;
