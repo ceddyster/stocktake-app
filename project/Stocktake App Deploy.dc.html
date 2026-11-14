@@ -3140,9 +3140,32 @@ class Component extends DCLogic {
     const d=this.boData(ov);
     const pax=+block.pax||0, tables=this.boTables(pax, ov), bars=+(beo.bars)||0, hours=+block.hours||0;
     const ev=beo.event||"corporate";
-    if(block.tier==="cocktail"){
+    /* Cocktail treatment applies when the block itself is a cocktail package OR
+       the BEO is a cocktail-style function — a cocktail event still pours the
+       package's actual wines/beers, just by the per-person x hours formula rather
+       than the seated per-table rates. */
+    if(block.tier==="cocktail" || (beo && beo.style==="cocktail")){
       const g=d.cocktailGarnish||{lemons:2, limes:1};
-      const out=d.cocktail.map(c=>({name:c.name, role:c.name, qty:((pax*hours*c.gpp)/c.gpb)*c.assume}));
+      const hrs = (+block.hours>0) ? +block.hours : (+(beo&&beo.hours)||0);
+      /* Per-category total from the cocktail role rates (matched by role name). */
+      const roleTotal=(re)=>{ let tt=0; (d.cocktail||[]).forEach(c=>{ if(re.test(c.name)) tt+=((pax*hrs*(+c.gpp||0))/((+c.gpb)||1))*(+c.assume||0); }); return tt; };
+      const catTot={ sparkling:roleTotal(/sparkling/i), red:roleTotal(/^red|red wine/i), white:roleTotal(/^white|white wine/i),
+        premier:roleTotal(/^beer/i), light:roleTotal(/light/i) };
+      /* Real product names: a named package's signature wines, else the wines
+         parsed from the BEO; beers always from the parsed beverage list. Each
+         category total is split evenly across its products (generic line if none). */
+      const byCat={sparkling:[], red:[], white:[], premier:[], light:[]};
+      const tt=d.tiers[block.tier];
+      if(tt){ if(tt.sparkling) byCat.sparkling.push(tt.sparkling); if(tt.red) byCat.red.push(tt.red); if(tt.white) byCat.white.push(tt.white); }
+      else { (block.wines||[]).forEach(nm=>{ const c=this.boClassify(nm, master); if(c==="sparkling"||c==="red"||c==="white"){ if(byCat[c].indexOf(nm)<0) byCat[c].push(nm); } }); }
+      (block.bevs||[]).forEach(nm=>{ const c=this.boClassify(nm, master); if(c==="premier"||c==="light"){ if(byCat[c].indexOf(nm)<0) byCat[c].push(nm); } });
+      const labels={sparkling:"Sparkling", red:"Red Wine", white:"White Wine", premier:"Premier Beer", light:"Light Beer"};
+      const out=[];
+      ["sparkling","red","white","premier","light"].forEach(cat=>{
+        const list=byCat[cat], tot=catTot[cat]||0;
+        if(list.length) list.forEach(nm=>out.push({name:nm, role:labels[cat], qty:tot/list.length}));
+        else out.push({name:labels[cat], role:labels[cat], qty:tot});
+      });
       out.push({name:"Lemons (kg)", role:"Lemons", qty:(+g.lemons||0)*bars});
       out.push({name:"Limes (kg)", role:"Limes", qty:(+g.limes||0)*bars});
       return out;
@@ -7211,7 +7234,7 @@ class Component extends DCLogic {
           vals.boBeos = (bo.beos||[]).map((beo,bi)=>{
             const evChips = EV.map(o=>chip(o.label, beo.event===o.key, ()=>this.boPatchBeo(bo.id,bi,{event:o.key})));
             const blocks = (beo.blocks||[]).map((bl,ki)=>{
-              const isCk = bl.tier==="cocktail";
+              const isCk = bl.tier==="cocktail" || beo.style==="cocktail";
               const tChips = TIER.map(o=>chip(o.label, bl.tier===o.key, ()=>this.boPatchBlock(bo.id,bi,ki,{tier:o.key})));
               const lines = this.boCompute(bl, beo, boMaster).map(l=>({ role:l.role, qty:this.fmt(Math.round(l.qty*100)/100), name:l.name }));
               return { title: bl.rawName || (TIER.filter(t=>t.key===bl.tier)[0]||{label:"Package"}).label,
